@@ -1,4 +1,4 @@
-# Subventionssimulator – Zurich Sailing
+# Subventionssimulator – Zurich Sailing Federation
 
 Subventionssimulator für zurich-sailing.ch
 

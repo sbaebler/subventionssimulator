@@ -67,7 +67,7 @@ VALUES (2, 'training', 1.000);
 INSERT INTO subventionen (bezeichnung, foerderstelle, kategorie, voraussetzungen, gueltig_von)
 VALUES (
   'Vereinsinterner Trainingsbeitrag',
-  'Zurich Sailing Club',
+  'Zurich Sailing Federation',
   'ausbildung',
   'Mitglieder des Vereins. Kein spezifischer Trainer erforderlich.',
   '2025-01-01'

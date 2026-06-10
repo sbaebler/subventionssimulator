@@ -6,7 +6,7 @@ Projektkontext und Arbeitsregeln für Claude Code.
 
 ## Projekt
 
-**Name:** Subventionssimulator Zurich Sailing  
+**Name:** Subventionssimulator Zurich Sailing Federation  
 **Repo:** <https://github.com/sbaebler/subventionssimulator>  
 **Live-URL:** <https://subventionssimulator.zurich-sailing.ch>  
 **Hosting:** cyon.ch – Shared Hosting (Linux, PHP 8.2, MariaDB 10.6, SSD)  
@@ -150,6 +150,12 @@ rsync -av --exclude='config/config.php' --exclude='sql/' . user@cyon-server:/pfa
 
 PHP-Version in my.cyon auf **8.2** setzen.  
 SSL (Let’s Encrypt) für `subventionssimulator.zurich-sailing.ch` aktivieren.
+
+-----
+
+## Bezeichnungen
+
+- Der Verein heisst immer **Zurich Sailing Federation** – nie «Zurich Sailing Club» oder nur «Zurich Sailing»
 
 -----
 
