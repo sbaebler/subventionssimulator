@@ -11,6 +11,9 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     name: Deploy
@@ -74,8 +77,8 @@ jobs:
           server:   ${{ secrets.CYON_FTP_HOST }}
           username: ${{ secrets.CYON_FTP_USER }}
           password: ${{ secrets.CYON_FTP_PASS }}
-          protocol: ftps
-          port:     21
+          protocol: sftp
+          port:     22
           local-dir:  ./
           server-dir: /public_html/subventionssimulator/
           dangerous-clean-slate: false
