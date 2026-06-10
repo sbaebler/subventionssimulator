@@ -1,0 +1,104 @@
+name: Deploy to cyon (FTPS)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Manueller Trigger via GitHub UI / gh CLI
+
+# Nur ein Deployment gleichzeitig
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # 1. Code auschecken
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # 2. Sicherheitscheck: config.php darf nicht im Repo sein
+      - name: Verify config.php is not committed
+        run: |
+          if [ -f "config/config.php" ]; then
+            echo "::error::config.php wurde versehentlich committet! Deployment abgebrochen."
+            exit 1
+          fi
+          echo "config.php-Check OK."
+
+      # 3. config.php aus GitHub Secrets generieren
+      # var_export() escaped Sonderzeichen im Passwort korrekt
+      - name: Generate config.php from secrets
+        env:
+          DB_HOST:        ${{ secrets.DB_HOST }}
+          DB_NAME:        ${{ secrets.DB_NAME }}
+          DB_USER:        ${{ secrets.DB_USER }}
+          DB_PASS:        ${{ secrets.DB_PASS }}
+          APP_BASE_URL:   ${{ secrets.APP_BASE_URL }}
+          AUTH_USER:      ${{ secrets.AUTH_USER }}
+          AUTH_PASS_HASH: ${{ secrets.AUTH_PASS_HASH }}
+        run: |
+          php -r "
+            \$d = function(string \$k, string \$env): string {
+              return 'define(' . var_export(\$k, true) . ', ' . var_export(getenv(\$env), true) . ');';
+            };
+            \$out  = \"<?php\\n\\n\";
+            \$out .= \$d('DB_HOST',    'DB_HOST')    . \"\\n\";
+            \$out .= \$d('DB_NAME',    'DB_NAME')    . \"\\n\";
+            \$out .= \$d('DB_USER',    'DB_USER')    . \"\\n\";
+            \$out .= \$d('DB_PASS',    'DB_PASS')    . \"\\n\";
+            \$out .= \"define('DB_CHARSET', 'utf8mb4');\\n\\n\";
+            \$out .= \"define('APP_NAME', 'Subventionssimulator');\\n\";
+            \$out .= \$d('APP_BASE_URL', 'APP_BASE_URL') . \"\\n\";
+            \$out .= \"define('APP_ENV', 'production');\\n\\n\";
+            \$out .= \$d('AUTH_USER',      'AUTH_USER')      . \"\\n\";
+            \$out .= \$d('AUTH_PASS_HASH', 'AUTH_PASS_HASH') . \"\\n\";
+            file_put_contents('config/config.php', \$out);
+            echo 'config.php generiert.' . PHP_EOL;
+          "
+
+      # 4. Deploy nach cyon Shared Hosting via FTPS
+      # FTP-User landet direkt im Verzeichnis des Subventionssimulators
+      # → server-dir ist "/" (FTP-Root = Projektverzeichnis auf cyon)
+      # Deployed: public_html/, includes/, config/ (mit generiertem config.php)
+      # Nicht deployed: sql/, CLAUDE.md, README.md, .gitignore, config.example.php
+      - name: Deploy via FTPS to cyon
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:   ${{ secrets.CYON_FTP_HOST }}
+          username: ${{ secrets.CYON_FTP_USER }}
+          password: ${{ secrets.CYON_FTP_PASS }}
+          protocol: ftps
+          port:     21
+          local-dir:  ./
+          server-dir: /
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/sql/**
+            **/config/config.example.php
+            **/CLAUDE.md
+            **/README.md
+            **/.gitignore
+            **/.env
+            **/*.log
+            **/.DS_Store
+
+      # 5. Deploy-Status melden
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "### Deployment erfolgreich! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ziel:** subventionssimulator.zurich-sailing.ch" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Gestartet von:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
