@@ -77,8 +77,8 @@ jobs:
           server:   ${{ secrets.CYON_FTP_HOST }}
           username: ${{ secrets.CYON_FTP_USER }}
           password: ${{ secrets.CYON_FTP_PASS }}
-          protocol: sftp
-          port:     22
+          protocol: ftps-legacy
+          port:     21
           local-dir:  ./
           server-dir: /public_html/subventionssimulator/
           dangerous-clean-slate: false
