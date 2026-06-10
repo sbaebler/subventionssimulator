@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fachlogik – Subventionssimulator Zurich Sailing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none; }
+      body { font-size: 12px; }
+    }
+    code { font-family: ui-monospace, 'Cascadia Code', monospace; }
+  </style>
+</head>
+<body class="bg-white text-gray-800 max-w-4xl mx-auto px-8 py-10">
+
+  <!-- Titel -->
+  <div class="border-b border-gray-200 pb-6 mb-8">
+    <p class="text-sm text-gray-400 uppercase tracking-wide mb-1">Zurich Sailing Federation</p>
+    <h1 class="text-3xl font-bold text-gray-900">Subventionssimulator</h1>
+    <p class="text-gray-500 mt-2">Fachliche Logik – Datenmodell, Parameter und Berechnungsformel</p>
+    <p class="text-xs text-gray-400 mt-1">Stand: Juni 2025 &nbsp;·&nbsp; <a href="https://subventionssimulator.zurich-sailing.ch" class="underline hover:text-blue-600">subventionssimulator.zurich-sailing.ch</a></p>
+  </div>
+
+  <!-- Inhaltsverzeichnis -->
+  <nav class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-10 no-print">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Inhalt</p>
+    <ol class="list-decimal list-inside space-y-1 text-sm text-blue-700">
+      <li><a href="#zweck" class="hover:underline">Zweck der Applikation</a></li>
+      <li><a href="#datenmodell" class="hover:underline">Datenmodell</a></li>
+      <li><a href="#stammdaten" class="hover:underline">Subventions-Stammdaten</a></li>
+      <li><a href="#betragsregeln" class="hover:underline">Betragsregeln</a></li>
+      <li><a href="#trainerarten" class="hover:underline">Trainerarten</a></li>
+      <li><a href="#eventarten" class="hover:underline">Eventarten</a></li>
+      <li><a href="#simulation" class="hover:underline">Simulationsparameter (Eingabe)</a></li>
+      <li><a href="#formel" class="hover:underline">Berechnungsformel</a></li>
+      <li><a href="#beispiele" class="hover:underline">Berechnungsbeispiele</a></li>
+      <li><a href="#kategorien" class="hover:underline">Referenz: Kategorien &amp; ENUMs</a></li>
+    </ol>
+  </nav>
+
+
+  <!-- 1. Zweck -->
+  <section id="zweck" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">1. Zweck der Applikation</h2>
+    <p class="text-gray-700 leading-relaxed mb-3">
+      Der Subventionssimulator ermöglicht es dem Zurich Sailing Club, verschiedene Sportsubventionen
+      (J+S, NWF, kantonal, vereinsintern) zu erfassen und für ein konkretes Trainings- oder Lagerprojekt
+      den erwarteten Förderbeitrag zu berechnen.
+    </p>
+    <p class="text-gray-700 leading-relaxed">
+      Die Applikation ist in zwei Phasen aufgebaut:
+    </p>
+    <ul class="mt-3 space-y-1 text-sm text-gray-700 list-disc list-inside">
+      <li><strong>Phase 1 – Erfassung:</strong> Subventionen mit allen Betragsregeln, Trainerarten und Eventarten pflegen</li>
+      <li><strong>Phase 2 – Simulation:</strong> Für ein konkretes Event (Teilnehmer, Tage, Trainer, Eventtyp) den Beitrag aller passenden Subventionen berechnen</li>
+    </ul>
+  </section>
+
+
+  <!-- 2. Datenmodell -->
+  <section id="datenmodell" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">2. Datenmodell (Übersicht)</h2>
+    <p class="text-sm text-gray-500 mb-5">Jede Subvention besteht aus Stammdaten und drei Detail-Tabellen:</p>
+
+    <div class="overflow-x-auto">
+      <div class="flex flex-col gap-2 font-mono text-sm">
+        <!-- Tabelle Subventionen -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <span class="font-bold text-blue-800">subventionen</span>
+          <span class="text-blue-500 ml-2 text-xs">Stammdaten</span>
+        </div>
+        <!-- 3 Detail-Tabellen -->
+        <div class="ml-8 flex flex-col gap-2">
+          <div class="flex items-start gap-3">
+            <span class="text-gray-300 pt-2.5 select-none">└──</span>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex-1">
+              <span class="font-bold text-amber-800">subvention_betraege</span>
+              <span class="text-amber-600 ml-2 text-xs">Betragsregeln (1..n pro Subvention)</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-gray-300 pt-2.5 select-none">└──</span>
+            <div class="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex-1">
+              <span class="font-bold text-green-800">subvention_trainerarten</span>
+              <span class="text-green-600 ml-2 text-xs">Erlaubte Trainerarten + Zusatzbetrag</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-gray-300 pt-2.5 select-none">└──</span>
+            <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-3 flex-1">
+              <span class="font-bold text-purple-800">subvention_eventarten</span>
+              <span class="text-purple-600 ml-2 text-xs">Erlaubte Eventarten + Multiplikator</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-xs text-gray-400 mt-4">
+      Alle Detail-Tabellen sind via <code>subvention_id</code> mit der Haupttabelle verknüpft (CASCADE DELETE).
+    </p>
+  </section>
+
+
+  <!-- 3. Stammdaten -->
+  <section id="stammdaten" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">3. Subventions-Stammdaten</h2>
+    <p class="text-sm text-gray-500 mb-4">Tabelle <code class="bg-gray-100 px-1 rounded">subventionen</code></p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Feld</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Pflicht</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Beschreibung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>bezeichnung</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(200)</td>
+            <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+            <td class="px-4 py-2.5 text-gray-600">Name des Subventionstopfs, z.B. «J+S Lagerbeitrag Segeln»</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>foerderstelle</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(150)</td>
+            <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+            <td class="px-4 py-2.5 text-gray-600">Herausgebende Organisation, z.B. «BASPO / J+S», «Kanton ZH»</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>kategorie</code></td>
+            <td class="px-4 py-2.5 text-gray-500">ENUM</td>
+            <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+            <td class="px-4 py-2.5 text-gray-600">Thematische Einordnung – siehe <a href="#kategorien" class="text-blue-600 underline">Abschnitt 10</a></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>beschreibung</code></td>
+            <td class="px-4 py-2.5 text-gray-500">TEXT</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">Freitextbeschreibung für die Übersichtsansicht</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>voraussetzungen</code></td>
+            <td class="px-4 py-2.5 text-gray-500">TEXT</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">Fördervoraussetzungen (Freitext), z.B. Mindestalter, Mitgliedschaft</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>gueltig_von</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DATE</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">Startdatum der Förderfähigkeit (NULL = unbefristet)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>gueltig_bis</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DATE</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">Enddatum – Subventionen nach diesem Datum erscheinen nicht in der Übersicht</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>antragsfrist</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DATE</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">Datum bis wann der Antrag eingereicht werden muss (nur informativ)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>link_extern</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(500)</td>
+            <td class="px-4 py-2.5 text-gray-400">Nein</td>
+            <td class="px-4 py-2.5 text-gray-600">URL zur offiziellen Förderseite</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>aktiv</code></td>
+            <td class="px-4 py-2.5 text-gray-500">TINYINT(1)</td>
+            <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+            <td class="px-4 py-2.5 text-gray-600">0 = deaktiviert (erscheint nicht in Übersicht/Simulator)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- 4. Betragsregeln -->
+  <section id="betragsregeln" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">4. Betragsregeln</h2>
+    <p class="text-sm text-gray-500 mb-4">Tabelle <code class="bg-gray-100 px-1 rounded">subvention_betraege</code> – eine Subvention kann mehrere Regeln haben (aktuell wird die erste Regel für die Berechnung verwendet)</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-amber-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-amber-800 border-b border-amber-200">Feld</th>
+            <th class="px-4 py-3 font-semibold text-amber-800 border-b border-amber-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-amber-800 border-b border-amber-200">Standard</th>
+            <th class="px-4 py-3 font-semibold text-amber-800 border-b border-amber-200">Beschreibung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>bezeichnung</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(100)</td>
+            <td class="px-4 py-2.5 text-gray-400">Standardbetrag</td>
+            <td class="px-4 py-2.5 text-gray-600">Name der Regel, z.B. «J+S Lagerpauschale»</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>grundbetrag</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(10,2)</td>
+            <td class="px-4 py-2.5 text-gray-400">0.00</td>
+            <td class="px-4 py-2.5 text-gray-600">Fixer Sockelbetrag in CHF, unabhängig von TN-Zahl oder Tagen</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>betrag_pro_teilnehmer</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(8,2)</td>
+            <td class="px-4 py-2.5 text-gray-400">0.00</td>
+            <td class="px-4 py-2.5 text-gray-600">Betrag in CHF pro Teilnehmer</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>betrag_pro_tag</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(8,2)</td>
+            <td class="px-4 py-2.5 text-gray-400">0.00</td>
+            <td class="px-4 py-2.5 text-gray-600">Betrag in CHF pro Tag (unabhängig von TN-Zahl)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>max_teilnehmer</code></td>
+            <td class="px-4 py-2.5 text-gray-500">SMALLINT</td>
+            <td class="px-4 py-2.5 text-gray-400">0</td>
+            <td class="px-4 py-2.5 text-gray-600"><strong>0 = kein Limit.</strong> Sonst: maximale TN-Zahl die in die Berechnung einfliesst</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>max_tage</code></td>
+            <td class="px-4 py-2.5 text-gray-500">SMALLINT</td>
+            <td class="px-4 py-2.5 text-gray-400">0</td>
+            <td class="px-4 py-2.5 text-gray-600"><strong>0 = kein Limit.</strong> Sonst: maximale Tagezahl die in die Berechnung einfliesst</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>betrag_max_gesamt</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(10,2)</td>
+            <td class="px-4 py-2.5 text-gray-400">0.00</td>
+            <td class="px-4 py-2.5 text-gray-600"><strong>0 = kein Limit.</strong> Sonst: absoluter Maximalbetrag (Cap) in CHF</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- 5. Trainerarten -->
+  <section id="trainerarten" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">5. Trainerarten</h2>
+    <p class="text-sm text-gray-500 mb-4">Tabelle <code class="bg-gray-100 px-1 rounded">subvention_trainerarten</code> – definiert welche Trainerarten für eine Subvention förderberechtig sind</p>
+
+    <div class="overflow-x-auto mb-5">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-green-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-green-800 border-b border-green-200">Feld</th>
+            <th class="px-4 py-3 font-semibold text-green-800 border-b border-green-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-green-800 border-b border-green-200">Beschreibung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>trainerart</code></td>
+            <td class="px-4 py-2.5 text-gray-500">ENUM</td>
+            <td class="px-4 py-2.5 text-gray-600">Schlüssel der Trainerart – siehe Tabelle unten</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>zusatzbetrag</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(8,2)</td>
+            <td class="px-4 py-2.5 text-gray-600">Zusätzlicher CHF-Betrag für diese Trainerart (wird zum Subtotal addiert, <em>vor</em> dem Eventart-Multiplikator)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>bemerkung</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(300)</td>
+            <td class="px-4 py-2.5 text-gray-600">Optionaler Hinweis, z.B. «Nur mit gültigem J+S-Ausweis»</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-sm font-semibold text-gray-700 mb-2">Mögliche Werte für <code>trainerart</code>:</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Schlüssel</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bezeichnung</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bedeutung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>js_trainer</code></td>
+            <td class="px-4 py-2.5">J+S Trainer</td>
+            <td class="px-4 py-2.5 text-gray-600">Trainer mit gültiger J+S-Anerkennung (Jugend+Sport, BASPO)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>nwf_trainer</code></td>
+            <td class="px-4 py-2.5">NWF Trainer</td>
+            <td class="px-4 py-2.5 text-gray-600">Trainer mit Anerkennung im Rahmen der Nachwuchsförderung</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>ohne</code></td>
+            <td class="px-4 py-2.5">Trainer ohne Anerkennung</td>
+            <td class="px-4 py-2.5 text-gray-600">Kein spezifischer Ausweis erforderlich – Vereinstrainer etc.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-4 text-sm text-amber-800">
+      <strong>Wichtig:</strong> Ist die Trainerart des simulierten Events <em>nicht</em> in der Liste der erlaubten Trainerarten einer Subvention, wird die Subvention als <strong>nicht berechtigt</strong> zurückgegeben – unabhängig vom Betrag.
+    </div>
+  </section>
+
+
+  <!-- 6. Eventarten -->
+  <section id="eventarten" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">6. Eventarten</h2>
+    <p class="text-sm text-gray-500 mb-4">Tabelle <code class="bg-gray-100 px-1 rounded">subvention_eventarten</code> – definiert für welche Eventtypen eine Subvention gilt</p>
+
+    <div class="overflow-x-auto mb-5">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-purple-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-purple-800 border-b border-purple-200">Feld</th>
+            <th class="px-4 py-3 font-semibold text-purple-800 border-b border-purple-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-purple-800 border-b border-purple-200">Beschreibung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>eventart</code></td>
+            <td class="px-4 py-2.5 text-gray-500">ENUM</td>
+            <td class="px-4 py-2.5 text-gray-600">Art des Events – siehe Tabelle unten</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>multiplikator</code></td>
+            <td class="px-4 py-2.5 text-gray-500">DECIMAL(5,3)</td>
+            <td class="px-4 py-2.5 text-gray-600">Faktor auf den Subtotal (<code>1.000</code> = keine Änderung, <code>1.200</code> = +20% Bonus, <code>0.800</code> = −20%)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>bemerkung</code></td>
+            <td class="px-4 py-2.5 text-gray-500">VARCHAR(300)</td>
+            <td class="px-4 py-2.5 text-gray-600">Optionaler Hinweis, z.B. «Mindestdauer 3 Tage»</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-sm font-semibold text-gray-700 mb-2">Mögliche Werte für <code>eventart</code>:</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Schlüssel</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bezeichnung</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bedeutung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>lager</code></td>
+            <td class="px-4 py-2.5">Lager</td>
+            <td class="px-4 py-2.5 text-gray-600">Mehrtägiges Trainingslager mit Übernachtung</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5"><code>training</code></td>
+            <td class="px-4 py-2.5">Training</td>
+            <td class="px-4 py-2.5 text-gray-600">Einzeltraining oder kürzerer Trainingsblock ohne Lagercharakter</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- 7. Simulationsparameter -->
+  <section id="simulation" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">7. Simulationsparameter (Eingabe)</h2>
+    <p class="text-gray-700 leading-relaxed mb-4">
+      Der Benutzer gibt für ein konkretes Event folgende vier Parameter ein. Der Simulator berechnet dann
+      den Förderbeitrag für alle passenden Subventionen.
+    </p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Parameter</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Beschreibung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium"><code>anzahl_teilnehmer</code></td>
+            <td class="px-4 py-2.5 text-gray-500">integer ≥ 0</td>
+            <td class="px-4 py-2.5 text-gray-600">Anzahl Teilnehmende am Event (Sportler, ohne Trainer)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium"><code>anzahl_tage</code></td>
+            <td class="px-4 py-2.5 text-gray-500">integer ≥ 0</td>
+            <td class="px-4 py-2.5 text-gray-600">Dauer des Events in Tagen</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium"><code>trainerart</code></td>
+            <td class="px-4 py-2.5 text-gray-500">ENUM</td>
+            <td class="px-4 py-2.5 text-gray-600">Art des eingesetzten Trainers (<code>js_trainer</code> / <code>nwf_trainer</code> / <code>ohne</code>)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium"><code>eventart</code></td>
+            <td class="px-4 py-2.5 text-gray-500">ENUM</td>
+            <td class="px-4 py-2.5 text-gray-600">Art des Events (<code>lager</code> / <code>training</code>)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- 8. Berechnungsformel -->
+  <section id="formel" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">8. Berechnungsformel</h2>
+    <p class="text-gray-700 leading-relaxed mb-6">
+      Die Berechnung läuft in drei Schritten: Berechtigungsprüfung, Betragskalkulation, Deckelung.
+    </p>
+
+    <!-- Schritt 1 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="bg-red-100 text-red-700 font-bold text-xs px-2.5 py-1 rounded-full">Schritt 1</span>
+        <h3 class="font-semibold text-gray-800">Berechtigungsprüfung</h3>
+      </div>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 space-y-2">
+        <p>1a. Ist die eingegebene <strong>Trainerart</strong> in der Liste der erlaubten Trainerarten dieser Subvention?<br>
+           → Nein: Ergebnis = <span class="text-red-600 font-medium">nicht berechtigt</span> (Grund: «Trainerart nicht berechtigt»)</p>
+        <p>1b. Ist die eingegebene <strong>Eventart</strong> in der Liste der erlaubten Eventarten dieser Subvention?<br>
+           → Nein: Ergebnis = <span class="text-red-600 font-medium">nicht berechtigt</span> (Grund: «Eventart nicht berechtigt»)</p>
+        <p>→ Ja für beide: weiter zu Schritt 2</p>
+      </div>
+    </div>
+
+    <!-- Schritt 2 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="bg-blue-100 text-blue-700 font-bold text-xs px-2.5 py-1 rounded-full">Schritt 2</span>
+        <h3 class="font-semibold text-gray-800">Betragskalkulation</h3>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 font-mono text-sm space-y-1.5 text-gray-800">
+        <p class="text-gray-500 text-xs mb-2">// Effektive Grössen (Obergrenzen anwenden)</p>
+        <p><span class="text-blue-600">eff_TN</span>   = (max_teilnehmer &gt; 0) ? <span class="text-purple-600">min</span>(anzahl_teilnehmer, max_teilnehmer) : anzahl_teilnehmer</p>
+        <p><span class="text-blue-600">eff_Tage</span> = (max_tage &gt; 0)       ? <span class="text-purple-600">min</span>(anzahl_tage, max_tage)             : anzahl_tage</p>
+        <p class="mt-3 text-gray-500 text-xs">// Subtotal berechnen</p>
+        <p><span class="text-blue-600">subtotal</span> = grundbetrag</p>
+        <p class="pl-10">+ betrag_pro_teilnehmer × <span class="text-blue-600">eff_TN</span></p>
+        <p class="pl-10">+ betrag_pro_tag × <span class="text-blue-600">eff_Tage</span></p>
+        <p class="pl-10">+ zusatzbetrag  <span class="text-gray-400 font-sans text-xs">← aus der Trainerart-Zeile</span></p>
+        <p class="mt-3 text-gray-500 text-xs">// Eventart-Multiplikator anwenden</p>
+        <p><span class="text-blue-600">total</span>    = <span class="text-blue-600">subtotal</span> × multiplikator  <span class="text-gray-400 font-sans text-xs">← aus der Eventart-Zeile</span></p>
+      </div>
+    </div>
+
+    <!-- Schritt 3 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <span class="bg-green-100 text-green-700 font-bold text-xs px-2.5 py-1 rounded-full">Schritt 3</span>
+        <h3 class="font-semibold text-gray-800">Deckelung (Cap)</h3>
+      </div>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-sm text-gray-800">
+        <p><span class="text-green-700">if</span> (betrag_max_gesamt &gt; 0):</p>
+        <p class="pl-8"><span class="text-blue-600">total</span> = <span class="text-purple-600">min</span>(total, betrag_max_gesamt)</p>
+        <p class="mt-2 text-gray-500 font-sans text-xs">// 0 bedeutet kein Limit – total wird unverändert übernommen</p>
+      </div>
+    </div>
+
+    <!-- Rückgabe -->
+    <div>
+      <div class="flex items-center gap-3 mb-3">
+        <span class="bg-gray-200 text-gray-700 font-bold text-xs px-2.5 py-1 rounded-full">Rückgabe</span>
+        <h3 class="font-semibold text-gray-800">Ergebnis-Array</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-50 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Feld</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Typ</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Beschreibung</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5"><code>berechtigt</code></td>
+              <td class="px-4 py-2.5 text-gray-500">boolean</td>
+              <td class="px-4 py-2.5 text-gray-600"><code>true</code> wenn Trainer- und Eventart passen</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5"><code>grund</code></td>
+              <td class="px-4 py-2.5 text-gray-500">string|null</td>
+              <td class="px-4 py-2.5 text-gray-600">Nur wenn <code>berechtigt = false</code>: Ablehnungsgrund</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5"><code>betrag</code></td>
+              <td class="px-4 py-2.5 text-gray-500">float</td>
+              <td class="px-4 py-2.5 text-gray-600">Berechneter Förderbetrag in CHF (gerundet auf 2 Dezimalstellen)</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5"><code>aufschluesselung</code></td>
+              <td class="px-4 py-2.5 text-gray-500">array</td>
+              <td class="px-4 py-2.5 text-gray-600">Detail: <code>grundbetrag</code>, <code>tn_anteil</code>, <code>tage_anteil</code>, <code>trainer_zusatz</code>, <code>eventart_faktor</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 9. Berechnungsbeispiele -->
+  <section id="beispiele" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-2">9. Berechnungsbeispiele</h2>
+    <p class="text-sm text-gray-500 mb-6">Basierend auf den drei Beispiel-Subventionen aus den Seed-Daten</p>
+
+    <!-- Beispiel 1 -->
+    <div class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-blue-50 border-b border-blue-200 px-5 py-3">
+        <p class="text-xs text-blue-500 font-semibold uppercase tracking-wide">Subvention 1</p>
+        <h3 class="font-semibold text-blue-900">J+S Lagerbeitrag Segeln</h3>
+        <p class="text-xs text-blue-600">Förderstelle: BASPO / J+S</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Grundbetrag</td><td class="font-mono">CHF 0.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Teilnehmer</td><td class="font-mono">CHF 12.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Tag</td><td class="font-mono">CHF 8.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Teilnehmer</td><td class="font-mono">40</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Tage</td><td class="font-mono">14</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Gesamt</td><td class="font-mono">CHF 3'000.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Trainer (Zusatz)</td><td class="font-mono">js_trainer (+150.00)</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Eventart (Faktor)</td><td class="font-mono">lager (×1.000)</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 20 TN, 5 Tage, J+S Trainer, Lager</p>
+          <div class="bg-gray-50 rounded-lg p-3 font-mono text-xs space-y-1">
+            <p>eff_TN   = min(20, 40) = 20</p>
+            <p>eff_Tage = min(5, 14)  = 5</p>
+            <p class="mt-1">subtotal = 0.00</p>
+            <p class="pl-8">+ 12.00 × 20 = 240.00</p>
+            <p class="pl-8">+ 8.00  × 5  = 40.00</p>
+            <p class="pl-8">+ 150.00 (Trainer)</p>
+            <p class="pl-8">= 430.00</p>
+            <p class="mt-1">total    = 430.00 × 1.000 = 430.00</p>
+            <p class="mt-1">Cap 3'000 → kein Einfluss</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 430.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beispiel 2 -->
+    <div class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-amber-50 border-b border-amber-200 px-5 py-3">
+        <p class="text-xs text-amber-500 font-semibold uppercase tracking-wide">Subvention 2</p>
+        <h3 class="font-semibold text-amber-900">NWF Kanton Zürich – Trainingsförderung</h3>
+        <p class="text-xs text-amber-600">Förderstelle: Sportamt Kanton Zürich</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Grundbetrag</td><td class="font-mono">CHF 50.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Teilnehmer</td><td class="font-mono">CHF 8.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Tag</td><td class="font-mono">CHF 0.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Teilnehmer</td><td class="font-mono">25</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Gesamt</td><td class="font-mono">CHF 1'500.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">nwf_trainer</td><td class="font-mono">+0.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">js_trainer</td><td class="font-mono">+50.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">lager</td><td class="font-mono">×1.200 (+20% Bonus)</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">training</td><td class="font-mono">×1.000</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 30 TN, 3 Tage, J+S Trainer, Lager</p>
+          <div class="bg-gray-50 rounded-lg p-3 font-mono text-xs space-y-1">
+            <p>eff_TN = min(30, 25) = 25  <span class="text-orange-500">← Cap greift</span></p>
+            <p class="mt-1">subtotal = 50.00</p>
+            <p class="pl-8">+ 8.00 × 25 = 200.00</p>
+            <p class="pl-8">+ 0.00 × 3  = 0.00</p>
+            <p class="pl-8">+ 50.00 (J+S Trainer)</p>
+            <p class="pl-8">= 300.00</p>
+            <p class="mt-1">total    = 300.00 × 1.200 = 360.00</p>
+            <p class="mt-1">Cap 1'500 → kein Einfluss</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 360.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beispiel 3 -->
+    <div class="mb-4 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-green-50 border-b border-green-200 px-5 py-3">
+        <p class="text-xs text-green-500 font-semibold uppercase tracking-wide">Subvention 3</p>
+        <h3 class="font-semibold text-green-900">Vereinsinterner Trainingsbeitrag</h3>
+        <p class="text-xs text-green-600">Förderstelle: Zurich Sailing Club</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Grundbetrag</td><td class="font-mono">CHF 100.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Teilnehmer</td><td class="font-mono">CHF 0.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Pro Tag</td><td class="font-mono">CHF 20.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Gesamt</td><td class="font-mono">CHF 800.00</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Trainerarten</td><td class="font-mono">alle (+0.00)</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">lager / training</td><td class="font-mono">×1.000</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 15 TN, 40 Tage, Ohne Trainer, Lager</p>
+          <div class="bg-gray-50 rounded-lg p-3 font-mono text-xs space-y-1">
+            <p>eff_Tage = 40  <span class="text-gray-400">(kein max_tage)</span></p>
+            <p class="mt-1">subtotal = 100.00</p>
+            <p class="pl-8">+ 0.00 × 15 = 0.00</p>
+            <p class="pl-8">+ 20.00 × 40 = 800.00</p>
+            <p class="pl-8">+ 0.00 (kein Trainerbonus)</p>
+            <p class="pl-8">= 900.00</p>
+            <p class="mt-1">total    = 900.00 × 1.000 = 900.00</p>
+            <p class="mt-1 text-orange-600">Cap 800.00 greift → 800.00</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 800.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 10. Referenz ENUMs -->
+  <section id="kategorien" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">10. Referenz: Kategorien &amp; ENUMs</h2>
+
+    <p class="text-sm font-semibold text-gray-700 mb-2">Kategorien (<code>subventionen.kategorie</code>)</p>
+    <div class="overflow-x-auto mb-6">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Schlüssel</th>
+            <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bezeichnung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>ausbildung</code></td><td class="px-4 py-2">Ausbildung</td></tr>
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>lager</code></td><td class="px-4 py-2">Lager</td></tr>
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>wettkampf</code></td><td class="px-4 py-2">Wettkampf</td></tr>
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>infrastruktur</code></td><td class="px-4 py-2">Infrastruktur</td></tr>
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>jugend</code></td><td class="px-4 py-2">Jugend</td></tr>
+          <tr class="hover:bg-gray-50"><td class="px-4 py-2"><code>sonstiges</code></td><td class="px-4 py-2">Sonstiges</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 text-sm">
+      <p class="font-semibold text-gray-700 mb-3">Kurzübersicht aller ENUMs</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+        <div>
+          <p class="text-gray-500 mb-1 font-sans font-semibold">trainerart</p>
+          <p>js_trainer</p>
+          <p>nwf_trainer</p>
+          <p>ohne</p>
+        </div>
+        <div>
+          <p class="text-gray-500 mb-1 font-sans font-semibold">eventart</p>
+          <p>lager</p>
+          <p>training</p>
+        </div>
+        <div>
+          <p class="text-gray-500 mb-1 font-sans font-semibold">kategorie</p>
+          <p>ausbildung</p>
+          <p>lager</p>
+          <p>wettkampf</p>
+          <p>infrastruktur</p>
+          <p>jugend</p>
+          <p>sonstiges</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-200 pt-6 text-xs text-gray-400 flex justify-between items-center">
+    <span>Subventionssimulator – Zurich Sailing Federation</span>
+    <span>Dokument generiert Juni 2025</span>
+  </footer>
+
+</body>
+</html>
