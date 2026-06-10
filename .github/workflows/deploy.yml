@@ -74,10 +74,10 @@ jobs:
       - name: Deploy via FTPS to cyon
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server:   ${{ secrets.CYON_FTP_HOST }}
-          username: ${{ secrets.CYON_FTP_USER }}
-          password: ${{ secrets.CYON_FTP_PASS }}
-          protocol: ftps-legacy
+          server:   ${{ secrets.CYON_SFTP_HOST }}
+          username: ${{ secrets.CYON_SFTP_USER }}
+          password: ${{ secrets.CYON_SFTP_PASS }}
+          protocol: ftps
           port:     21
           local-dir:  ./
           server-dir: /public_html/subventionssimulator/
