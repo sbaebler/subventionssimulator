@@ -1,0 +1,30 @@
+Options -Indexes
+ServerSignature Off
+
+# Konfiguration und includes schützen
+<FilesMatch "\.(php)$">
+  <If "%{REQUEST_URI} =~ m|^/(config|includes|sql)/|">
+    Require all denied
+  </If>
+</FilesMatch>
+
+# SQL-Verzeichnis immer sperren
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^sql/ - [F,L]
+  RewriteRule ^config/ - [F,L]
+  RewriteRule ^includes/ - [F,L]
+</IfModule>
+
+# HTTPS erzwingen (cyon unterstützt das)
+<IfModule mod_rewrite.c>
+  RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Sicherheitsheader
+<IfModule mod_headers.c>
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

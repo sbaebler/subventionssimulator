@@ -1,0 +1,12 @@
+# Konfiguration mit Credentials nie committen
+config/config.php
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
