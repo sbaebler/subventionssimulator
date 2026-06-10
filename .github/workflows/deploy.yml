@@ -65,8 +65,7 @@ jobs:
           "
 
       # 4. Deploy nach cyon Shared Hosting via FTPS
-      # FTP-User landet direkt im Verzeichnis des Subventionssimulators
-      # → server-dir ist "/" (FTP-Root = Projektverzeichnis auf cyon)
+      # FTP-User landet im cyon-Root; Zielverzeichnis ist public_html/subventionssimulator/
       # Deployed: public_html/, includes/, config/ (mit generiertem config.php)
       # Nicht deployed: sql/, CLAUDE.md, README.md, .gitignore, config.example.php
       - name: Deploy via FTPS to cyon
@@ -78,7 +77,7 @@ jobs:
           protocol: ftps
           port:     21
           local-dir:  ./
-          server-dir: /
+          server-dir: /public_html/subventionssimulator/
           dangerous-clean-slate: false
           exclude: |
             **/.git*
