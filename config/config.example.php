@@ -11,3 +11,8 @@ define('DB_CHARSET', 'utf8mb4');
 define('APP_NAME', 'Subventionssimulator');
 define('APP_BASE_URL', 'https://subventionssimulator.zurich-sailing.ch');
 define('APP_ENV', 'production'); // 'development' | 'production'
+
+// Authentifizierung
+// AUTH_PASS_HASH erzeugen: php -r "echo password_hash('dein_passwort', PASSWORD_DEFAULT);"
+define('AUTH_USER', 'admin');
+define('AUTH_PASS_HASH', '$2y$12$BEISPIEL_HASH_HIER_ERSETZEN_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx');

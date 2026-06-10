@@ -1,3 +1,8 @@
+<?php
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/auth.php';
+auth_erforderlich();
+?>
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -20,6 +25,7 @@
     <a href="/erfassen.php" class="hover:text-blue-600">Neue Subvention</a>
     <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
   </nav>
+  <a href="/logout.php" class="ml-auto text-sm text-gray-400 hover:text-red-600">Abmelden</a>
 </header>
 
 <main class="max-w-5xl mx-auto px-6 py-8">

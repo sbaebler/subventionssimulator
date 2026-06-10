@@ -121,9 +121,12 @@ Implementiert in `Subvention::berechnen(int $id, array $params)`.
 |---------------------------|---------------------------------------------|
 |`includes/db.php`          |`db(): PDO` – einziger Datenbankzugriffspunkt|
 |`includes/Subvention.php`  |Alle DB-Operationen + Berechnungslogik       |
+|`includes/auth.php`        |Session-Auth: `auth_erforderlich()`, `auth_anmelden()`, `auth_abmelden()`|
 |`config/config.example.php`|Vorlage – bei Änderungen hier auch anpassen  |
 |`sql/schema.sql`           |Einzige Wahrheit für die DB-Struktur         |
 |`public_html/.htaccess`    |HTTPS, Sicherheitsheader, Verzeichnisschutz  |
+|`public_html/login.php`    |Login-Formular                               |
+|`public_html/logout.php`   |Session beenden und auf Login umleiten       |
 
 -----
 
