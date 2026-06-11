@@ -75,9 +75,9 @@ if (isset($_GET['gespeichert'])) $erfolg = true;
 $subv = $id ? Subvention::laden($id) : null;
 
 // Alpine.js Startwert
-$alpineBetraege     = json_encode($subv['betraege']     ?? [['bezeichnung'=>'Standardbetrag','grundbetrag'=>0,'betrag_pro_teilnehmer'=>0,'betrag_pro_tag'=>0,'max_teilnehmer'=>0,'max_tage'=>0,'betrag_max_gesamt'=>0]]);
-$alpineTrainerarten = json_encode($subv['trainerarten'] ?? []);
-$alpineEventarten   = json_encode($subv['eventarten']   ?? []);
+$alpineBetraege     = htmlspecialchars(json_encode($subv['betraege']     ?? [['bezeichnung'=>'Standardbetrag','grundbetrag'=>0,'betrag_pro_teilnehmer'=>0,'betrag_pro_tag'=>0,'max_teilnehmer'=>0,'max_tage'=>0,'betrag_max_gesamt'=>0]]), ENT_QUOTES, 'UTF-8');
+$alpineTrainerarten = htmlspecialchars(json_encode($subv['trainerarten'] ?? []), ENT_QUOTES, 'UTF-8');
+$alpineEventarten   = htmlspecialchars(json_encode($subv['eventarten']   ?? []), ENT_QUOTES, 'UTF-8');
 
 require __DIR__ . '/partials/header.php';
 ?>
