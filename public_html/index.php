@@ -37,6 +37,16 @@ require __DIR__ . '/partials/header.php';
         <?php if ($s['beschreibung']): ?>
         <p class="text-sm text-gray-600 mt-1 line-clamp-2"><?= htmlspecialchars($s['beschreibung']) ?></p>
         <?php endif; ?>
+        <p class="text-xs text-gray-400 mt-2">
+          <?php if ($s['erstellt_von_name']): ?>
+            Erfasst von <?= htmlspecialchars($s['erstellt_von_name']) ?> am <?= date('d.m.Y', strtotime($s['erstellt_am'])) ?>
+          <?php else: ?>
+            Erfasst am <?= date('d.m.Y', strtotime($s['erstellt_am'])) ?>
+          <?php endif; ?>
+          <?php if ($s['geaendert_von_name'] && $s['geaendert_am'] !== $s['erstellt_am']): ?>
+            &middot; Zuletzt geändert von <?= htmlspecialchars($s['geaendert_von_name']) ?> am <?= date('d.m.Y', strtotime($s['geaendert_am'])) ?>
+          <?php endif; ?>
+        </p>
       </div>
       <div class="flex gap-2 shrink-0">
         <a href="/erfassen.php?id=<?= $s['id'] ?>"

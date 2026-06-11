@@ -38,15 +38,14 @@ jobs:
 
       # 3. config.php aus GitHub Secrets generieren
       # var_export() escaped Sonderzeichen im Passwort korrekt
+      # Benutzer werden in der DB verwaltet – keine AUTH_* Secrets mehr nötig
       - name: Generate config.php from secrets
         env:
-          DB_HOST:        ${{ secrets.DB_HOST }}
-          DB_NAME:        ${{ secrets.DB_NAME }}
-          DB_USER:        ${{ secrets.DB_USER }}
-          DB_PASS:        ${{ secrets.DB_PASS }}
-          APP_BASE_URL:   ${{ secrets.APP_BASE_URL }}
-          AUTH_USER:      ${{ secrets.AUTH_USER }}
-          AUTH_PASS_HASH: ${{ secrets.AUTH_PASS_HASH }}
+          DB_HOST:      ${{ secrets.DB_HOST }}
+          DB_NAME:      ${{ secrets.DB_NAME }}
+          DB_USER:      ${{ secrets.DB_USER }}
+          DB_PASS:      ${{ secrets.DB_PASS }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
         run: |
           php -r "
             \$d = function(string \$k, string \$env): string {
@@ -60,9 +59,7 @@ jobs:
             \$out .= \"define('DB_CHARSET', 'utf8mb4');\\n\\n\";
             \$out .= \"define('APP_NAME', 'Subventionssimulator');\\n\";
             \$out .= \$d('APP_BASE_URL', 'APP_BASE_URL') . \"\\n\";
-            \$out .= \"define('APP_ENV', 'production');\\n\\n\";
-            \$out .= \$d('AUTH_USER',      'AUTH_USER')      . \"\\n\";
-            \$out .= \$d('AUTH_PASS_HASH', 'AUTH_PASS_HASH') . \"\\n\";
+            \$out .= \"define('APP_ENV', 'production');\\n\";
             file_put_contents('config/config.php', \$out);
             echo 'config.php generiert.' . PHP_EOL;
           "

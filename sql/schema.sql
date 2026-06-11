@@ -7,6 +7,19 @@ SET NAMES utf8mb4;
 SET foreign_key_checks = 0;
 
 -- -------------------------------------------------------------
+-- 0. Benutzer
+-- -------------------------------------------------------------
+CREATE TABLE benutzer (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  benutzername  VARCHAR(50)  NOT NULL UNIQUE,
+  anzeigename   VARCHAR(100) NOT NULL,
+  passwort_hash VARCHAR(255) NOT NULL,
+  aktiv         TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+  erstellt_am   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------------------------------------------
 -- 1. Stammdaten Subvention
 -- -------------------------------------------------------------
 CREATE TABLE subventionen (
@@ -28,8 +41,14 @@ CREATE TABLE subventionen (
   gueltig_bis     DATE,
   link_extern     VARCHAR(500),
   aktiv           TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+  erstellt_von    INT UNSIGNED NULL,
+  geaendert_von   INT UNSIGNED NULL,
   erstellt_am     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  geaendert_am    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  geaendert_am    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_sv_erstellt_von
+    FOREIGN KEY (erstellt_von)  REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_sv_geaendert_von
+    FOREIGN KEY (geaendert_von) REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -134,6 +153,7 @@ CREATE TABLE subvention_eventarten (
 CREATE TABLE simulationen (
   id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   session_id          VARCHAR(64),               -- Browser-Session (kein Login nötig)
+  benutzer_id         INT UNSIGNED NULL,
   subvention_id       INT UNSIGNED NOT NULL,
 
   -- Eingabeparameter der Simulation
@@ -154,7 +174,10 @@ CREATE TABLE simulationen (
 
   CONSTRAINT fk_sim_subvention
     FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
-    ON DELETE RESTRICT ON UPDATE CASCADE
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sim_benutzer
+    FOREIGN KEY (benutzer_id) REFERENCES benutzer(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

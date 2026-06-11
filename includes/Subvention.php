@@ -30,12 +30,19 @@ class Subvention {
     // Alle aktiven Subventionen (für Listenansicht)
     // ------------------------------------------------------------------
     public static function alle(bool $nurAktive = true): array {
-        $sql = 'SELECT * FROM subventionen';
+        $sql = '
+            SELECT s.*,
+                   b1.anzeigename AS erstellt_von_name,
+                   b2.anzeigename AS geaendert_von_name
+            FROM subventionen s
+            LEFT JOIN benutzer b1 ON b1.id = s.erstellt_von
+            LEFT JOIN benutzer b2 ON b2.id = s.geaendert_von
+        ';
         if ($nurAktive) {
-            $sql .= ' WHERE aktiv = 1
-                        AND (gueltig_bis IS NULL OR gueltig_bis >= CURDATE())';
+            $sql .= ' WHERE s.aktiv = 1
+                        AND (s.gueltig_bis IS NULL OR s.gueltig_bis >= CURDATE())';
         }
-        $sql .= ' ORDER BY foerderstelle, bezeichnung';
+        $sql .= ' ORDER BY s.foerderstelle, s.bezeichnung';
         return db()->query($sql)->fetchAll();
     }
 
@@ -43,7 +50,15 @@ class Subvention {
     // Eine Subvention mit allen Detail-Tabellen laden
     // ------------------------------------------------------------------
     public static function laden(int $id): ?array {
-        $subv = db()->prepare('SELECT * FROM subventionen WHERE id = ?');
+        $subv = db()->prepare('
+            SELECT s.*,
+                   b1.anzeigename AS erstellt_von_name,
+                   b2.anzeigename AS geaendert_von_name
+            FROM subventionen s
+            LEFT JOIN benutzer b1 ON b1.id = s.erstellt_von
+            LEFT JOIN benutzer b2 ON b2.id = s.geaendert_von
+            WHERE s.id = ?
+        ');
         $subv->execute([$id]);
         $row = $subv->fetch();
         if (!$row) return null;
@@ -78,7 +93,7 @@ class Subvention {
     // ------------------------------------------------------------------
     // Subvention speichern (neu oder update)
     // ------------------------------------------------------------------
-    public static function speichern(array $data): int {
+    public static function speichern(array $data, ?int $benutzer_id = null): int {
         $pdo = db();
         $pdo->beginTransaction();
         try {
@@ -99,32 +114,33 @@ class Subvention {
             if (!empty($data['id'])) {
                 $stmt = $pdo->prepare('
                     UPDATE subventionen SET
-                        bezeichnung   = :bezeichnung,
-                        beschreibung  = :beschreibung,
-                        foerderstelle = :foerderstelle,
-                        kategorie     = :kategorie,
+                        bezeichnung     = :bezeichnung,
+                        beschreibung    = :beschreibung,
+                        foerderstelle   = :foerderstelle,
+                        kategorie       = :kategorie,
                         voraussetzungen = :voraussetzungen,
-                        antragsfrist  = :antragsfrist,
-                        gueltig_von   = :gueltig_von,
-                        gueltig_bis   = :gueltig_bis,
-                        link_extern   = :link_extern,
-                        aktiv         = :aktiv
+                        antragsfrist    = :antragsfrist,
+                        gueltig_von     = :gueltig_von,
+                        gueltig_bis     = :gueltig_bis,
+                        link_extern     = :link_extern,
+                        aktiv           = :aktiv,
+                        geaendert_von   = :geaendert_von
                     WHERE id = :id
                 ');
-                $stmt->execute($stammdaten + ['id' => (int)$data['id']]);
+                $stmt->execute($stammdaten + ['geaendert_von' => $benutzer_id, 'id' => (int)$data['id']]);
                 $id = (int)$data['id'];
             } else {
                 $stmt = $pdo->prepare('
                     INSERT INTO subventionen
                         (bezeichnung, beschreibung, foerderstelle, kategorie,
                          voraussetzungen, antragsfrist, gueltig_von, gueltig_bis,
-                         link_extern, aktiv)
+                         link_extern, aktiv, erstellt_von, geaendert_von)
                     VALUES
                         (:bezeichnung, :beschreibung, :foerderstelle, :kategorie,
                          :voraussetzungen, :antragsfrist, :gueltig_von, :gueltig_bis,
-                         :link_extern, :aktiv)
+                         :link_extern, :aktiv, :erstellt_von, :geaendert_von)
                 ');
-                $stmt->execute($stammdaten);
+                $stmt->execute($stammdaten + ['erstellt_von' => $benutzer_id, 'geaendert_von' => $benutzer_id]);
                 $id = (int)$pdo->lastInsertId();
             }
 

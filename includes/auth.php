@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/db.php';
 
 function auth_start(): void
 {
@@ -22,20 +23,34 @@ function auth_erforderlich(): void
     }
 }
 
+function auth_benutzer_id(): int
+{
+    return (int)($_SESSION['benutzer_id'] ?? 0);
+}
+
+function auth_anzeigename(): string
+{
+    return $_SESSION['anzeigename'] ?? '';
+}
+
 function auth_anmelden(string $benutzer, string $passwort): bool
 {
-    if (!defined('AUTH_USER') || !defined('AUTH_PASS_HASH')) {
+    $stmt = db()->prepare(
+        'SELECT id, anzeigename, passwort_hash FROM benutzer WHERE benutzername = ? AND aktiv = 1'
+    );
+    $stmt->execute([$benutzer]);
+    $row = $stmt->fetch();
+
+    if (!$row || !password_verify($passwort, $row['passwort_hash'])) {
         return false;
     }
-    if ($benutzer !== AUTH_USER) {
-        return false;
-    }
-    if (!password_verify($passwort, AUTH_PASS_HASH)) {
-        return false;
-    }
+
     auth_start();
     session_regenerate_id(true);
-    $_SESSION['eingeloggt'] = true;
+    $_SESSION['eingeloggt']   = true;
+    $_SESSION['benutzer_id']  = $row['id'];
+    $_SESSION['benutzername'] = $benutzer;
+    $_SESSION['anzeigename']  = $row['anzeigename'];
     return true;
 }
 

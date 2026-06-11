@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/Subvention.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $subv = $id ? Subvention::laden($id) : null;
@@ -66,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($fehler)) {
         try {
-            $newId = Subvention::speichern($data);
+            $newId = Subvention::speichern($data, auth_benutzer_id());
             header('Location: /erfassen.php?id=' . $newId . '&gespeichert=1');
             exit;
         } catch (Throwable $e) {

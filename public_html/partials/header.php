@@ -26,8 +26,12 @@ auth_erforderlich();
     <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
     <a href="/anleitung.php" class="hover:text-blue-600">Anleitung</a>
     <a href="/docs/fachlogik.html" class="hover:text-blue-600" target="_blank">Fachlogik</a>
+    <a href="/benutzer.php" class="hover:text-blue-600">Benutzer</a>
   </nav>
-  <a href="/logout.php" class="ml-auto text-sm text-gray-400 hover:text-red-600">Abmelden</a>
+  <div class="ml-auto flex items-center gap-3">
+    <span class="text-sm text-gray-400"><?= htmlspecialchars(auth_anzeigename()) ?></span>
+    <a href="/logout.php" class="text-sm text-gray-400 hover:text-red-600">Abmelden</a>
+  </div>
 </header>
 
 <main class="max-w-5xl mx-auto px-6 py-8">
