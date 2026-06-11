@@ -25,6 +25,7 @@ auth_erforderlich();
     <a href="/erfassen.php"  class="hover:text-blue-600">Neue Subvention</a>
     <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
     <a href="/anleitung.php" class="hover:text-blue-600">Anleitung</a>
+    <a href="/docs/fachlogik.html" class="hover:text-blue-600" target="_blank">Fachlogik</a>
   </nav>
   <a href="/logout.php" class="ml-auto text-sm text-gray-400 hover:text-red-600">Abmelden</a>
 </header>
