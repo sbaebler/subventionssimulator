@@ -83,6 +83,19 @@ class Subvention {
         $pdo->beginTransaction();
         try {
             // Stammdaten
+            $stammdaten = [
+                'bezeichnung'     => $data['bezeichnung'],
+                'beschreibung'    => $data['beschreibung'],
+                'foerderstelle'   => $data['foerderstelle'],
+                'kategorie'       => $data['kategorie'],
+                'voraussetzungen' => $data['voraussetzungen'],
+                'antragsfrist'    => $data['antragsfrist'],
+                'gueltig_von'     => $data['gueltig_von'],
+                'gueltig_bis'     => $data['gueltig_bis'],
+                'link_extern'     => $data['link_extern'],
+                'aktiv'           => $data['aktiv'],
+            ];
+
             if (!empty($data['id'])) {
                 $stmt = $pdo->prepare('
                     UPDATE subventionen SET
@@ -98,8 +111,7 @@ class Subvention {
                         aktiv         = :aktiv
                     WHERE id = :id
                 ');
-                $data['id'] = (int)$data['id'];
-                $stmt->execute($data);
+                $stmt->execute($stammdaten + ['id' => (int)$data['id']]);
                 $id = (int)$data['id'];
             } else {
                 $stmt = $pdo->prepare('
@@ -112,7 +124,7 @@ class Subvention {
                          :voraussetzungen, :antragsfrist, :gueltig_von, :gueltig_bis,
                          :link_extern, :aktiv)
                 ');
-                $stmt->execute($data);
+                $stmt->execute($stammdaten);
                 $id = (int)$pdo->lastInsertId();
             }
 

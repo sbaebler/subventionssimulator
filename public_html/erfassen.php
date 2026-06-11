@@ -65,9 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($data['betraege'])) $fehler[] = 'Mindestens eine Betragsregel erforderlich.';
 
     if (empty($fehler)) {
-        $newId = Subvention::speichern($data);
-        header('Location: /erfassen.php?id=' . $newId . '&gespeichert=1');
-        exit;
+        try {
+            $newId = Subvention::speichern($data);
+            header('Location: /erfassen.php?id=' . $newId . '&gespeichert=1');
+            exit;
+        } catch (Throwable $e) {
+            error_log('[Subventionssimulator] speichern() Fehler: ' . $e->getMessage());
+            $fehler[] = 'Beim Speichern ist ein Fehler aufgetreten. Details im Server-Log.';
+        }
     }
 }
 
