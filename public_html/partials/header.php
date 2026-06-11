@@ -21,9 +21,10 @@ auth_erforderlich();
   </a>
   <span class="text-gray-300">|</span>
   <nav class="flex gap-4 text-sm">
-    <a href="/"           class="hover:text-blue-600">Übersicht</a>
-    <a href="/erfassen.php" class="hover:text-blue-600">Neue Subvention</a>
+    <a href="/"              class="hover:text-blue-600">Übersicht</a>
+    <a href="/erfassen.php"  class="hover:text-blue-600">Neue Subvention</a>
     <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
+    <a href="/anleitung.php" class="hover:text-blue-600">Anleitung</a>
   </nav>
   <a href="/logout.php" class="ml-auto text-sm text-gray-400 hover:text-red-600">Abmelden</a>
 </header>
