@@ -78,19 +78,36 @@ require __DIR__ . '/partials/header.php';
     <span class="bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">3</span>
     <h2 class="font-semibold text-gray-700">Simulation durchführen</h2>
   </div>
-  <p class="text-sm text-gray-600 leading-relaxed mb-3">
-    Unter <strong>«Simulator»</strong> gibst du die konkreten Eckdaten deines Events ein:
+  <p class="text-sm text-gray-600 leading-relaxed mb-4">
+    Unter <strong>«Simulator»</strong> gibst du die Eckdaten deines Events ein und klickst auf
+    <strong>«Berechnen»</strong>. Der Simulator prüft automatisch alle aktiven Subventionen.
   </p>
-  <ul class="text-sm text-gray-600 list-disc list-inside space-y-1 mb-4">
-    <li>Anzahl Teilnehmende</li>
-    <li>Anzahl Tage</li>
-    <li>Trainerart (J+S, NWF, ohne Anerkennung)</li>
-    <li>Eventart (Lager oder Training)</li>
-  </ul>
-  <p class="text-sm text-gray-600 leading-relaxed">
-    Der Simulator berechnet dann für alle passenden Subventionen den voraussichtlichen Förderbetrag
-    und zeigt die Aufschlüsselung (Grundbetrag, TN-Anteil, Tagesanteil, Trainerbonus, Multiplikator).
-  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-5">
+    <div class="bg-gray-50 rounded-lg p-4">
+      <p class="font-medium text-gray-700 mb-2">Eingaben</p>
+      <ul class="text-gray-600 space-y-1 list-disc list-inside">
+        <li>Anzahl Teilnehmende</li>
+        <li>Anzahl Tage</li>
+        <li>Trainerart (J+S, NWF, ohne Anerkennung)</li>
+        <li>Eventart (Lager oder Training)</li>
+      </ul>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4">
+      <p class="font-medium text-gray-700 mb-2">Ergebnis</p>
+      <ul class="text-gray-600 space-y-1 list-disc list-inside">
+        <li>Zusammenfassung: Anzahl berechtigte Töpfe + Gesamtbetrag</li>
+        <li>Grüne Karte pro berechtigter Subvention mit CHF-Betrag</li>
+        <li>«Aufschlüsselung» zeigt Grundbetrag, TN-Anteil, Tagesanteil, Trainerbonus und Faktor</li>
+        <li>Ausgeblendete Karte mit Begründung für nicht berechtigte Subventionen</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-700">
+    <strong>Tipp:</strong> In der Übersicht kannst du bei jeder Subvention direkt auf
+    <strong>«Simulieren»</strong> klicken — der Simulator öffnet sich mit vorausgefüllten Standardwerten.
+  </div>
 </section>
 
 <!-- Berechnungsformel -->
