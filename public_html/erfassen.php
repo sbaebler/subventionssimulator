@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../includes/Subvention.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+// Session starten und Login erzwingen, BEVOR der POST verarbeitet wird –
+// sonst liefert auth_benutzer_id() unten 0 (Session noch nicht gestartet)
+// und das Speichern verletzt den Fremdschlüssel auf benutzer(id).
+auth_erforderlich();
+
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $subv = $id ? Subvention::laden($id) : null;
 $pageTitle = $subv ? 'Subvention bearbeiten' : 'Neue Subvention erfassen';
@@ -67,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($fehler)) {
         try {
-            $newId = Subvention::speichern($data, auth_benutzer_id());
+            $newId = Subvention::speichern($data, auth_benutzer_id() ?: null);
             header('Location: /erfassen.php?id=' . $newId . '&gespeichert=1');
             exit;
         } catch (Throwable $e) {
