@@ -7,6 +7,13 @@ require_once __DIR__ . '/../includes/auth.php';
 // und das Speichern verletzt den Fremdschlüssel auf benutzer(id).
 auth_erforderlich();
 
+// CHF-Beträge werden mit Punkt als Dezimaltrennzeichen erfasst.
+// Eine allfällige Komma-Eingabe (z.B. "9,00") wird hier auf Punkt
+// normalisiert, damit (float) den Nachkommateil nicht verliert.
+function dezimal($wert): float {
+    return (float) str_replace([',', "'"], ['.', ''], (string)$wert);
+}
+
 $id   = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $subv = $id ? Subvention::laden($id) : null;
 $pageTitle = $subv ? 'Subvention bearbeiten' : 'Neue Subvention erfassen';
@@ -37,12 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($b['bezeichnung'])) continue;
         $data['betraege'][] = [
             'bezeichnung'           => trim($b['bezeichnung']),
-            'grundbetrag'           => (float)($b['grundbetrag'] ?? 0),
-            'betrag_pro_teilnehmer' => (float)($b['betrag_pro_teilnehmer'] ?? 0),
-            'betrag_pro_tag'        => (float)($b['betrag_pro_tag'] ?? 0),
+            'grundbetrag'           => dezimal($b['grundbetrag'] ?? 0),
+            'betrag_pro_teilnehmer' => dezimal($b['betrag_pro_teilnehmer'] ?? 0),
+            'betrag_pro_tag'        => dezimal($b['betrag_pro_tag'] ?? 0),
             'max_teilnehmer'        => (int)($b['max_teilnehmer'] ?? 0),
             'max_tage'              => (int)($b['max_tage'] ?? 0),
-            'betrag_max_gesamt'     => (float)($b['betrag_max_gesamt'] ?? 0),
+            'betrag_max_gesamt'     => dezimal($b['betrag_max_gesamt'] ?? 0),
         ];
     }
 
@@ -51,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($t['trainerart'])) continue;
         $data['trainerarten'][] = [
             'trainerart'   => $t['trainerart'],
-            'zusatzbetrag' => (float)($t['zusatzbetrag'] ?? 0),
+            'zusatzbetrag' => dezimal($t['zusatzbetrag'] ?? 0),
             'bemerkung'    => trim($t['bemerkung'] ?? '') ?: null,
         ];
     }
@@ -61,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($e['eventart'])) continue;
         $data['eventarten'][] = [
             'eventart'     => $e['eventart'],
-            'multiplikator'=> (float)($e['multiplikator'] ?? 1),
+            'multiplikator'=> dezimal($e['multiplikator'] ?? 1),
             'bemerkung'    => trim($e['bemerkung'] ?? '') ?: null,
         ];
     }
@@ -241,17 +248,17 @@ require __DIR__ . '/partials/header.php';
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           <div>
             <label class="block text-xs text-gray-500 mb-1">Grundbetrag (CHF)</label>
-            <input type="number" step="0.01" min="0" :name="'betraege['+i+'][grundbetrag]'" x-model="b.grundbetrag"
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][grundbetrag]'" x-model="b.grundbetrag"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Betrag / Teilnehmer (CHF)</label>
-            <input type="number" step="0.01" min="0" :name="'betraege['+i+'][betrag_pro_teilnehmer]'" x-model="b.betrag_pro_teilnehmer"
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_teilnehmer]'" x-model="b.betrag_pro_teilnehmer"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Betrag / Tag (CHF)</label>
-            <input type="number" step="0.01" min="0" :name="'betraege['+i+'][betrag_pro_tag]'" x-model="b.betrag_pro_tag"
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_tag]'" x-model="b.betrag_pro_tag"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
           <div>
@@ -266,7 +273,7 @@ require __DIR__ . '/partials/header.php';
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">Max. Gesamtbetrag (0 = kein Limit)</label>
-            <input type="number" step="0.01" min="0" :name="'betraege['+i+'][betrag_max_gesamt]'" x-model="b.betrag_max_gesamt"
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_max_gesamt]'" x-model="b.betrag_max_gesamt"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
         </div>
@@ -300,7 +307,7 @@ require __DIR__ . '/partials/header.php';
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Zusatzbetrag (CHF)</label>
-          <input type="number" step="0.01" min="0" :name="'trainerarten['+i+'][zusatzbetrag]'" x-model="t.zusatzbetrag"
+          <input type="text" inputmode="decimal" :name="'trainerarten['+i+'][zusatzbetrag]'" x-model="t.zusatzbetrag"
                  class="w-32 border border-gray-300 rounded px-2 py-1.5 text-sm">
         </div>
         <div class="flex-1">
@@ -339,7 +346,7 @@ require __DIR__ . '/partials/header.php';
         </div>
         <div>
           <label class="block text-xs text-gray-500 mb-1">Multiplikator</label>
-          <input type="number" step="0.001" min="0.001" :name="'eventarten['+i+'][multiplikator]'" x-model="e.multiplikator"
+          <input type="text" inputmode="decimal" :name="'eventarten['+i+'][multiplikator]'" x-model="e.multiplikator"
                  class="w-24 border border-gray-300 rounded px-2 py-1.5 text-sm">
         </div>
         <div class="flex-1">
