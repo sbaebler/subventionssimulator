@@ -27,6 +27,7 @@ auth_erforderlich();
     <a href="/events.php" class="hover:text-blue-600">Events</a>
     <a href="/anleitung.php" class="hover:text-blue-600">Anleitung</a>
     <a href="/docs/fachlogik.html" class="hover:text-blue-600" target="_blank">Fachlogik</a>
+    <a href="/releases.php" class="hover:text-blue-600">Neuigkeiten</a>
     <a href="/benutzer.php" class="hover:text-blue-600">Benutzer</a>
   </nav>
   <div class="ml-auto flex items-center gap-3">
