@@ -181,4 +181,34 @@ CREATE TABLE simulationen (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+-- -------------------------------------------------------------
+-- 6. Zuordnung Event <-> Subvention
+--
+-- Legt fest, welche Subventionen für welches Event (Anlass aus dem
+-- ClassManagerTool, Tabelle cm_events) zum Tragen kommen.
+-- Beide Projekte teilen sich dieselbe Datenbank, daher kann der
+-- Fremdschlüssel direkt auf cm_events(id) zeigen. Wird ein Event im
+-- ClassManagerTool gelöscht, verschwinden die Zuordnungen automatisch.
+-- -------------------------------------------------------------
+CREATE TABLE subvention_events (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  event_id      INT UNSIGNED NOT NULL,         -- referenziert cm_events(id)
+  subvention_id INT UNSIGNED NOT NULL,
+  bemerkung     VARCHAR(300),
+  erstellt_von  INT UNSIGNED NULL,
+  erstellt_am   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_event_subvention (event_id, subvention_id),
+  CONSTRAINT fk_se_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_se_event
+    FOREIGN KEY (event_id) REFERENCES cm_events(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_se_erstellt_von
+    FOREIGN KEY (erstellt_von) REFERENCES benutzer(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 SET foreign_key_checks = 1;

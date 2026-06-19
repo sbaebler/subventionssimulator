@@ -24,6 +24,7 @@ auth_erforderlich();
     <a href="/"              class="hover:text-blue-600">Übersicht</a>
     <a href="/erfassen.php"  class="hover:text-blue-600">Neue Subvention</a>
     <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
+    <a href="/events.php" class="hover:text-blue-600">Events</a>
     <a href="/anleitung.php" class="hover:text-blue-600">Anleitung</a>
     <a href="/docs/fachlogik.html" class="hover:text-blue-600" target="_blank">Fachlogik</a>
     <a href="/benutzer.php" class="hover:text-blue-600">Benutzer</a>
