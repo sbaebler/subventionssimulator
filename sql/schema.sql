@@ -35,7 +35,19 @@ CREATE TABLE subventionen (
                     'jugend',
                     'sonstiges'
                   ) NOT NULL DEFAULT 'sonstiges',
+  berechnungstyp  ENUM(
+                    'additiv',                   -- Grundbetrag + pro TN + pro Tag (Standard)
+                    'js_teilnehmertag',          -- Satz × TN × Tage (J+S Lager)
+                    'js_teilnehmerstunde',       -- Satz × TN × Tage × Stunden (J+S Training)
+                    'zks_ausbildungseinheit',    -- Satz × TN × Lektionen × Tage (ZKS Ausbildung)
+                    'pauschale',                 -- fixer Jahresbetrag
+                    'jahresbeitrag'              -- Kennzahl-basiert (verbandsweit, Phase 3)
+                  ) NOT NULL DEFAULT 'additiv',
   voraussetzungen TEXT,
+  berechtigte          TEXT,                     -- Wer ist antragsberechtigt / Teilnahmeberechtigt
+  einschraenkungen     TEXT,                     -- Einschränkungen / Vorgaben der Förderstelle
+  verlangte_unterlagen TEXT,                     -- Verlangte Daten & Unterlagen
+  berechnungsgrundlage TEXT,                     -- Beschreibung der Berechnungsgrundlage
   antragsfrist    DATE,                          -- NULL = laufend
   gueltig_von     DATE,
   gueltig_bis     DATE,
@@ -80,6 +92,14 @@ CREATE TABLE subvention_betraege (
   max_teilnehmer        SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   max_tage              SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   betrag_max_gesamt     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+
+  -- Typspezifische Felder (0 = nicht genutzt / je nach berechnungstyp)
+  satz_mit_uebernachtung   DECIMAL(8,2) NOT NULL DEFAULT 0.00,  -- js_teilnehmertag: Satz mit Übernachtung
+  satz_ohne_uebernachtung  DECIMAL(8,2) NOT NULL DEFAULT 0.00,  -- js_teilnehmertag: Satz ohne Übernachtung
+  betrag_pro_stunde        DECIMAL(8,2) NOT NULL DEFAULT 0.00,  -- js_teilnehmerstunde
+  max_stunden_pro_tag      SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- js_teilnehmerstunde (0 = kein Limit)
+  betrag_pro_einheit       DECIMAL(10,4) NOT NULL DEFAULT 0.0000, -- zks_ausbildungseinheit
+  max_lektionen_pro_tag    SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- zks_ausbildungseinheit (0 = kein Limit)
 
   CONSTRAINT fk_betraege_subvention
     FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
@@ -161,6 +181,9 @@ CREATE TABLE simulationen (
   anzahl_tage         SMALLINT UNSIGNED NOT NULL DEFAULT 1,
   trainerart          ENUM('js_trainer','nwf_trainer','ohne') NOT NULL,
   eventart            ENUM('lager','training')  NOT NULL,
+  uebernachtung       TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+  stunden_pro_tag     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  lektionen_pro_tag   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 
   -- Berechnetes Ergebnis
   grundbetrag_calc    DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -206,6 +229,80 @@ CREATE TABLE subvention_events (
     FOREIGN KEY (event_id) REFERENCES cm_events(id)
     ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_se_erstellt_von
+    FOREIGN KEY (erstellt_von) REFERENCES benutzer(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------------------------------------------
+-- 7. Fristen / Termine pro Subvention
+--
+-- Die realen Subventionen haben oft mehrere Termine (z.B. Anmeldung
+-- 30.4., Report 31.10.). Ergänzt das einzelne subventionen.antragsfrist.
+-- -------------------------------------------------------------
+CREATE TABLE subvention_fristen (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  subvention_id INT UNSIGNED NOT NULL,
+  bezeichnung   VARCHAR(150) NOT NULL,           -- z.B. "Anmeldung", "Rapport"
+  datum         DATE NULL,                        -- konkretes Datum (NULL wenn nur Hinweis)
+  hinweis       VARCHAR(300),                     -- Freitext, z.B. "jährlich nach Sommerferien"
+  CONSTRAINT fk_fristen_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------------------------------------------
+-- 8. Betragshistorie pro Subvention
+--
+-- Erfasste Ist-Beträge pro Jahr (z.B. ZKS Ausbildung 2024: 12'949 Fr).
+-- Dient als Referenz und als Grundlage für Pauschal-Beiträge (Phase 2/3).
+-- -------------------------------------------------------------
+CREATE TABLE subvention_betrag_historie (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  subvention_id INT UNSIGNED NOT NULL,
+  jahr          SMALLINT UNSIGNED NOT NULL,
+  betrag        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  bemerkung     VARCHAR(300),
+  UNIQUE KEY uq_subvention_jahr (subvention_id, jahr),
+  CONSTRAINT fk_betraghist_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------------------------------------------
+-- 9. Verwendung / Verteilung erhaltener Beiträge
+--
+-- Hält fest, wohin ein (erhaltener) Subventionsbetrag pro Jahr verteilt
+-- wird: auf ein Event (cm_events), eine Kaderklasse (cm_klassen), eine
+-- Reserve oder ein frei benanntes Ziel. ziel_event_id/ziel_klasse_id sind
+-- nur je nach ziel_typ gesetzt – die Konsistenz wird in PHP erzwungen
+-- (cyon lehnt spaltenübergreifende CHECK-Constraints ab).
+-- -------------------------------------------------------------
+CREATE TABLE subvention_verwendung (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  subvention_id  INT UNSIGNED NOT NULL,
+  jahr           SMALLINT UNSIGNED NOT NULL,
+  ziel_typ       ENUM('event','klasse','reserve','frei') NOT NULL DEFAULT 'frei',
+  ziel_event_id  INT UNSIGNED NULL,             -- referenziert cm_events(id)
+  ziel_klasse_id INT UNSIGNED NULL,             -- referenziert cm_klassen(id)
+  ziel_text      VARCHAR(200),                  -- freies Ziel / Bezeichnung
+  betrag         DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  bemerkung      VARCHAR(300),
+  erstellt_von   INT UNSIGNED NULL,
+  erstellt_am    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_verw_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_verw_event
+    FOREIGN KEY (ziel_event_id) REFERENCES cm_events(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_verw_klasse
+    FOREIGN KEY (ziel_klasse_id) REFERENCES cm_klassen(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_verw_erstellt_von
     FOREIGN KEY (erstellt_von) REFERENCES benutzer(id)
     ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

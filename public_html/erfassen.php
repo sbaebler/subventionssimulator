@@ -27,16 +27,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'bezeichnung'     => trim($_POST['bezeichnung'] ?? ''),
         'beschreibung'    => trim($_POST['beschreibung'] ?? ''),
         'foerderstelle'   => trim($_POST['foerderstelle'] ?? ''),
-        'kategorie'       => $_POST['kategorie'] ?? 'sonstiges',
-        'voraussetzungen' => trim($_POST['voraussetzungen'] ?? ''),
-        'antragsfrist'    => $_POST['antragsfrist'] ?: null,
-        'gueltig_von'     => $_POST['gueltig_von']  ?: null,
-        'gueltig_bis'     => $_POST['gueltig_bis']  ?: null,
-        'link_extern'     => trim($_POST['link_extern'] ?? '') ?: null,
-        'aktiv'           => isset($_POST['aktiv']) ? 1 : 0,
-        'betraege'        => [],
-        'trainerarten'    => [],
-        'eventarten'      => [],
+        'kategorie'            => $_POST['kategorie'] ?? 'sonstiges',
+        'voraussetzungen'      => trim($_POST['voraussetzungen'] ?? ''),
+        'berechtigte'          => trim($_POST['berechtigte'] ?? '') ?: null,
+        'einschraenkungen'     => trim($_POST['einschraenkungen'] ?? '') ?: null,
+        'verlangte_unterlagen' => trim($_POST['verlangte_unterlagen'] ?? '') ?: null,
+        'berechnungsgrundlage' => trim($_POST['berechnungsgrundlage'] ?? '') ?: null,
+        'antragsfrist'         => $_POST['antragsfrist'] ?: null,
+        'gueltig_von'          => $_POST['gueltig_von']  ?: null,
+        'gueltig_bis'          => $_POST['gueltig_bis']  ?: null,
+        'link_extern'          => trim($_POST['link_extern'] ?? '') ?: null,
+        'aktiv'                => isset($_POST['aktiv']) ? 1 : 0,
+        'betraege'             => [],
+        'trainerarten'         => [],
+        'eventarten'           => [],
+        'fristen'              => [],
+        'historie'             => [],
     ];
 
     // Betraege aus POST
@@ -73,6 +79,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
     }
 
+    // Fristen aus POST
+    foreach ($_POST['fristen'] ?? [] as $f) {
+        if (empty(trim($f['bezeichnung'] ?? ''))) continue;
+        $data['fristen'][] = [
+            'bezeichnung' => trim($f['bezeichnung']),
+            'datum'       => $f['datum'] ?: null,
+            'hinweis'     => trim($f['hinweis'] ?? '') ?: null,
+        ];
+    }
+
+    // Betragshistorie aus POST
+    foreach ($_POST['historie'] ?? [] as $h) {
+        if (empty($h['jahr'])) continue;
+        $data['historie'][] = [
+            'jahr'      => (int)$h['jahr'],
+            'betrag'    => dezimal($h['betrag'] ?? 0),
+            'bemerkung' => trim($h['bemerkung'] ?? '') ?: null,
+        ];
+    }
+
     if (empty($data['bezeichnung'])) $fehler[] = 'Bezeichnung ist pflicht.';
     if (empty($data['foerderstelle'])) $fehler[] = 'Förderstelle ist pflicht.';
     if (empty($data['betraege'])) $fehler[] = 'Mindestens eine Betragsregel erforderlich.';
@@ -93,9 +119,11 @@ if (isset($_GET['gespeichert'])) $erfolg = true;
 $subv = $id ? Subvention::laden($id) : null;
 
 // Alpine.js Startwert
-$alpineBetraege     = htmlspecialchars(json_encode($subv['betraege']     ?? [['bezeichnung'=>'Standardbetrag','grundbetrag'=>0,'betrag_pro_teilnehmer'=>0,'betrag_pro_tag'=>0,'max_teilnehmer'=>0,'max_tage'=>0,'betrag_max_gesamt'=>0]]), ENT_QUOTES, 'UTF-8');
+$alpineBetraege     = htmlspecialchars(json_encode($subv['betraege']     ?? [['bezeichnung'=>'Standardbetrag','grundbetrag'=>0,'betrag_pro_teilnehmer'=>0,'betrag_pro_tag'=>0,'max_teilnehmer'=>0,'max_tage'=>0,'betrag_max_gesamt'=>0,'satz_mit_uebernachtung'=>0,'satz_ohne_uebernachtung'=>0,'betrag_pro_stunde'=>0,'max_stunden_pro_tag'=>0,'betrag_pro_einheit'=>0,'max_lektionen_pro_tag'=>0]]), ENT_QUOTES, 'UTF-8');
 $alpineTrainerarten = htmlspecialchars(json_encode($subv['trainerarten'] ?? []), ENT_QUOTES, 'UTF-8');
 $alpineEventarten   = htmlspecialchars(json_encode($subv['eventarten']   ?? []), ENT_QUOTES, 'UTF-8');
+$alpineFristen      = htmlspecialchars(json_encode($subv['fristen']      ?? []), ENT_QUOTES, 'UTF-8');
+$alpineHistorie     = htmlspecialchars(json_encode($subv['historie']     ?? []), ENT_QUOTES, 'UTF-8');
 
 require __DIR__ . '/partials/header.php';
 ?>
@@ -123,10 +151,13 @@ require __DIR__ . '/partials/header.php';
 
 <form method="post" action="/erfassen.php"
       x-data="{
+        berechnungstyp: '<?= htmlspecialchars($subv['berechnungstyp'] ?? 'additiv') ?>',
         betraege:     <?= $alpineBetraege ?>,
         trainerarten: <?= $alpineTrainerarten ?>,
         eventarten:   <?= $alpineEventarten ?>,
-        addBetrag()    { this.betraege.push({bezeichnung:'Neue Regel',grundbetrag:0,betrag_pro_teilnehmer:0,betrag_pro_tag:0,max_teilnehmer:0,max_tage:0,betrag_max_gesamt:0}) },
+        fristen:      <?= $alpineFristen ?>,
+        historie:     <?= $alpineHistorie ?>,
+        addBetrag()    { this.betraege.push({bezeichnung:'Neue Regel',grundbetrag:0,betrag_pro_teilnehmer:0,betrag_pro_tag:0,max_teilnehmer:0,max_tage:0,betrag_max_gesamt:0,satz_mit_uebernachtung:0,satz_ohne_uebernachtung:0,betrag_pro_stunde:0,max_stunden_pro_tag:0,betrag_pro_einheit:0,max_lektionen_pro_tag:0}) },
         rmBetrag(i)    { this.betraege.splice(i,1) },
         addTrainer(ta) {
           if(!this.trainerarten.find(t=>t.trainerart===ta))
@@ -137,7 +168,11 @@ require __DIR__ . '/partials/header.php';
           if(!this.eventarten.find(e=>e.eventart===ea))
             this.eventarten.push({eventart:ea,multiplikator:1,bemerkung:''})
         },
-        rmEvent(i)     { this.eventarten.splice(i,1) }
+        rmEvent(i)     { this.eventarten.splice(i,1) },
+        addFrist()     { this.fristen.push({bezeichnung:'',datum:'',hinweis:''}) },
+        rmFrist(i)     { this.fristen.splice(i,1) },
+        addHistorie()  { this.historie.push({jahr:new Date().getFullYear(),betrag:0,bemerkung:''}) },
+        rmHistorie(i)  { this.historie.splice(i,1) }
       }">
 
   <input type="hidden" name="id" value="<?= $subv['id'] ?? '' ?>">
@@ -175,6 +210,17 @@ require __DIR__ . '/partials/header.php';
       </div>
 
       <div class="md:col-span-2">
+        <label class="block text-sm font-medium mb-1">Berechnungstyp</label>
+        <select name="berechnungstyp" x-model="berechnungstyp"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+          <?php foreach (Subvention::BERECHNUNGSTYPEN as $k => $label): ?>
+          <option value="<?= $k ?>"><?= htmlspecialchars($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <p class="text-xs text-gray-400 mt-1">Bestimmt, welche Betragsfelder unten relevant sind und wie der Simulator rechnet.</p>
+      </div>
+
+      <div class="md:col-span-2">
         <label class="block text-sm font-medium mb-1">Beschreibung</label>
         <textarea name="beschreibung" rows="2"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"><?= htmlspecialchars($subv['beschreibung'] ?? '') ?></textarea>
@@ -185,6 +231,31 @@ require __DIR__ . '/partials/header.php';
         <textarea name="voraussetzungen" rows="3"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   placeholder="z.B. Mindestalter, Mitgliedschaft, Anerkennungen..."><?= htmlspecialchars($subv['voraussetzungen'] ?? '') ?></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Berechtigte</label>
+        <textarea name="berechtigte" rows="2"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="Wer ist antrags-/teilnahmeberechtigt?"><?= htmlspecialchars($subv['berechtigte'] ?? '') ?></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Einschränkungen / Vorgaben</label>
+        <textarea name="einschraenkungen" rows="2"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="Einschränkungen der Förderstelle"><?= htmlspecialchars($subv['einschraenkungen'] ?? '') ?></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Verlangte Unterlagen</label>
+        <textarea name="verlangte_unterlagen" rows="2"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="z.B. Anwesenheitsliste, Trainerausweise"><?= htmlspecialchars($subv['verlangte_unterlagen'] ?? '') ?></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Berechnungsgrundlage</label>
+        <textarea name="berechnungsgrundlage" rows="2"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="Wie berechnet die Förderstelle den Beitrag?"><?= htmlspecialchars($subv['berechnungsgrundlage'] ?? '') ?></textarea>
       </div>
 
       <div>
@@ -231,8 +302,23 @@ require __DIR__ . '/partials/header.php';
         + Regel
       </button>
     </div>
-    <p class="text-xs text-gray-400 mb-4">
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'additiv'">
       Formel: Grundbetrag + (Betrag/TN × Anzahl TN) + (Betrag/Tag × Anzahl Tage) + Trainer-Zusatz × Eventart-Faktor → max. Gesamtbetrag
+    </p>
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'js_teilnehmertag'">
+      Formel: Satz (je nach Übernachtung) × anrechenbare Teilnehmer × anrechenbare Tage → max. Gesamtbetrag
+    </p>
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'js_teilnehmerstunde'">
+      Formel: Satz pro Teilnehmerstunde × anrechenbare Teilnehmer × Tage × Stunden/Tag → max. Gesamtbetrag
+    </p>
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'zks_ausbildungseinheit'">
+      Formel: Satz pro Einheit × Ausbildungseinheiten (Teilnehmer × Lektionen/Tag × Tage) → max. Gesamtbetrag
+    </p>
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'pauschale'">
+      Fixer Jahresbetrag – im Feld «Grundbetrag / Pauschalbetrag» hinterlegen.
+    </p>
+    <p class="text-xs text-gray-400 mb-4" x-show="berechnungstyp === 'jahresbeitrag'">
+      Verbandsweite Kennzahl: Betrag pro Einheit × Anzahl Einheiten (Eingabe im Jahresbeitrags-Rechner). Ohne Satz gilt der Pauschalbetrag als Referenz.
     </p>
 
     <template x-for="(b, i) in betraege" :key="i">
@@ -246,27 +332,64 @@ require __DIR__ . '/partials/header.php';
           </button>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-          <div>
-            <label class="block text-xs text-gray-500 mb-1">Grundbetrag (CHF)</label>
+          <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'pauschale' || berechnungstyp === 'jahresbeitrag'">
+            <label class="block text-xs text-gray-500 mb-1" x-text="berechnungstyp === 'additiv' ? 'Grundbetrag (CHF)' : 'Grundbetrag / Pauschalbetrag (CHF)'">Grundbetrag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][grundbetrag]'" x-model="b.grundbetrag"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
-          <div>
+          <div x-show="berechnungstyp === 'additiv'">
             <label class="block text-xs text-gray-500 mb-1">Betrag / Teilnehmer (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_teilnehmer]'" x-model="b.betrag_pro_teilnehmer"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
-          <div>
+          <div x-show="berechnungstyp === 'additiv'">
             <label class="block text-xs text-gray-500 mb-1">Betrag / Tag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_tag]'" x-model="b.betrag_pro_tag"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
-          <div>
+
+          <!-- js_teilnehmertag -->
+          <div x-show="berechnungstyp === 'js_teilnehmertag'">
+            <label class="block text-xs text-gray-500 mb-1">Satz mit Übernachtung (CHF/TN/Tag)</label>
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][satz_mit_uebernachtung]'" x-model="b.satz_mit_uebernachtung"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+          <div x-show="berechnungstyp === 'js_teilnehmertag'">
+            <label class="block text-xs text-gray-500 mb-1">Satz ohne Übernachtung (CHF/TN/Tag)</label>
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][satz_ohne_uebernachtung]'" x-model="b.satz_ohne_uebernachtung"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+
+          <!-- js_teilnehmerstunde -->
+          <div x-show="berechnungstyp === 'js_teilnehmerstunde'">
+            <label class="block text-xs text-gray-500 mb-1">Betrag / Teilnehmerstunde (CHF)</label>
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_stunde]'" x-model="b.betrag_pro_stunde"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+          <div x-show="berechnungstyp === 'js_teilnehmerstunde'">
+            <label class="block text-xs text-gray-500 mb-1">Max. Stunden / Tag (0 = unbegrenzt)</label>
+            <input type="number" step="1" min="0" :name="'betraege['+i+'][max_stunden_pro_tag]'" x-model="b.max_stunden_pro_tag"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+
+          <!-- zks_ausbildungseinheit / jahresbeitrag -->
+          <div x-show="berechnungstyp === 'zks_ausbildungseinheit' || berechnungstyp === 'jahresbeitrag'">
+            <label class="block text-xs text-gray-500 mb-1" x-text="berechnungstyp === 'jahresbeitrag' ? 'Betrag / Einheit (CHF)' : 'Satz / Ausbildungseinheit (CHF)'">Satz / Ausbildungseinheit (CHF)</label>
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_einheit]'" x-model="b.betrag_pro_einheit"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+          <div x-show="berechnungstyp === 'zks_ausbildungseinheit'">
+            <label class="block text-xs text-gray-500 mb-1">Max. Lektionen / Tag (0 = unbegrenzt)</label>
+            <input type="number" step="1" min="0" :name="'betraege['+i+'][max_lektionen_pro_tag]'" x-model="b.max_lektionen_pro_tag"
+                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+          </div>
+
+          <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
             <label class="block text-xs text-gray-500 mb-1">Max. Teilnehmer (0 = unbegrenzt)</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_teilnehmer]'" x-model="b.max_teilnehmer"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
           </div>
-          <div>
+          <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
             <label class="block text-xs text-gray-500 mb-1">Max. Tage (0 = unbegrenzt)</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_tage]'" x-model="b.max_tage"
                    class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
@@ -360,6 +483,79 @@ require __DIR__ . '/partials/header.php';
       </div>
     </template>
     <p x-show="eventarten.length === 0" class="text-sm text-gray-400">Noch keine Eventart hinzugefügt.</p>
+  </section>
+
+  <!-- ── Fristen & Termine ──────────────────────────── -->
+  <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-gray-700">Fristen &amp; Termine</h2>
+      <button type="button" @click="addFrist()"
+              class="text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-3 py-1">
+        + Frist
+      </button>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">Mehrere Termine möglich (z.B. Anmeldung 30.4., Rapport 31.10.). Nur als Hinweis – ohne Einfluss auf die Berechnung.</p>
+
+    <template x-for="(f, i) in fristen" :key="i">
+      <div class="border border-gray-100 rounded-lg p-3 mb-2 bg-gray-50 flex flex-wrap gap-3 items-end">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Bezeichnung</label>
+          <input type="text" :name="'fristen['+i+'][bezeichnung]'" x-model="f.bezeichnung"
+                 placeholder="z.B. Anmeldung"
+                 class="w-40 border border-gray-300 rounded px-2 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Datum</label>
+          <input type="date" :name="'fristen['+i+'][datum]'" x-model="f.datum"
+                 class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-gray-500 mb-1">Hinweis</label>
+          <input type="text" :name="'fristen['+i+'][hinweis]'" x-model="f.hinweis"
+                 class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                 placeholder="Optional, z.B. via ZKS-Extranet">
+        </div>
+        <button type="button" @click="rmFrist(i)"
+                class="text-red-400 hover:text-red-600 text-xs pb-2">Entfernen</button>
+      </div>
+    </template>
+    <p x-show="fristen.length === 0" class="text-sm text-gray-400">Noch keine Frist erfasst.</p>
+  </section>
+
+  <!-- ── Betragshistorie ────────────────────────────── -->
+  <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-gray-700">Betragshistorie</h2>
+      <button type="button" @click="addHistorie()"
+              class="text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-3 py-1">
+        + Jahr
+      </button>
+    </div>
+    <p class="text-xs text-gray-400 mb-4">Tatsächlich erhaltene Beträge pro Jahr (Referenz und Basis für Pauschal-Beiträge).</p>
+
+    <template x-for="(h, i) in historie" :key="i">
+      <div class="border border-gray-100 rounded-lg p-3 mb-2 bg-gray-50 flex flex-wrap gap-3 items-end">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Jahr</label>
+          <input type="number" step="1" min="2000" max="2100" :name="'historie['+i+'][jahr]'" x-model="h.jahr"
+                 class="w-24 border border-gray-300 rounded px-2 py-1.5 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Betrag (CHF)</label>
+          <input type="text" inputmode="decimal" :name="'historie['+i+'][betrag]'" x-model="h.betrag"
+                 class="w-32 border border-gray-300 rounded px-2 py-1.5 text-sm">
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-gray-500 mb-1">Bemerkung</label>
+          <input type="text" :name="'historie['+i+'][bemerkung]'" x-model="h.bemerkung"
+                 class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                 placeholder="Optional">
+        </div>
+        <button type="button" @click="rmHistorie(i)"
+                class="text-red-400 hover:text-red-600 text-xs pb-2">Entfernen</button>
+      </div>
+    </template>
+    <p x-show="historie.length === 0" class="text-sm text-gray-400">Noch keine Beträge erfasst.</p>
   </section>
 
   <!-- ── Speichern ──────────────────────────────────── -->

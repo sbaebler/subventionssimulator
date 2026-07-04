@@ -19,7 +19,7 @@
     <p class="text-sm text-gray-400 uppercase tracking-wide mb-1">Zurich Sailing Federation</p>
     <h1 class="text-3xl font-bold text-gray-900">Subventionssimulator</h1>
     <p class="text-gray-500 mt-2">Fachliche Logik – Felder, Bedeutungen und Berechnungsweise</p>
-    <p class="text-xs text-gray-400 mt-1">Stand: Juni 2025 &nbsp;·&nbsp; <a href="https://subventionssimulator.zurich-sailing.ch" class="underline hover:text-blue-600">subventionssimulator.zurich-sailing.ch</a></p>
+    <p class="text-xs text-gray-400 mt-1">Stand: Juli 2026 &nbsp;·&nbsp; <a href="https://subventionssimulator.zurich-sailing.ch" class="underline hover:text-blue-600">subventionssimulator.zurich-sailing.ch</a></p>
   </div>
 
   <!-- Inhaltsverzeichnis -->
@@ -29,6 +29,7 @@
       <li><a href="#zweck" class="hover:underline">Zweck der Applikation</a></li>
       <li><a href="#stammdaten" class="hover:underline">Allgemeine Angaben zur Subvention</a></li>
       <li><a href="#betragsregeln" class="hover:underline">Betragsregeln</a></li>
+      <li><a href="#berechnungstypen" class="hover:underline">Berechnungstypen</a></li>
       <li><a href="#trainerarten" class="hover:underline">Trainerarten</a></li>
       <li><a href="#eventarten" class="hover:underline">Eventarten</a></li>
       <li><a href="#simulation" class="hover:underline">Simulation: Was wird eingegeben?</a></li>
@@ -186,6 +187,61 @@
   </section>
 
 
+  <!-- 3b. Berechnungstypen -->
+  <section id="berechnungstypen" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Berechnungstypen</h2>
+    <p class="text-sm text-gray-500 mb-4">Jede Subvention hat einen <strong>Berechnungstyp</strong>, der festlegt, welche Betragsfelder relevant sind und nach welcher Formel der Simulator rechnet. So lassen sich neben der klassischen additiven Pauschale auch die realen J+S- und ZKS-Sätze exakt abbilden.</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-indigo-50 text-left">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-indigo-800 border-b border-indigo-200">Typ</th>
+            <th class="px-4 py-3 font-semibold text-indigo-800 border-b border-indigo-200">Formel</th>
+            <th class="px-4 py-3 font-semibold text-indigo-800 border-b border-indigo-200">Typische Anwendung</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Additiv</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">Grundbetrag + Betrag/TN × TN + Betrag/Tag × Tage + Trainer-Zusatz, dann × Eventart-Faktor</td>
+            <td class="px-4 py-2.5 text-gray-600">Vereinsinterne Beiträge, gemischte Pauschalen</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">J+S Teilnehmertag</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">Satz × TN × Tage &nbsp;(Satz je nach Übernachtung)</td>
+            <td class="px-4 py-2.5 text-gray-600">J+S Lager (z.B. CHF 16 mit / 6.50 ohne Übernachtung)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">J+S Teilnehmerstunde</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">Satz × TN × Tage × Stunden/Tag &nbsp;(Stunden gedeckelt)</td>
+            <td class="px-4 py-2.5 text-gray-600">J+S Training (CHF 1.30/Std, max. 5 Std/Tag)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">ZKS Ausbildungseinheit</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">Satz × (TN × Lektionen/Tag × Tage) &nbsp;(Lektionen gedeckelt)</td>
+            <td class="px-4 py-2.5 text-gray-600">ZKS Ausbildungsbeitrag (ca. CHF 2.80/Einheit, max. 6 Lektionen/Tag)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Pauschale</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">fixer Betrag (im Grundbetrag hinterlegt)</td>
+            <td class="px-4 py-2.5 text-gray-600">Feste Jahresbeiträge (z.B. Sportamt ZH)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Jahresbeitrag</td>
+            <td class="px-4 py-2.5 text-gray-600 font-mono text-xs">Betrag pro Einheit × Anzahl Einheiten</td>
+            <td class="px-4 py-2.5 text-gray-600">Verbandsweite Kennzahlen (Mitglieder, SOTC, Trainertage)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mt-4 text-sm text-blue-800">
+      Für alle Typen gilt am Schluss dieselbe <strong>Deckelung</strong> auf den Maximalbetrag total (sofern hinterlegt). Die Berechtigungsprüfung über Trainer- und Eventart greift, sofern für die Subvention entsprechende Einträge erfasst sind.
+    </div>
+  </section>
+
+
   <!-- 4. Trainerarten -->
   <section id="trainerarten" class="mb-12">
     <h2 class="text-xl font-bold text-gray-900 mb-4">4. Trainerarten</h2>
@@ -335,6 +391,18 @@
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-2.5 font-medium">Eventart</td>
             <td class="px-4 py-2.5 text-gray-600">Um welche Art von Veranstaltung handelt es sich? (Lager / Training)</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Mit Übernachtung</td>
+            <td class="px-4 py-2.5 text-gray-600">Nur relevant für den Typ «J+S Teilnehmertag»: wählt zwischen dem Satz mit bzw. ohne Übernachtung. Das Feld erscheint nur, wenn mindestens eine aktive Subvention diesen Typ nutzt.</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Stunden / Tag</td>
+            <td class="px-4 py-2.5 text-gray-600">Nur für «J+S Teilnehmerstunde»: geplante Sportstunden pro Tag (wird auf das hinterlegte Maximum gedeckelt).</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium">Lektionen / Tag</td>
+            <td class="px-4 py-2.5 text-gray-600">Nur für «ZKS Ausbildungseinheit»: Anzahl Lektionen pro Tag (wird auf das hinterlegte Maximum gedeckelt).</td>
           </tr>
         </tbody>
       </table>
@@ -511,6 +579,86 @@
         </div>
       </div>
     </div>
+    <!-- Beispiel 4: J+S Teilnehmertag -->
+    <div class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-indigo-50 border-b border-indigo-200 px-5 py-3">
+        <p class="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Beispiel 4 · Typ J+S Teilnehmertag</p>
+        <h3 class="font-semibold text-indigo-900">J+S Lager Segeln</h3>
+        <p class="text-xs text-indigo-600">Satz × Teilnehmer × Tage</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Satz mit Übernachtung</td><td>CHF 16.00 / TN / Tag</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Satz ohne Übernachtung</td><td>CHF 6.50 / TN / Tag</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Teilnehmer</td><td>40</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Tage</td><td>14</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 20 TN, 5 Tage, mit Übernachtung</p>
+          <div class="bg-gray-50 rounded-lg p-3 text-xs space-y-1 text-gray-700">
+            <p>Satz mit Übernachtung: CHF 16.00</p>
+            <p>CHF 16.00 × 20 TN × 5 Tage</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 1'600.00</p>
+            <p class="text-gray-400">Ohne Übernachtung: CHF 6.50 × 20 × 5 = CHF 650.00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beispiel 5: J+S Teilnehmerstunde -->
+    <div class="mb-8 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-indigo-50 border-b border-indigo-200 px-5 py-3">
+        <p class="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Beispiel 5 · Typ J+S Teilnehmerstunde</p>
+        <h3 class="font-semibold text-indigo-900">J+S Training</h3>
+        <p class="text-xs text-indigo-600">Satz × Teilnehmer × Tage × Stunden/Tag</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Betrag / Teilnehmerstunde</td><td>CHF 1.30</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Stunden / Tag</td><td>5</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 15 TN, 5 Tage, 3 Std/Tag</p>
+          <div class="bg-gray-50 rounded-lg p-3 text-xs space-y-1 text-gray-700">
+            <p>CHF 1.30 × 15 TN × 5 Tage × 3 Std</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 292.50</p>
+            <p class="text-gray-400">Bei 8 Std/Tag greift die Deckelung auf 5 Std → CHF 487.50</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beispiel 6: ZKS Ausbildungseinheit -->
+    <div class="mb-4 border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-indigo-50 border-b border-indigo-200 px-5 py-3">
+        <p class="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Beispiel 6 · Typ ZKS Ausbildungseinheit</p>
+        <h3 class="font-semibold text-indigo-900">ZKS Ausbildungsbeitrag</h3>
+        <p class="text-xs text-indigo-600">Satz × (Teilnehmer × Lektionen/Tag × Tage)</p>
+      </div>
+      <div class="px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Konfiguration</p>
+          <table class="w-full text-xs">
+            <tr><td class="text-gray-500 pr-3 py-0.5">Satz / Ausbildungseinheit</td><td>CHF 2.80</td></tr>
+            <tr><td class="text-gray-500 pr-3 py-0.5">Max. Lektionen / Tag</td><td>6</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="font-semibold text-gray-600 mb-2">Simulation: 12 TN, 2 Tage, 6 Lektionen/Tag</p>
+          <div class="bg-gray-50 rounded-lg p-3 text-xs space-y-1 text-gray-700">
+            <p>Ausbildungseinheiten: 12 TN × 6 Lekt. × 2 Tage = 144</p>
+            <p>CHF 2.80 × 144 Einheiten</p>
+            <p class="mt-2 font-bold text-green-700">Ergebnis: CHF 403.20</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
 
@@ -568,7 +716,7 @@
   <!-- Footer -->
   <footer class="border-t border-gray-200 pt-6 text-xs text-gray-400 flex justify-between items-center">
     <span>Subventionssimulator – Zurich Sailing Federation</span>
-    <span>Stand Juni 2025</span>
+    <span>Stand Juli 2026</span>
   </footer>
 
 </body>

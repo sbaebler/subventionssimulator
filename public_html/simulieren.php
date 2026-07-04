@@ -9,7 +9,23 @@ $params = [
     'anzahl_tage'       => 3,
     'trainerart'        => 'js_trainer',
     'eventart'          => 'lager',
+    'uebernachtung'     => 1,
+    'stunden_pro_tag'   => 4,
+    'lektionen_pro_tag' => 6,
 ];
+
+// Aktive Subventionen laden. Der Event-Simulator behandelt nur event-basierte
+// Berechnungstypen – verbandsweite Pauschalen/Jahresbeiträge gehören in die
+// separate Ansicht "Jahresbeiträge" und würden ein Event-Total verfälschen.
+$JAHRESTYPEN = ['pauschale', 'jahresbeitrag'];
+$alleSubv = array_values(array_filter(
+    Subvention::alle(),
+    fn($s) => !in_array($s['berechnungstyp'] ?? 'additiv', $JAHRESTYPEN, true)
+));
+$typen    = array_column($alleSubv, 'berechnungstyp');
+$brauchtUebernachtung = in_array('js_teilnehmertag', $typen, true);
+$brauchtStunden       = in_array('js_teilnehmerstunde', $typen, true);
+$brauchtLektionen     = in_array('zks_ausbildungseinheit', $typen, true);
 
 $ergebnisse = null;
 $fehler     = null;
@@ -21,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'anzahl_tage'       => max(1, (int)($_POST['anzahl_tage']       ?? 1)),
         'trainerart'        => $_POST['trainerart'] ?? 'js_trainer',
         'eventart'          => $_POST['eventart']   ?? 'lager',
+        'uebernachtung'     => isset($_POST['uebernachtung']) ? 1 : 0,
+        'stunden_pro_tag'   => max(0, (int)($_POST['stunden_pro_tag']   ?? 0)),
+        'lektionen_pro_tag' => max(0, (int)($_POST['lektionen_pro_tag'] ?? 0)),
     ];
 
     if (!array_key_exists($params['trainerart'], Subvention::TRAINERARTEN)) {
@@ -29,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fehler = 'Ungültige Eventart.';
     } else {
         try {
-            $alle = Subvention::alle();
+            $alle = $alleSubv;
             if (empty($alle)) {
                 $fehler = 'Keine aktiven Subventionen erfasst.';
             } else {
@@ -71,34 +90,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         fputcsv($out, ['Tage', $params['anzahl_tage']], ';');
         fputcsv($out, ['Trainerart', Subvention::TRAINERARTEN[$params['trainerart']]], ';');
         fputcsv($out, ['Eventart', Subvention::EVENTARTEN[$params['eventart']]], ';');
+        fputcsv($out, ['Übernachtung', $params['uebernachtung'] ? 'Ja' : 'Nein'], ';');
+        fputcsv($out, ['Stunden/Tag', $params['stunden_pro_tag']], ';');
+        fputcsv($out, ['Lektionen/Tag', $params['lektionen_pro_tag']], ';');
         fputcsv($out, [], ';');
 
         // Titelzeile
         fputcsv($out, [
-            'Subvention', 'Förderstelle', 'Berechtigt', 'Betrag (CHF)',
-            'Grundbetrag', 'TN-Anteil', 'Tages-Anteil', 'Trainer-Bonus', 'Eventart-Faktor',
+            'Subvention', 'Förderstelle', 'Berechnungstyp', 'Berechtigt', 'Betrag (CHF)', 'Berechnung',
         ], ';');
 
         foreach ($ergebnisse as $r) {
+            $typLabel = Subvention::BERECHNUNGSTYPEN[$r['berechnungstyp'] ?? 'additiv'] ?? ($r['berechnungstyp'] ?? '');
             if ($r['berechtigt']) {
-                $auf = $r['aufschluesselung'];
+                // Aufschlüsselung als lesbaren Text zusammensetzen
+                $teile = [];
+                foreach ($r['aufschluesselung'] as $zeile) {
+                    $wert = match ($zeile['format']) {
+                        'faktor' => '× ' . number_format($zeile['wert'], 3, '.', ''),
+                        'zahl'   => (string)(0 + $zeile['wert']),
+                        default  => number_format($zeile['wert'], 2, '.', '') . ' CHF',
+                    };
+                    $teile[] = $zeile['label'] . ': ' . $wert;
+                }
                 fputcsv($out, [
                     $r['bezeichnung'],
                     $r['foerderstelle'],
+                    $typLabel,
                     'Ja',
                     number_format($r['betrag'], 2, '.', ''),
-                    number_format($auf['grundbetrag'], 2, '.', ''),
-                    number_format($auf['tn_anteil'], 2, '.', ''),
-                    number_format($auf['tage_anteil'], 2, '.', ''),
-                    number_format($auf['trainer_zusatz'], 2, '.', ''),
-                    number_format($auf['eventart_faktor'], 3, '.', ''),
+                    implode(' | ', $teile),
                 ], ';');
             } else {
                 fputcsv($out, [
                     $r['bezeichnung'],
                     $r['foerderstelle'],
-                    'Nein – ' . $r['grund'],
-                    '', '', '', '', '', '',
+                    $typLabel,
+                    'Nein – ' . ($r['grund'] ?? ''),
+                    '', '',
                 ], ';');
             }
         }
@@ -106,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Totalszeile
         $total = array_sum(array_map(fn($r) => $r['berechtigt'] ? $r['betrag'] : 0, $ergebnisse));
         fputcsv($out, [], ';');
-        fputcsv($out, ['Total förderberechtigt', '', '', number_format($total, 2, '.', '')], ';');
+        fputcsv($out, ['Total förderberechtigt', '', '', '', number_format($total, 2, '.', ''), ''], ';');
 
         fclose($out);
         exit;
@@ -180,6 +209,38 @@ require __DIR__ . '/partials/header.php';
       </div>
 
     </div>
+
+    <?php if ($brauchtUebernachtung || $brauchtStunden || $brauchtLektionen): ?>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+      <?php if ($brauchtUebernachtung): ?>
+      <div class="flex items-center gap-2 pt-6">
+        <input type="checkbox" name="uebernachtung" id="uebernachtung" value="1"
+               <?= $params['uebernachtung'] ? 'checked' : '' ?>
+               class="rounded border-gray-300 text-blue-600 focus:ring-blue-400">
+        <label for="uebernachtung" class="text-sm font-medium">Mit Übernachtung</label>
+      </div>
+      <?php endif; ?>
+      <?php if ($brauchtStunden): ?>
+      <div>
+        <label class="block text-sm font-medium mb-1">Stunden / Tag</label>
+        <input type="number" name="stunden_pro_tag" min="0" max="24"
+               value="<?= (int)$params['stunden_pro_tag'] ?>"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+        <p class="text-xs text-gray-400 mt-1">Für J+S Training (Teilnehmerstunden)</p>
+      </div>
+      <?php endif; ?>
+      <?php if ($brauchtLektionen): ?>
+      <div>
+        <label class="block text-sm font-medium mb-1">Lektionen / Tag</label>
+        <input type="number" name="lektionen_pro_tag" min="0" max="24"
+               value="<?= (int)$params['lektionen_pro_tag'] ?>"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+        <p class="text-xs text-gray-400 mt-1">Für ZKS Ausbildungseinheiten</p>
+      </div>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     <div class="mt-4 flex justify-end">
       <button type="submit"
               class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-2 rounded-lg">
@@ -252,26 +313,18 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
     <div x-show="offen" x-transition class="mt-4 border-t border-gray-100 pt-4">
       <table class="w-full text-sm">
         <tbody class="divide-y divide-gray-50">
-          <?php
-          $auf = $r['aufschluesselung'];
-          $zeilen = [
-              ['Grundbetrag',       $auf['grundbetrag']],
-              ['Teilnehmer-Anteil', $auf['tn_anteil']],
-              ['Tages-Anteil',      $auf['tage_anteil']],
-              ['Trainer-Bonus',     $auf['trainer_zusatz']],
-          ];
-          foreach ($zeilen as [$label, $wert]): ?>
-          <tr class="<?= $wert == 0 ? 'text-gray-300' : 'text-gray-600' ?>">
-            <td class="py-1"><?= $label ?></td>
-            <td class="py-1 text-right font-mono">CHF <?= number_format($wert, 2, '.', "'") ?></td>
+          <?php foreach ($r['aufschluesselung'] as $zeile): ?>
+          <tr class="<?= $zeile['wert'] == 0 ? 'text-gray-300' : 'text-gray-600' ?>">
+            <td class="py-1"><?= htmlspecialchars($zeile['label']) ?></td>
+            <td class="py-1 text-right font-mono"><?php
+              echo match ($zeile['format']) {
+                  'faktor' => '× ' . number_format($zeile['wert'], 3),
+                  'zahl'   => htmlspecialchars((string)(0 + $zeile['wert'])),
+                  default  => 'CHF ' . number_format($zeile['wert'], 2, '.', "'"),
+              };
+            ?></td>
           </tr>
           <?php endforeach; ?>
-          <?php if ($auf['eventart_faktor'] != 1.0): ?>
-          <tr class="text-gray-600">
-            <td class="py-1">Eventart-Faktor</td>
-            <td class="py-1 text-right font-mono">× <?= number_format($auf['eventart_faktor'], 3) ?></td>
-          </tr>
-          <?php endif; ?>
         </tbody>
         <tfoot>
           <tr class="font-semibold text-gray-900 border-t border-gray-200">
@@ -310,6 +363,9 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
   <input type="hidden" name="anzahl_tage"        value="<?= (int)$params['anzahl_tage'] ?>">
   <input type="hidden" name="trainerart"         value="<?= htmlspecialchars($params['trainerart']) ?>">
   <input type="hidden" name="eventart"           value="<?= htmlspecialchars($params['eventart']) ?>">
+  <?php if ($params['uebernachtung']): ?><input type="hidden" name="uebernachtung" value="1"><?php endif; ?>
+  <input type="hidden" name="stunden_pro_tag"    value="<?= (int)$params['stunden_pro_tag'] ?>">
+  <input type="hidden" name="lektionen_pro_tag"  value="<?= (int)$params['lektionen_pro_tag'] ?>">
   <button type="submit"
           class="flex items-center gap-2 border border-gray-300 hover:border-blue-400 text-gray-600 hover:text-blue-600 text-sm px-4 py-2 rounded-lg">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

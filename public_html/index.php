@@ -22,7 +22,7 @@ require __DIR__ . '/partials/header.php';
     <?php foreach ($subventionen as $s): ?>
     <div class="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2 mb-1">
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
           <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
             <?= htmlspecialchars(Subvention::KATEGORIEN[$s['kategorie']] ?? $s['kategorie']) ?>
           </span>
@@ -31,6 +31,11 @@ require __DIR__ . '/partials/header.php';
             Frist: <?= date('d.m.Y', strtotime($s['antragsfrist'])) ?>
           </span>
           <?php endif; ?>
+          <?php foreach (Subvention::fristen($s['id']) as $frist): ?>
+          <span class="text-xs text-orange-600">
+            <?= htmlspecialchars($frist['bezeichnung']) ?><?php if ($frist['datum']): ?>: <?= date('d.m.Y', strtotime($frist['datum'])) ?><?php endif; ?>
+          </span>
+          <?php endforeach; ?>
         </div>
         <h2 class="font-semibold text-gray-900"><?= htmlspecialchars($s['bezeichnung']) ?></h2>
         <p class="text-sm text-gray-500"><?= htmlspecialchars($s['foerderstelle']) ?></p>
