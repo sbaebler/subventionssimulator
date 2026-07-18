@@ -8,6 +8,62 @@ require __DIR__ . '/partials/header.php';
   <p class="text-sm text-gray-500 mt-1">Was sich im Subventionssimulator geändert hat</p>
 </div>
 
+<!-- Version 4 -->
+<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <div class="flex items-center gap-3 mb-1">
+    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Version 4</span>
+    <span class="text-xs text-gray-400">18.07.2026</span>
+  </div>
+  <h2 class="font-semibold text-gray-800 mb-3">Erfassen ohne Anleitung: neue Nutzerführung</h2>
+
+  <p class="text-sm text-gray-600 leading-relaxed mb-4">
+    Die Erfassung wurde von Grund auf vereinfacht: Wer weiss, wie ein Förderbeitrag funktioniert,
+    kann dieses Wissen jetzt <strong>ohne Anleitung</strong> eintragen. In den Masken heisst das
+    Stammobjekt neu <strong>«Förderprogramm»</strong>.
+  </p>
+
+  <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
+    <li><strong>Geführte Erfassung in vier Schritten:</strong> Beitrag → Berechnung → Bedingungen →
+        Termine &amp; Beträge. Nur noch <strong>Name und Förderstelle sind Pflicht</strong> – alles
+        andere kann später ergänzt werden.</li>
+    <li><strong>Berechnungsart als Auswahlkarten</strong> in Alltagssprache – inklusive
+        «Weiss ich noch nicht»: Berechnung in Worten beschreiben, Zahlen kommen später.</li>
+    <li><strong>Probe-Rechnung live:</strong> Beim Eintippen der Sätze zeigt die Maske sofort,
+        was ein Beispiel-Anlass ergeben würde.</li>
+    <li><strong>Übersicht als Arbeitsliste:</strong> Fortschritt «x von y vollständig erfasst» und
+        pro Programm klickbare Hinweise, was noch fehlt.</li>
+    <li><strong>Aufgeräumte Navigation:</strong> vier Punkte statt zehn.</li>
+    <li><strong>Jahresbetrag direkt erfassen:</strong> Der erhaltene Betrag pro Jahr wird neu direkt
+        unter «Beiträge &amp; Verwendung» eingetragen.</li>
+  </ul>
+
+  <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+    <p class="font-medium text-gray-700 mb-1">Behobener Fehler</p>
+    <p>Beim Speichern gingen die typspezifischen Beitragssätze (z. B. J+S-Satz mit/ohne Übernachtung,
+    Satz pro Ausbildungseinheit) verloren. Diese Werte werden jetzt korrekt gespeichert.</p>
+  </div>
+</section>
+
+<!-- Version 3 -->
+<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <div class="flex items-center gap-3 mb-1">
+    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Version 3</span>
+    <span class="text-xs text-gray-400">04.07.2026</span>
+  </div>
+  <h2 class="font-semibold text-gray-800 mb-3">Neue Berechnungsarten, Jahresbeiträge und Verwendung</h2>
+  <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+    <li><strong>Sechs Berechnungsarten</strong> statt einer Einheitsformel: additiv, J+S Teilnehmertag
+        (mit/ohne Übernachtung), J+S Teilnehmerstunde, ZKS Ausbildungseinheit, Pauschale und
+        Jahresbeitrag nach Kennzahl.</li>
+    <li><strong>Mehr Fachinformationen pro Subvention:</strong> Berechtigte, Einschränkungen,
+        verlangte Unterlagen, mehrere Fristen sowie die erhaltenen Beträge pro Jahr.</li>
+    <li><strong>Neue Seite «Jahresbeiträge»</strong> für Beiträge, die nicht an ein Event gebunden
+        sind (z. B. pro Aktivmitglied).</li>
+    <li><strong>Neue Seite «Verwendung»:</strong> Erhaltene Jahresbeträge auf Events, Kaderklassen,
+        Reserven oder freie Zwecke verteilen – mit laufender Restkontrolle.</li>
+  </ul>
+</section>
+
 <!-- Version 2 -->
 <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
   <div class="flex items-center gap-3 mb-1">
