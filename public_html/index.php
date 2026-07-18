@@ -1,28 +1,60 @@
 <?php
 require_once __DIR__ . '/../includes/Subvention.php';
-$pageTitle = 'Subventionen – Übersicht';
+$pageTitle = 'Förderprogramme – Übersicht';
 $subventionen = Subvention::alle();
+
+// Vollständigkeit pro Programm ermitteln (für Badges und Fortschritt)
+$fehltProProgramm = [];
+$anzahlVollstaendig = 0;
+foreach ($subventionen as $s) {
+    $fehlt = Subvention::vollstaendigkeit($s);
+    $fehltProProgramm[$s['id']] = $fehlt;
+    if (empty($fehlt)) $anzahlVollstaendig++;
+}
+
 require __DIR__ . '/partials/header.php';
 ?>
 
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-semibold">Subventionstöpfe</h1>
+<div class="flex items-center justify-between mb-2">
+  <h1 class="text-2xl font-semibold">Förderprogramme</h1>
   <a href="/erfassen.php"
      class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg">
-    + Neue Subvention
+    + Neues Förderprogramm
   </a>
 </div>
 
+<?php if (!empty($subventionen)): ?>
+<div class="mb-6">
+  <p class="text-sm text-gray-500 mb-2">
+    <?= $anzahlVollstaendig ?> von <?= count($subventionen) ?> Förderprogrammen vollständig erfasst
+    <?php if ($anzahlVollstaendig < count($subventionen)): ?>
+    – die amber markierten warten noch auf Angaben.
+    <?php else: ?>
+    – alles beisammen. 🎉
+    <?php endif; ?>
+  </p>
+  <div class="w-full bg-gray-200 rounded-full h-2 max-w-md">
+    <div class="bg-green-500 h-2 rounded-full transition-all"
+         style="width: <?= count($subventionen) ? round($anzahlVollstaendig / count($subventionen) * 100) : 0 ?>%"></div>
+  </div>
+</div>
+<?php endif; ?>
+
 <?php if (empty($subventionen)): ?>
-  <p class="text-gray-500">Noch keine Subventionen erfasst.
+  <p class="text-gray-500">Noch keine Förderprogramme erfasst.
     <a href="/erfassen.php" class="text-blue-600 underline">Jetzt erfassen</a>
   </p>
 <?php else: ?>
   <div class="grid gap-4">
-    <?php foreach ($subventionen as $s): ?>
+    <?php foreach ($subventionen as $s): $fehlt = $fehltProProgramm[$s['id']]; ?>
     <div class="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1 flex-wrap">
+          <?php if (empty($fehlt)): ?>
+          <span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">Vollständig</span>
+          <?php else: ?>
+          <span class="text-xs font-medium bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Unvollständig</span>
+          <?php endif; ?>
           <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
             <?= htmlspecialchars(Subvention::KATEGORIEN[$s['kategorie']] ?? $s['kategorie']) ?>
           </span>
@@ -41,6 +73,15 @@ require __DIR__ . '/partials/header.php';
         <p class="text-sm text-gray-500"><?= htmlspecialchars($s['foerderstelle']) ?></p>
         <?php if ($s['beschreibung']): ?>
         <p class="text-sm text-gray-600 mt-1 line-clamp-2"><?= htmlspecialchars($s['beschreibung']) ?></p>
+        <?php endif; ?>
+        <?php if ($fehlt): ?>
+        <p class="text-xs text-amber-700 mt-2">
+          Fehlt noch:
+          <?php foreach ($fehlt as $idx => $f): ?>
+          <a href="/erfassen.php?id=<?= $s['id'] ?>#schritt-<?= (int)$f['schritt'] ?>"
+             class="underline hover:text-amber-900"><?= htmlspecialchars($f['text']) ?></a><?= $idx < count($fehlt) - 1 ? ' · ' : '' ?>
+          <?php endforeach; ?>
+        </p>
         <?php endif; ?>
         <p class="text-xs text-gray-400 mt-2">
           <?php if ($s['erstellt_von_name']): ?>

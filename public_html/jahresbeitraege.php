@@ -41,7 +41,7 @@ require __DIR__ . '/partials/header.php';
 
 <?php if (empty($beitraege)): ?>
 <div class="bg-gray-50 border border-gray-200 text-gray-600 text-sm rounded-lg px-4 py-3">
-  Keine Jahresbeiträge erfasst. Lege eine Subvention mit Berechnungstyp «Pauschale» oder «Jahresbeitrag» an.
+  Keine Jahresbeiträge erfasst. Lege ein Förderprogramm mit Berechnungsmuster «Fixer Betrag» oder «Nach Jahreskennzahl» an.
 </div>
 <?php else: ?>
 

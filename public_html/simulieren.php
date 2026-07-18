@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $alle = $alleSubv;
             if (empty($alle)) {
-                $fehler = 'Keine aktiven Subventionen erfasst.';
+                $fehler = 'Keine aktiven Förderprogramme erfasst.';
             } else {
                 $ergebnisse = [];
                 foreach ($alle as $s) {
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Titelzeile
         fputcsv($out, [
-            'Subvention', 'Förderstelle', 'Berechnungstyp', 'Berechtigt', 'Betrag (CHF)', 'Berechnung',
+            'Förderprogramm', 'Förderstelle', 'Berechnungstyp', 'Berechtigt', 'Betrag (CHF)', 'Berechnung',
         ], ';');
 
         foreach ($ergebnisse as $r) {

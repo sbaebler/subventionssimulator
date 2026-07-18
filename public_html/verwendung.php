@@ -10,7 +10,7 @@ function dezimal($wert): float {
     return (float) str_replace([',', "'"], ['.', ''], (string)$wert);
 }
 
-$pageTitle = 'Verwendung';
+$pageTitle = 'Beiträge & Verwendung';
 
 $subventionen = Subvention::alle(false);
 $events       = Event::alle();
@@ -22,6 +22,24 @@ $jahr         = (int)($_POST['jahr'] ?? $_GET['jahr'] ?? date('Y'));
 
 $fehler = [];
 $erfolg = isset($_GET['gespeichert']);
+$betragErfolg = isset($_GET['betrag_gespeichert']);
+
+// Erhaltenen Jahresbetrag direkt hier setzen (Upsert in die Betragshistorie),
+// damit der Umweg über die Erfassungsmaske entfällt.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['betrag_setzen'])) {
+    if ($subventionId <= 0) {
+        $fehler[] = 'Bitte ein Förderprogramm wählen.';
+    } else {
+        try {
+            Subvention::historieSetzen($subventionId, $jahr, dezimal($_POST['erhalten_betrag'] ?? 0));
+            header('Location: /verwendung.php?subvention_id=' . $subventionId . '&jahr=' . $jahr . '&betrag_gespeichert=1');
+            exit;
+        } catch (Throwable $e) {
+            error_log('[Subventionssimulator] historieSetzen() Fehler: ' . $e->getMessage());
+            $fehler[] = 'Beim Speichern des Jahresbetrags ist ein Fehler aufgetreten. Details im Server-Log.';
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['speichern'])) {
     $rows = [];
@@ -36,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['speichern'])) {
         ];
     }
     if ($subventionId <= 0) {
-        $fehler[] = 'Bitte eine Subvention wählen.';
+        $fehler[] = 'Bitte ein Förderprogramm wählen.';
     } else {
         try {
             Subvention::verwendungSpeichern($subventionId, $jahr, $rows, auth_benutzer_id() ?: null);
@@ -72,12 +90,15 @@ require __DIR__ . '/partials/header.php';
 ?>
 
 <div class="mb-6">
-  <h1 class="text-2xl font-semibold">Verwendung erhaltener Beiträge</h1>
-  <p class="text-sm text-gray-500 mt-1">Festhalten, wohin ein Subventionsbeitrag pro Jahr verteilt wird (Lager, Trainings, Kaderklassen, Reserve)</p>
+  <h1 class="text-2xl font-semibold">Beiträge &amp; Verwendung</h1>
+  <p class="text-sm text-gray-500 mt-1">Pro Förderprogramm und Jahr: Wie viel wurde erhalten – und wohin wurde es verteilt (Lager, Trainings, Kaderklassen, Reserve)?</p>
 </div>
 
 <?php if ($erfolg): ?>
 <div class="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-6">Verwendung gespeichert.</div>
+<?php endif; ?>
+<?php if ($betragErfolg): ?>
+<div class="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-6">Jahresbetrag gespeichert.</div>
 <?php endif; ?>
 <?php if ($fehler): ?>
 <div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3 mb-6">
@@ -89,7 +110,7 @@ require __DIR__ . '/partials/header.php';
 <form method="get" action="/verwendung.php" class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
   <div class="flex flex-wrap items-end gap-4">
     <div class="flex-1 min-w-[240px]">
-      <label class="block text-sm font-medium mb-1">Subvention</label>
+      <label class="block text-sm font-medium mb-1">Förderprogramm</label>
       <select name="subvention_id" onchange="this.form.submit()"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
         <?php foreach ($subventionen as $s): ?>
@@ -109,6 +130,27 @@ require __DIR__ . '/partials/header.php';
 </form>
 
 <?php if ($subv): ?>
+
+<!-- Erhaltenen Jahresbetrag direkt erfassen (schreibt in die Betragshistorie) -->
+<form method="post" action="/verwendung.php" class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <input type="hidden" name="subvention_id" value="<?= (int)$subventionId ?>">
+  <input type="hidden" name="jahr" value="<?= (int)$jahr ?>">
+  <input type="hidden" name="betrag_setzen" value="1">
+  <div class="flex flex-wrap items-end gap-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Erhaltener / erwarteter Betrag <?= (int)$jahr ?> (CHF)</label>
+      <input type="text" inputmode="decimal" name="erhalten_betrag"
+             value="<?= $erhalten != 0 ? number_format($erhalten, 2, '.', '') : '' ?>"
+             placeholder="z.B. 30000.00"
+             class="w-44 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+    </div>
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg">
+      Jahresbetrag speichern
+    </button>
+    <p class="text-xs text-gray-400 pb-2">Was hat die Förderstelle für <?= (int)$jahr ?> ausbezahlt oder in Aussicht gestellt? Dieser Betrag wird unten verteilt.</p>
+  </div>
+</form>
+
 <form method="post" action="/verwendung.php"
       x-data="{
         erhalten: <?= json_encode($erhalten) ?>,
@@ -137,7 +179,7 @@ require __DIR__ . '/partials/header.php';
       <div>
         <span class="text-gray-400">Erhaltener Betrag (<?= (int)$jahr ?>):</span>
         <span class="font-semibold">CHF <?= number_format($erhalten, 2, '.', "'") ?></span>
-        <?php if ($erhalten == 0): ?><span class="text-xs text-gray-400">(in Betragshistorie hinterlegen)</span><?php endif; ?>
+        <?php if ($erhalten == 0): ?><span class="text-xs text-gray-400">(oben erfassen)</span><?php endif; ?>
       </div>
       <div>
         <span class="text-gray-400">Verteilt:</span>

@@ -352,6 +352,55 @@ class Subvention {
     }
 
     // ------------------------------------------------------------------
+    // Einzelnen Jahresbetrag setzen (Upsert auf uq_subvention_jahr) –
+    // erlaubt das Erfassen des erhaltenen Betrags direkt auf der
+    // Verwendungsseite, ohne Umweg über die Erfassungsmaske.
+    // ------------------------------------------------------------------
+    public static function historieSetzen(int $id, int $jahr, float $betrag, ?string $bemerkung = null): void {
+        $stmt = db()->prepare('
+            INSERT INTO subvention_betrag_historie (subvention_id, jahr, betrag, bemerkung)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                betrag    = VALUES(betrag),
+                bemerkung = COALESCE(VALUES(bemerkung), bemerkung)
+        ');
+        $stmt->execute([$id, $jahr, $betrag, $bemerkung]);
+    }
+
+    // ------------------------------------------------------------------
+    // Vollständigkeits-Check für die Übersicht: liefert fehlende Angaben
+    // als Liste von ['text' => ..., 'schritt' => Wizard-Schritt 1-4].
+    // Leere Liste = Förderprogramm vollständig erfasst.
+    // ------------------------------------------------------------------
+    public static function vollstaendigkeit(array $subv): array {
+        $id       = (int)($subv['id'] ?? 0);
+        $betraege = $subv['betraege'] ?? self::betraege($id);
+        $fristen  = $subv['fristen']  ?? self::fristen($id);
+        $historie = $subv['historie'] ?? self::betragHistorie($id);
+
+        $fehlt = [];
+        if (empty($betraege)) {
+            $fehlt[] = ['text' => 'Beitragssatz fehlt', 'schritt' => 2];
+        }
+        if (trim((string)($subv['beschreibung'] ?? '')) === ''
+            && trim((string)($subv['voraussetzungen'] ?? '')) === '') {
+            $fehlt[] = ['text' => 'Beschreibung fehlt', 'schritt' => 3];
+        }
+        if (empty($fristen) && empty($subv['antragsfrist'])) {
+            $fehlt[] = ['text' => 'Keine Frist erfasst', 'schritt' => 4];
+        }
+        $aktJahr = (int)date('Y');
+        $hatAktuellenBetrag = false;
+        foreach ($historie as $h) {
+            if ((int)$h['jahr'] >= $aktJahr - 1) { $hatAktuellenBetrag = true; break; }
+        }
+        if (!$hatAktuellenBetrag) {
+            $fehlt[] = ['text' => 'Kein Jahresbetrag (' . ($aktJahr - 1) . '/' . $aktJahr . ')', 'schritt' => 4];
+        }
+        return $fehlt;
+    }
+
+    // ------------------------------------------------------------------
     // Betrag berechnen (Kernlogik für den Simulator)
     //
     // $params = [
