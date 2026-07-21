@@ -46,7 +46,7 @@ function passwort_reset_gueltig(string $token): ?array
     $tokenHash = hash('sha256', $token);
 
     $stmt = db()->prepare(
-        'SELECT prt.id AS token_id, prt.benutzer_id, b.anzeigename
+        'SELECT prt.id AS token_id, prt.benutzer_id, b.anzeigename, b.benutzername
          FROM passwort_reset_tokens prt
          JOIN benutzer b ON b.id = prt.benutzer_id
          WHERE prt.token_hash = ?

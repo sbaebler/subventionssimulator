@@ -82,6 +82,13 @@ if ($reset && $_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post" action="/passwort-zuruecksetzen.php">
       <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
       <div class="mb-4">
+        <label for="benutzername" class="block text-sm font-medium mb-1">Benutzername</label>
+        <input type="text" id="benutzername" name="benutzername"
+               value="<?= htmlspecialchars($reset['benutzername']) ?>" readonly
+               autocomplete="username"
+               class="input">
+      </div>
+      <div class="mb-4">
         <label for="passwort" class="block text-sm font-medium mb-1">Neues Passwort</label>
         <input type="password" id="passwort" name="passwort" required autofocus
                autocomplete="new-password"
