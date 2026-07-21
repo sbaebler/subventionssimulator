@@ -30,11 +30,6 @@ require __DIR__ . '/partials/header.php';
 <div class="page-header mb-2">
   <h1 class="text-2xl font-semibold">Förderprogramme</h1>
   <div class="flex gap-2">
-    <?php if ($anzahlPapierkorb > 0): ?>
-    <a href="/papierkorb.php" class="btn btn--secondary btn--sm">
-      Papierkorb (<?= $anzahlPapierkorb ?>)
-    </a>
-    <?php endif; ?>
     <a href="/erfassen.php" class="btn btn--primary btn--sm">
       + Neues Förderprogramm
     </a>
@@ -53,7 +48,7 @@ require __DIR__ . '/partials/header.php';
   <p class="text-sm text-muted mb-2">
     <?= $anzahlVollstaendig ?> von <?= count($subventionen) ?> Förderprogrammen vollständig erfasst
     <?php if ($anzahlVollstaendig < count($subventionen)): ?>
-    – die amber markierten warten noch auf Angaben.
+    – die orange markierten warten noch auf Angaben.
     <?php else: ?>
     – alles beisammen. 🎉
     <?php endif; ?>
@@ -135,6 +130,14 @@ require __DIR__ . '/partials/header.php';
     </div>
     <?php endforeach; ?>
   </div>
+<?php endif; ?>
+
+<?php if ($anzahlPapierkorb > 0): ?>
+<div class="mt-6 text-left">
+  <a href="/papierkorb.php" class="btn btn--secondary btn--sm">
+    Papierkorb (<?= $anzahlPapierkorb ?>)
+  </a>
+</div>
 <?php endif; ?>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
