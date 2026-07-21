@@ -16,16 +16,21 @@ auth_erforderlich();
 </head>
 <body class="min-h-screen">
 
-<header class="navbar">
+<header class="navbar" x-data="{ navOffen: false }">
   <a href="/" class="navbar__brand"><?= APP_NAME ?></a>
-  <span class="text-subtle">|</span>
-  <nav class="flex items-center gap-4">
+
+  <button type="button" class="navbar__toggle" @click="navOffen = !navOffen"
+          :aria-expanded="navOffen.toString()" aria-label="Menü öffnen">
+    <svg x-show="!navOffen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <svg x-show="navOffen" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+
+  <nav class="navbar__nav" :class="{ 'is-open': navOffen }">
     <a href="/"               class="navbar__link">Förderprogramme</a>
     <a href="/simulieren.php" class="navbar__link">Simulator</a>
     <a href="/verwendung.php" class="navbar__link">Beiträge &amp; Verwendung</a>
     <div class="relative" x-data="{ offen: false }" @click.outside="offen = false">
-      <button type="button" @click="offen = !offen"
-              class="navbar__link flex items-center gap-1 cursor-pointer">
+      <button type="button" @click="offen = !offen" class="navbar__link navbar__submenu-toggle">
         Mehr
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
@@ -40,7 +45,8 @@ auth_erforderlich();
       </div>
     </div>
   </nav>
-  <div class="ml-auto flex items-center gap-3">
+
+  <div class="navbar__user" :class="{ 'is-open': navOffen }">
     <span class="text-sm text-subtle"><?= htmlspecialchars(auth_anzeigename()) ?></span>
     <a href="/logout.php" class="text-sm link--danger">Abmelden</a>
   </div>

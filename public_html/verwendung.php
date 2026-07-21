@@ -165,7 +165,7 @@ require __DIR__ . '/partials/header.php';
   <input type="hidden" name="speichern" value="1">
 
   <section class="card mb-6">
-    <div class="flex items-center justify-between mb-4">
+    <div class="page-header mb-4">
       <div>
         <h2 class="font-semibold"><?= htmlspecialchars($subv['bezeichnung']) ?> · <?= (int)$jahr ?></h2>
         <p class="text-sm text-muted"><?= htmlspecialchars($subv['foerderstelle']) ?></p>

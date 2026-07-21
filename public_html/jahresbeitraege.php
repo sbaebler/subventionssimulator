@@ -96,7 +96,7 @@ require __DIR__ . '/partials/header.php';
   <?php endforeach; ?>
   </div>
 
-  <div class="alert alert--info px-5 py-4 mt-6 flex items-center justify-between">
+  <div class="alert alert--info px-5 py-4 mt-6 page-header">
     <div>
       <p class="text-xs uppercase tracking-wide font-medium opacity-70">Total Jahresbeiträge<?= $berechnet ? ' ' . (int)$jahr : '' ?></p>
       <p class="text-2xl font-bold">CHF <?= number_format($total, 2, '.', "'") ?></p>

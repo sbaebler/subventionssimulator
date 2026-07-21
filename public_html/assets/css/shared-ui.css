@@ -68,10 +68,16 @@ body {
 .stack > * + * { margin-top: 1rem; }
 .stack-lg > * + * { margin-top: 2rem; }
 
-/* --- Navigation --- */
+/* --- Navigation ---
+   Mobil (< 768px) klappt .navbar__nav und .navbar__user hinter
+   .navbar__toggle zusammen; Zustand kommt von aussen (z. B. Alpine
+   x-data="{ navOffen: false }" auf .navbar, :class="{ 'is-open': navOffen }"
+   auf .navbar__nav / .navbar__user). Ohne JS bleiben beide Blöcke auf
+   Mobile einfach sichtbar (kein Broken-State). */
 .navbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 1rem 1.5rem;
   background: var(--color-surface);
@@ -86,12 +92,53 @@ body {
 }
 .navbar__brand:hover { color: var(--color-primary-hover); }
 
+.navbar__toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-left: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.navbar__toggle:hover { border-color: var(--color-primary-border); color: var(--color-primary); }
+
+.navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-border);
+}
+
 .navbar__link {
   font-size: 0.875rem;
   color: var(--color-text);
   text-decoration: none;
 }
 .navbar__link:hover { color: var(--color-primary); }
+
+.navbar__submenu-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
 
 .menu {
   background: var(--color-surface);
@@ -109,6 +156,52 @@ body {
   text-decoration: none;
 }
 .menu__item:hover { background: var(--color-bg); }
+
+@media (max-width: 767px) {
+  .navbar__toggle { display: inline-flex; }
+
+  .navbar__nav,
+  .navbar__user {
+    display: none;
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+  }
+  .navbar__nav.is-open,
+  .navbar__user.is-open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .navbar__user.is-open { flex-direction: row; justify-content: space-between; }
+
+  .navbar__nav.is-open .navbar__link { padding: 0.375rem 0; }
+  .navbar__nav.is-open .navbar__submenu-toggle { justify-content: space-between; padding: 0.375rem 0; width: 100%; }
+  .navbar__nav.is-open .menu {
+    position: static;
+    box-shadow: none;
+    border: none;
+    width: 100%;
+    margin-top: 0;
+    padding: 0 0 0 0.75rem;
+  }
+}
+
+/* --- Seitenkopf ---
+   Titel + primäre Aktion; bricht auf schmalen Screens um statt zu
+   überlappen. */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
 
 /* --- Buttons --- */
 .btn {

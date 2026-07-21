@@ -15,7 +15,7 @@ foreach ($subventionen as $s) {
 require __DIR__ . '/partials/header.php';
 ?>
 
-<div class="flex items-center justify-between mb-2">
+<div class="page-header mb-2">
   <h1 class="text-2xl font-semibold">Förderprogramme</h1>
   <a href="/erfassen.php" class="btn btn--primary btn--sm">
     + Neues Förderprogramm

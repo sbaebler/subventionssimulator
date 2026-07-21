@@ -713,7 +713,7 @@ require __DIR__ . '/partials/header.php';
 
     <!-- Weitere Termine -->
     <div class="mb-6">
-      <div class="flex items-center justify-between mb-2">
+      <div class="page-header mb-2">
         <p class="text-sm font-medium">Weitere Termine</p>
         <button type="button" @click="addFrist()"
                 class="btn btn--secondary btn--sm">
@@ -748,7 +748,7 @@ require __DIR__ . '/partials/header.php';
 
     <!-- Erhaltene Beträge pro Jahr -->
     <div class="mb-6">
-      <div class="flex items-center justify-between mb-2">
+      <div class="page-header mb-2">
         <p class="text-sm font-medium">Erhaltene Beträge pro Jahr</p>
         <button type="button" @click="addHistorie()"
                 class="btn btn--secondary btn--sm">
@@ -790,7 +790,7 @@ require __DIR__ . '/partials/header.php';
   </section>
 
   <!-- ── Navigation + Speichern ─────────────────────── -->
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <div class="flex gap-2" x-show="wizard" x-cloak>
       <button type="button" x-show="schritt > 1" @click="gehe(schritt - 1)"
               class="btn btn--secondary">
