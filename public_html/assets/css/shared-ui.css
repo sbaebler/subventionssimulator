@@ -192,6 +192,19 @@ body {
   }
 }
 
+/* --- Banner (volle Breite Hinweisleiste, z. B. unter der Navigation) --- */
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid transparent;
+  font-size: 0.875rem;
+}
+.banner--warning { background: var(--color-warning-bg-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+
 /* --- Seitenkopf ---
    Titel + primäre Aktion; bricht auf schmalen Screens um statt zu
    überlappen. */
@@ -237,6 +250,16 @@ body {
 .btn--secondary:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.btn--secondary-danger {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+.btn--secondary-danger:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .btn--accent {
@@ -371,7 +394,15 @@ body {
 .alert--error   { background: var(--color-error-bg-soft);   border-color: var(--color-error-border);   color: var(--color-error-text); }
 .alert--info    { background: var(--color-primary-bg);      border-color: var(--color-primary-border); color: var(--color-info-text); }
 
-/* --- Tabellen --- */
+/* --- Tabellen ---
+   .table-scroll um <table class="table"> legen, damit breite Tabellen auf
+   schmalen Screens horizontal scrollen statt vom Card-overflow:hidden
+   abgeschnitten zu werden. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

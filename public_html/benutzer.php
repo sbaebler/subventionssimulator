@@ -141,6 +141,7 @@ require __DIR__ . '/partials/header.php';
 
 <!-- Liste aller Benutzer -->
 <section class="card p-0 overflow-hidden">
+  <div class="table-scroll">
   <table class="table">
     <thead>
       <tr>
@@ -181,6 +182,7 @@ require __DIR__ . '/partials/header.php';
       <?php endforeach; ?>
     </tbody>
   </table>
+  </div>
 </section>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
