@@ -235,21 +235,21 @@ require __DIR__ . '/partials/header.php';
 ?>
 
 <div class="mb-6">
-  <a href="/" class="text-sm text-gray-400 hover:text-blue-600">&larr; Zurück zur Übersicht</a>
+  <a href="/" class="text-sm link-muted">&larr; Zurück zur Übersicht</a>
   <h1 class="text-2xl font-semibold mt-2"><?= htmlspecialchars($pageTitle) ?></h1>
   <?php if (!$subv): ?>
-  <p class="text-sm text-gray-500 mt-1">Trage ein, was du weisst – alles ausser Name und Förderstelle kannst du jederzeit später ergänzen.</p>
+  <p class="text-sm text-muted mt-1">Trage ein, was du weisst – alles ausser Name und Förderstelle kannst du jederzeit später ergänzen.</p>
   <?php endif; ?>
 </div>
 
 <?php if ($erfolg): ?>
-<div class="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-6">
+<div class="alert alert--success mb-6">
   Förderprogramm wurde gespeichert.
 </div>
 <?php endif; ?>
 
 <?php if ($fehler): ?>
-<div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3 mb-6">
+<div class="alert alert--error mb-6">
   <ul class="list-disc list-inside">
     <?php foreach ($fehler as $f): ?>
     <li><?= htmlspecialchars($f) ?></li>
@@ -355,8 +355,8 @@ require __DIR__ . '/partials/header.php';
   <div x-show="wizard" class="flex items-center gap-2 mb-6 text-sm" x-cloak>
     <template x-for="(name, i) in ['Beitrag', 'Berechnung', 'Bedingungen', 'Termine & Beträge']" :key="i">
       <button type="button" @click="gehe(i+1)"
-              class="flex items-center gap-2 rounded-full px-3 py-1.5 border"
-              :class="schritt === i+1 ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-500 hover:border-blue-300'">
+              class="wizard-step"
+              :class="{ 'is-active': schritt === i+1 }">
         <span class="font-semibold" x-text="i+1"></span>
         <span x-text="name"></span>
       </button>
@@ -365,22 +365,22 @@ require __DIR__ . '/partials/header.php';
 
   <!-- ── Schritt 1: Was für ein Beitrag? ─────────────── -->
   <section id="schritt-1" x-show="!wizard || schritt === 1"
-           class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-    <h2 class="font-semibold text-gray-700 mb-1">Was für ein Beitrag ist es?</h2>
-    <p class="text-xs text-gray-400 mb-4">Nur Name und Förderstelle sind Pflicht – alles andere kannst du später ergänzen.</p>
+           class="card mb-6">
+    <h2 class="font-semibold mb-1">Was für ein Beitrag ist es?</h2>
+    <p class="text-xs text-subtle mb-4">Nur Name und Förderstelle sind Pflicht – alles andere kannst du später ergänzen.</p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
       <div class="md:col-span-2">
         <label class="block text-sm font-medium mb-1">Name des Förderprogramms *</label>
         <input type="text" name="bezeichnung" x-model="bezeichnung"
                placeholder="z.B. ZKS Ausbildungsbeitrag"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Förderstelle *</label>
         <input type="text" name="foerderstelle" x-model="foerderstelle" list="foerderstellen-liste"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+               class="input"
                placeholder="Wer zahlt den Beitrag aus?">
         <datalist id="foerderstellen-liste">
           <?php foreach ($foerderstellen as $fs): ?>
@@ -392,7 +392,7 @@ require __DIR__ . '/partials/header.php';
       <div>
         <label class="block text-sm font-medium mb-1">Kategorie</label>
         <select name="kategorie"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                class="input">
           <?php foreach (Subvention::KATEGORIEN as $k => $label): ?>
           <option value="<?= $k ?>" <?= ($subv['kategorie'] ?? '') === $k ? 'selected' : '' ?>>
             <?= $label ?>
@@ -405,25 +405,25 @@ require __DIR__ . '/partials/header.php';
         <label class="block text-sm font-medium mb-1">Worum geht es? (Beschreibung)</label>
         <textarea name="beschreibung" rows="2"
                   placeholder="In ein, zwei Sätzen: Wofür zahlt die Förderstelle diesen Beitrag?"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"><?= htmlspecialchars($subv['beschreibung'] ?? '') ?></textarea>
+                  class="input"><?= htmlspecialchars($subv['beschreibung'] ?? '') ?></textarea>
       </div>
     </div>
   </section>
 
   <!-- ── Schritt 2: Wie wird gerechnet? ──────────────── -->
   <section id="schritt-2" x-show="!wizard || schritt === 2"
-           class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-    <h2 class="font-semibold text-gray-700 mb-1">Wie wird der Beitrag berechnet?</h2>
-    <p class="text-xs text-gray-400 mb-4">Wähle das passende Muster. Danach erscheinen nur die Felder, die dafür nötig sind.</p>
+           class="card mb-6">
+    <h2 class="font-semibold mb-1">Wie wird der Beitrag berechnet?</h2>
+    <p class="text-xs text-subtle mb-4">Wähle das passende Muster. Danach erscheinen nur die Felder, die dafür nötig sind.</p>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
       <?php foreach ($typKarten as $typ => $karte): ?>
       <button type="button" @click="waehleTyp('<?= $typ ?>')"
-              class="text-left border rounded-xl p-4 transition"
-              :class="berechnungstyp === '<?= $typ ?>' ? 'border-blue-500 ring-2 ring-blue-200 bg-blue-50' : 'border-gray-200 hover:border-blue-300 bg-white'">
-        <p class="text-sm font-semibold text-gray-800"><?= htmlspecialchars($karte['titel']) ?></p>
-        <p class="text-xs text-gray-500 mt-1"><?= htmlspecialchars($karte['text']) ?></p>
-        <p class="text-xs text-blue-600 mt-1"><?= htmlspecialchars($karte['beispiel']) ?></p>
+              class="choice-card text-left"
+              :class="{ 'is-selected': berechnungstyp === '<?= $typ ?>' }">
+        <p class="text-sm font-semibold"><?= htmlspecialchars($karte['titel']) ?></p>
+        <p class="text-xs text-muted mt-1"><?= htmlspecialchars($karte['text']) ?></p>
+        <p class="text-xs text-primary mt-1"><?= htmlspecialchars($karte['beispiel']) ?></p>
       </button>
       <?php endforeach; ?>
     </div>
@@ -431,10 +431,10 @@ require __DIR__ . '/partials/header.php';
     <!-- Beispiel-Panel (Inline-Hilfe) -->
     <div class="mb-5">
       <button type="button" @click="beispielOffen = !beispielOffen"
-              class="text-sm text-blue-600 hover:text-blue-800">
+              class="link text-sm">
         <span x-text="beispielOffen ? '▾' : '▸'"></span> Beispiel ansehen: ZKS Ausbildungsbeitrag
       </button>
-      <div x-show="beispielOffen" x-cloak class="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-gray-700">
+      <div x-show="beispielOffen" x-cloak class="alert alert--info mt-2 p-4">
         <p class="mb-2"><strong>So wurde der ZKS Ausbildungsbeitrag erfasst:</strong></p>
         <ul class="space-y-1 list-disc list-inside">
           <li>Muster: <em>Pro Ausbildungseinheit</em> (Teilnehmer × Lektionen × Tage)</li>
@@ -447,7 +447,7 @@ require __DIR__ . '/partials/header.php';
     </div>
 
     <!-- Hinweis, solange kein Typ gewählt -->
-    <p x-show="berechnungstyp === ''" class="text-sm text-gray-400" x-cloak>
+    <p x-show="berechnungstyp === ''" class="text-sm text-subtle" x-cloak>
       Noch kein Muster gewählt. Wenn du unsicher bist, nimm «Weiss ich noch nicht» und beschreibe die Berechnung unten in Worten.
     </p>
 
@@ -457,94 +457,94 @@ require __DIR__ . '/partials/header.php';
              x-text="berechnungstyp === 'unbekannt' ? 'Beschreibe die Berechnung in eigenen Worten' : 'Berechnung in eigenen Worten (optional)'"></label>
       <textarea name="berechnungsgrundlage" rows="2"
                 placeholder="z.B. «CHF 2.80 pro Teilnehmer und Lektion, maximal 6 Lektionen pro Tag»"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"><?= htmlspecialchars($subv['berechnungsgrundlage'] ?? '') ?></textarea>
+                class="input"><?= htmlspecialchars($subv['berechnungsgrundlage'] ?? '') ?></textarea>
     </div>
 
     <!-- Betragsfelder je Typ -->
     <template x-for="(b, i) in betraege" :key="i">
       <div x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt'"
-           class="border border-gray-100 rounded-lg p-4 mb-3 bg-gray-50">
+           class="card card--muted mb-3">
         <input type="hidden" :name="'betraege['+i+'][bezeichnung]'" x-model="b.bezeichnung" x-show="i === 0">
         <div x-show="i > 0" class="flex justify-between items-center mb-3">
           <input type="text" :name="i > 0 ? 'betraege['+i+'][bezeichnung]' : null" x-model="b.bezeichnung"
                  placeholder="Name der Komponente"
-                 class="text-sm font-medium border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-300 rounded px-1 w-64">
-          <button type="button" @click="rmBetrag(i)" class="text-red-400 hover:text-red-600 text-xs">
+                 class="text-sm font-medium border-0 bg-transparent focus:outline-none focus:ring-1 rounded px-1 w-64">
+          <button type="button" @click="rmBetrag(i)" class="link--danger text-xs">
             Entfernen
           </button>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'pauschale' || berechnungstyp === 'jahresbeitrag'">
-            <label class="block text-xs text-gray-500 mb-1" x-text="berechnungstyp === 'additiv' ? 'Grundbetrag (CHF)' : 'Betrag (CHF)'">Grundbetrag (CHF)</label>
+            <label class="block text-xs text-muted mb-1" x-text="berechnungstyp === 'additiv' ? 'Grundbetrag (CHF)' : 'Betrag (CHF)'">Grundbetrag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][grundbetrag]'" x-model="b.grundbetrag"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'additiv'">
-            <label class="block text-xs text-gray-500 mb-1">Betrag pro Teilnehmer (CHF)</label>
+            <label class="block text-xs text-muted mb-1">Betrag pro Teilnehmer (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_teilnehmer]'" x-model="b.betrag_pro_teilnehmer"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'additiv'">
-            <label class="block text-xs text-gray-500 mb-1">Betrag pro Tag (CHF)</label>
+            <label class="block text-xs text-muted mb-1">Betrag pro Tag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_tag]'" x-model="b.betrag_pro_tag"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
 
           <!-- js_teilnehmertag -->
           <div x-show="berechnungstyp === 'js_teilnehmertag'">
-            <label class="block text-xs text-gray-500 mb-1">Satz mit Übernachtung (CHF pro Teilnehmer und Tag)</label>
+            <label class="block text-xs text-muted mb-1">Satz mit Übernachtung (CHF pro Teilnehmer und Tag)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][satz_mit_uebernachtung]'" x-model="b.satz_mit_uebernachtung"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'js_teilnehmertag'">
-            <label class="block text-xs text-gray-500 mb-1">Satz ohne Übernachtung (CHF pro Teilnehmer und Tag)</label>
+            <label class="block text-xs text-muted mb-1">Satz ohne Übernachtung (CHF pro Teilnehmer und Tag)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][satz_ohne_uebernachtung]'" x-model="b.satz_ohne_uebernachtung"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
 
           <!-- js_teilnehmerstunde -->
           <div x-show="berechnungstyp === 'js_teilnehmerstunde'">
-            <label class="block text-xs text-gray-500 mb-1">Betrag pro Teilnehmerstunde (CHF)</label>
+            <label class="block text-xs text-muted mb-1">Betrag pro Teilnehmerstunde (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_stunde]'" x-model="b.betrag_pro_stunde"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'js_teilnehmerstunde'">
-            <label class="block text-xs text-gray-500 mb-1">Max. Stunden pro Tag</label>
+            <label class="block text-xs text-muted mb-1">Max. Stunden pro Tag</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_stunden_pro_tag]'" x-model="b.max_stunden_pro_tag"
                    placeholder="leer = unbegrenzt"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
 
           <!-- zks_ausbildungseinheit / jahresbeitrag -->
           <div x-show="berechnungstyp === 'zks_ausbildungseinheit' || berechnungstyp === 'jahresbeitrag'">
-            <label class="block text-xs text-gray-500 mb-1" x-text="berechnungstyp === 'jahresbeitrag' ? 'Betrag pro Einheit (CHF)' : 'Satz pro Ausbildungseinheit (CHF)'">Satz pro Ausbildungseinheit (CHF)</label>
+            <label class="block text-xs text-muted mb-1" x-text="berechnungstyp === 'jahresbeitrag' ? 'Betrag pro Einheit (CHF)' : 'Satz pro Ausbildungseinheit (CHF)'">Satz pro Ausbildungseinheit (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_einheit]'" x-model="b.betrag_pro_einheit"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'zks_ausbildungseinheit'">
-            <label class="block text-xs text-gray-500 mb-1">Max. Lektionen pro Tag</label>
+            <label class="block text-xs text-muted mb-1">Max. Lektionen pro Tag</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_lektionen_pro_tag]'" x-model="b.max_lektionen_pro_tag"
                    placeholder="leer = unbegrenzt"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
 
           <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
-            <label class="block text-xs text-gray-500 mb-1">Max. Teilnehmer</label>
+            <label class="block text-xs text-muted mb-1">Max. Teilnehmer</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_teilnehmer]'" x-model="b.max_teilnehmer"
                    placeholder="leer = unbegrenzt"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
-            <label class="block text-xs text-gray-500 mb-1">Max. Tage</label>
+            <label class="block text-xs text-muted mb-1">Max. Tage</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_tage]'" x-model="b.max_tage"
                    placeholder="leer = unbegrenzt"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Max. Gesamtbetrag (CHF)</label>
+            <label class="block text-xs text-muted mb-1">Max. Gesamtbetrag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_max_gesamt]'" x-model="b.betrag_max_gesamt"
                    placeholder="leer = kein Limit"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm">
           </div>
         </div>
       </div>
@@ -552,47 +552,47 @@ require __DIR__ . '/partials/header.php';
 
     <!-- Live-Beispielrechnung -->
     <div x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt' && betraege.length > 0 && beispielText"
-         class="bg-green-50 border border-green-100 rounded-lg px-4 py-3 text-sm text-green-800" x-cloak>
+         class="alert alert--success" x-cloak>
       <span x-text="beispielText"></span>
-      <span class="text-xs text-green-600">(Probe-Rechnung mit deinen Sätzen)</span>
+      <span class="text-xs opacity-75">(Probe-Rechnung mit deinen Sätzen)</span>
     </div>
 
     <button type="button" x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt' && betraege.length >= 1"
             @click="addBetrag()"
-            class="mt-4 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-3 py-1" x-cloak>
+            class="btn btn--secondary btn--sm mt-4" x-cloak>
       + weitere Beitragskomponente
     </button>
   </section>
 
   <!-- ── Schritt 3: Bedingungen (optional) ───────────── -->
   <section id="schritt-3" x-show="!wizard || schritt === 3"
-           class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-    <h2 class="font-semibold text-gray-700 mb-1">Bedingungen <span class="text-xs font-normal text-gray-400">(optional)</span></h2>
-    <p class="text-xs text-gray-400 mb-4">Nur einschränken, wenn die Förderstelle es wirklich vorschreibt. Keine Auswahl = gilt für alle.</p>
+           class="card mb-6">
+    <h2 class="font-semibold mb-1">Bedingungen <span class="text-xs font-normal text-subtle">(optional)</span></h2>
+    <p class="text-xs text-subtle mb-4">Nur einschränken, wenn die Förderstelle es wirklich vorschreibt. Keine Auswahl = gilt für alle.</p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
         <label class="block text-sm font-medium mb-1">Voraussetzungen</label>
         <textarea name="voraussetzungen" rows="2"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  class="input"
                   placeholder="z.B. Mindestalter, Mitgliedschaft, Anerkennungen"><?= htmlspecialchars($subv['voraussetzungen'] ?? '') ?></textarea>
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Wer ist berechtigt?</label>
         <textarea name="berechtigte" rows="2"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  class="input"
                   placeholder="z.B. Vereine mit Sitz im Kanton Zürich"><?= htmlspecialchars($subv['berechtigte'] ?? '') ?></textarea>
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Einschränkungen / Vorgaben</label>
         <textarea name="einschraenkungen" rows="2"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  class="input"
                   placeholder="z.B. keine Wettkämpfe, max. 6 Lektionen pro Tag"><?= htmlspecialchars($subv['einschraenkungen'] ?? '') ?></textarea>
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Verlangte Unterlagen</label>
         <textarea name="verlangte_unterlagen" rows="2"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  class="input"
                   placeholder="z.B. Teilnehmerliste, Kursprogramm, Leiterausweise"><?= htmlspecialchars($subv['verlangte_unterlagen'] ?? '') ?></textarea>
       </div>
     </div>
@@ -602,31 +602,31 @@ require __DIR__ . '/partials/header.php';
       <p class="text-sm font-medium mb-2">Gilt der Beitrag nur für bestimmte Eventarten?</p>
       <div class="space-y-2">
         <?php foreach (Subvention::EVENTARTEN as $key => $label): ?>
-        <div class="border border-gray-100 rounded-lg bg-gray-50 px-3 py-2">
+        <div class="card card--muted px-3 py-2">
           <label class="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" :checked="hatEvent('<?= $key ?>')" @change="toggleEvent('<?= $key ?>')"
-                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-400">
+                   class="checkbox">
             <span>Nur für <?= $label ?></span>
             <button type="button" x-show="hatEvent('<?= $key ?>')" @click.prevent="detailsEvent['<?= $key ?>'] = !detailsEvent['<?= $key ?>']"
-                    class="text-xs text-blue-600 hover:text-blue-800 ml-2" x-cloak>Details</button>
+                    class="link text-xs ml-2" x-cloak>Details</button>
           </label>
           <template x-if="hatEvent('<?= $key ?>')">
             <div>
               <input type="hidden" :name="'eventarten['+eventIndex('<?= $key ?>')+'][eventart]'" value="<?= $key ?>">
               <div x-show="detailsEvent['<?= $key ?>']" class="flex flex-wrap gap-3 mt-2 pl-6" x-cloak>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Faktor auf den Betrag (1 = normal)</label>
+                  <label class="block text-xs text-muted mb-1">Faktor auf den Betrag (1 = normal)</label>
                   <input type="text" inputmode="decimal"
                          :name="'eventarten['+eventIndex('<?= $key ?>')+'][multiplikator]'"
                          x-model="eventarten[eventIndex('<?= $key ?>')].multiplikator"
-                         class="w-24 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                         class="input input--sm w-24">
                 </div>
                 <div class="flex-1 min-w-[200px]">
-                  <label class="block text-xs text-gray-500 mb-1">Bemerkung</label>
+                  <label class="block text-xs text-muted mb-1">Bemerkung</label>
                   <input type="text"
                          :name="'eventarten['+eventIndex('<?= $key ?>')+'][bemerkung]'"
                          x-model="eventarten[eventIndex('<?= $key ?>')].bemerkung"
-                         class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="Optional">
+                         class="input input--sm" placeholder="Optional">
                 </div>
               </div>
             </div>
@@ -641,31 +641,31 @@ require __DIR__ . '/partials/header.php';
       <p class="text-sm font-medium mb-2">Braucht es eine bestimmte Trainer-Anerkennung?</p>
       <div class="space-y-2">
         <?php foreach (Subvention::TRAINERARTEN as $key => $label): ?>
-        <div class="border border-gray-100 rounded-lg bg-gray-50 px-3 py-2">
+        <div class="card card--muted px-3 py-2">
           <label class="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" :checked="hatTrainer('<?= $key ?>')" @change="toggleTrainer('<?= $key ?>')"
-                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-400">
+                   class="checkbox">
             <span><?= $label ?></span>
             <button type="button" x-show="hatTrainer('<?= $key ?>')" @click.prevent="detailsTrainer['<?= $key ?>'] = !detailsTrainer['<?= $key ?>']"
-                    class="text-xs text-blue-600 hover:text-blue-800 ml-2" x-cloak>Details</button>
+                    class="link text-xs ml-2" x-cloak>Details</button>
           </label>
           <template x-if="hatTrainer('<?= $key ?>')">
             <div>
               <input type="hidden" :name="'trainerarten['+trainerIndex('<?= $key ?>')+'][trainerart]'" value="<?= $key ?>">
               <div x-show="detailsTrainer['<?= $key ?>']" class="flex flex-wrap gap-3 mt-2 pl-6" x-cloak>
                 <div>
-                  <label class="block text-xs text-gray-500 mb-1">Zusatzbetrag (CHF)</label>
+                  <label class="block text-xs text-muted mb-1">Zusatzbetrag (CHF)</label>
                   <input type="text" inputmode="decimal"
                          :name="'trainerarten['+trainerIndex('<?= $key ?>')+'][zusatzbetrag]'"
                          x-model="trainerarten[trainerIndex('<?= $key ?>')].zusatzbetrag"
-                         class="w-32 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                         class="input input--sm w-32">
                 </div>
                 <div class="flex-1 min-w-[200px]">
-                  <label class="block text-xs text-gray-500 mb-1">Bemerkung</label>
+                  <label class="block text-xs text-muted mb-1">Bemerkung</label>
                   <input type="text"
                          :name="'trainerarten['+trainerIndex('<?= $key ?>')+'][bemerkung]'"
                          x-model="trainerarten[trainerIndex('<?= $key ?>')].bemerkung"
-                         class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="Optional, z.B. J+S-Leiter erforderlich">
+                         class="input input--sm" placeholder="Optional, z.B. J+S-Leiter erforderlich">
                 </div>
               </div>
             </div>
@@ -678,36 +678,36 @@ require __DIR__ . '/partials/header.php';
 
   <!-- ── Schritt 4: Termine & Beträge (optional) ─────── -->
   <section id="schritt-4" x-show="!wizard || schritt === 4"
-           class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-    <h2 class="font-semibold text-gray-700 mb-1">Termine &amp; Beträge <span class="text-xs font-normal text-gray-400">(optional)</span></h2>
-    <p class="text-xs text-gray-400 mb-4">Fristen sind reine Hinweise. Erhaltene Beträge pro Jahr kannst du auch später unter «Beiträge &amp; Verwendung» erfassen.</p>
+           class="card mb-6">
+    <h2 class="font-semibold mb-1">Termine &amp; Beträge <span class="text-xs font-normal text-subtle">(optional)</span></h2>
+    <p class="text-xs text-subtle mb-4">Fristen sind reine Hinweise. Erhaltene Beträge pro Jahr kannst du auch später unter «Beiträge &amp; Verwendung» erfassen.</p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
         <label class="block text-sm font-medium mb-1">Eingabefrist bei der Förderstelle</label>
         <input type="date" name="antragsfrist"
                value="<?= htmlspecialchars($subv['antragsfrist'] ?? '') ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Link zur Förderstelle</label>
         <input type="url" name="link_extern"
                value="<?= htmlspecialchars($subv['link_extern'] ?? '') ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+               class="input"
                placeholder="https://...">
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Gültig von</label>
         <input type="date" name="gueltig_von"
                value="<?= htmlspecialchars($subv['gueltig_von'] ?? '') ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
       <div>
         <label class="block text-sm font-medium mb-1">Gültig bis</label>
         <input type="date" name="gueltig_bis"
                value="<?= htmlspecialchars($subv['gueltig_bis'] ?? '') ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
-        <p class="text-xs text-gray-400 mt-1">Leer lassen, wenn unbefristet.</p>
+               class="input">
+        <p class="text-xs text-subtle mt-1">Leer lassen, wenn unbefristet.</p>
       </div>
     </div>
 
@@ -716,34 +716,34 @@ require __DIR__ . '/partials/header.php';
       <div class="flex items-center justify-between mb-2">
         <p class="text-sm font-medium">Weitere Termine</p>
         <button type="button" @click="addFrist()"
-                class="text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-3 py-1">
+                class="btn btn--secondary btn--sm">
           + Termin
         </button>
       </div>
       <template x-for="(f, i) in fristen" :key="i">
-        <div class="border border-gray-100 rounded-lg p-3 mb-2 bg-gray-50 flex flex-wrap gap-3 items-end">
+        <div class="card card--muted p-3 mb-2 flex flex-wrap gap-3 items-end">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Bezeichnung</label>
+            <label class="block text-xs text-muted mb-1">Bezeichnung</label>
             <input type="text" :name="'fristen['+i+'][bezeichnung]'" x-model="f.bezeichnung"
                    placeholder="z.B. Anmeldung"
-                   class="w-40 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm w-40">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Datum</label>
+            <label class="block text-xs text-muted mb-1">Datum</label>
             <input type="date" :name="'fristen['+i+'][datum]'" x-model="f.datum"
-                   class="border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm w-40">
           </div>
           <div class="flex-1">
-            <label class="block text-xs text-gray-500 mb-1">Hinweis</label>
+            <label class="block text-xs text-muted mb-1">Hinweis</label>
             <input type="text" :name="'fristen['+i+'][hinweis]'" x-model="f.hinweis"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                   class="input input--sm"
                    placeholder="Optional, z.B. via ZKS-Extranet">
           </div>
           <button type="button" @click="rmFrist(i)"
-                  class="text-red-400 hover:text-red-600 text-xs pb-2">Entfernen</button>
+                  class="link--danger text-xs pb-2">Entfernen</button>
         </div>
       </template>
-      <p x-show="fristen.length === 0" class="text-sm text-gray-400">Kein weiterer Termin erfasst.</p>
+      <p x-show="fristen.length === 0" class="text-sm text-subtle">Kein weiterer Termin erfasst.</p>
     </div>
 
     <!-- Erhaltene Beträge pro Jahr -->
@@ -751,40 +751,40 @@ require __DIR__ . '/partials/header.php';
       <div class="flex items-center justify-between mb-2">
         <p class="text-sm font-medium">Erhaltene Beträge pro Jahr</p>
         <button type="button" @click="addHistorie()"
-                class="text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded px-3 py-1">
+                class="btn btn--secondary btn--sm">
           + Jahr
         </button>
       </div>
-      <p class="text-xs text-gray-400 mb-2">Was wurde in einem Jahr tatsächlich erhalten oder erwartet? Basis für die Verteilung unter «Beiträge &amp; Verwendung».</p>
+      <p class="text-xs text-subtle mb-2">Was wurde in einem Jahr tatsächlich erhalten oder erwartet? Basis für die Verteilung unter «Beiträge &amp; Verwendung».</p>
       <template x-for="(h, i) in historie" :key="i">
-        <div class="border border-gray-100 rounded-lg p-3 mb-2 bg-gray-50 flex flex-wrap gap-3 items-end">
+        <div class="card card--muted p-3 mb-2 flex flex-wrap gap-3 items-end">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Jahr</label>
+            <label class="block text-xs text-muted mb-1">Jahr</label>
             <input type="number" step="1" min="2000" max="2100" :name="'historie['+i+'][jahr]'" x-model="h.jahr"
-                   class="w-24 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm w-24">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Betrag (CHF)</label>
+            <label class="block text-xs text-muted mb-1">Betrag (CHF)</label>
             <input type="text" inputmode="decimal" :name="'historie['+i+'][betrag]'" x-model="h.betrag"
-                   class="w-32 border border-gray-300 rounded px-2 py-1.5 text-sm">
+                   class="input input--sm w-32">
           </div>
           <div class="flex-1">
-            <label class="block text-xs text-gray-500 mb-1">Bemerkung</label>
+            <label class="block text-xs text-muted mb-1">Bemerkung</label>
             <input type="text" :name="'historie['+i+'][bemerkung]'" x-model="h.bemerkung"
-                   class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm"
+                   class="input input--sm"
                    placeholder="Optional, z.B. «ca.» oder «definitiv»">
           </div>
           <button type="button" @click="rmHistorie(i)"
-                  class="text-red-400 hover:text-red-600 text-xs pb-2">Entfernen</button>
+                  class="link--danger text-xs pb-2">Entfernen</button>
         </div>
       </template>
-      <p x-show="historie.length === 0" class="text-sm text-gray-400">Noch keine Beträge erfasst.</p>
+      <p x-show="historie.length === 0" class="text-sm text-subtle">Noch keine Beträge erfasst.</p>
     </div>
 
     <div class="flex items-center gap-2">
       <input type="checkbox" name="aktiv" id="aktiv" value="1"
              <?= ($subv['aktiv'] ?? 1) ? 'checked' : '' ?>
-             class="rounded border-gray-300 text-blue-600 focus:ring-blue-400">
+             class="checkbox">
       <label for="aktiv" class="text-sm font-medium">Aktiv (in Übersicht und Simulator sichtbar)</label>
     </div>
   </section>
@@ -793,19 +793,18 @@ require __DIR__ . '/partials/header.php';
   <div class="flex items-center justify-between gap-3">
     <div class="flex gap-2" x-show="wizard" x-cloak>
       <button type="button" x-show="schritt > 1" @click="gehe(schritt - 1)"
-              class="text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg px-4 py-2">
+              class="btn btn--secondary">
         &larr; Zurück
       </button>
       <button type="button" x-show="schritt < 4" @click="gehe(schritt + 1)"
-              class="text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg px-4 py-2">
+              class="btn btn--primary">
         Weiter &rarr;
       </button>
     </div>
     <div class="flex items-center gap-3 ml-auto">
-      <span x-show="!speicherbar" class="text-xs text-gray-400" x-cloak>Zum Speichern fehlen noch Name und Förderstelle (Schritt 1).</span>
-      <a href="/" class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2">Abbrechen</a>
-      <button type="submit" :disabled="!speicherbar"
-              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium text-sm px-6 py-2 rounded-lg">
+      <span x-show="!speicherbar" class="text-xs text-subtle" x-cloak>Zum Speichern fehlen noch Name und Förderstelle (Schritt 1).</span>
+      <a href="/" class="text-sm link-muted px-4 py-2">Abbrechen</a>
+      <button type="submit" :disabled="!speicherbar" class="btn btn--primary">
         Speichern
       </button>
     </div>

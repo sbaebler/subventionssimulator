@@ -12,6 +12,8 @@ require_once __DIR__ . '/db.php';
 //
 // STATUS/STATUS_BADGE entsprechen bewusst den Werten im ClassManagerTool
 // (includes/Event.php dort), damit dieselben Labels und Farben erscheinen.
+// STATUS_BADGE liefert Badge-Modifier aus dem ZSF-UI-Kit (shared-ui.css),
+// im Markup zusammen mit der Basisklasse "badge" verwenden.
 // ---------------------------------------------------------------------
 
 class Event {
@@ -24,10 +26,10 @@ class Event {
     ];
 
     public const STATUS_BADGE = [
-        'provisorisch_geplant' => 'bg-amber-100 text-amber-700',
-        'geplant'              => 'bg-blue-100 text-blue-700',
-        'durchgefuehrt'        => 'bg-green-100 text-green-700',
-        'abgeschlossen'        => 'bg-gray-100 text-gray-500',
+        'provisorisch_geplant' => 'badge--warning',
+        'geplant'              => 'badge--info',
+        'durchgefuehrt'        => 'badge--success',
+        'abgeschlossen'        => 'badge--neutral',
     ];
 
     // Alle Events über alle Klassen, inkl. Klassenname und Anzahl der

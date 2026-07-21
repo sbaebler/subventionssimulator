@@ -78,13 +78,13 @@ require __DIR__ . '/partials/header.php';
 </div>
 
 <?php if ($erfolg): ?>
-<div class="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-6">
+<div class="alert alert--success mb-6">
   Benutzer wurde gespeichert.
 </div>
 <?php endif; ?>
 
 <?php if ($fehler): ?>
-<div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3 mb-6">
+<div class="alert alert--error mb-6">
   <ul class="list-disc list-inside">
     <?php foreach ($fehler as $f): ?>
     <li><?= htmlspecialchars($f) ?></li>
@@ -94,8 +94,8 @@ require __DIR__ . '/partials/header.php';
 <?php endif; ?>
 
 <!-- Formular: Benutzer anlegen / bearbeiten -->
-<section class="bg-white border border-gray-200 rounded-xl p-6 mb-8">
-  <h2 class="font-semibold text-gray-700 mb-4">
+<section class="card mb-8">
+  <h2 class="font-semibold mb-4">
     <?= $benutzer_edit ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen' ?>
   </h2>
   <form method="post" action="/benutzer.php" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -106,7 +106,7 @@ require __DIR__ . '/partials/header.php';
       <label class="block text-sm font-medium mb-1">Benutzername *</label>
       <input type="text" name="benutzername" required
              value="<?= htmlspecialchars($benutzer_edit['benutzername'] ?? '') ?>"
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+             class="input"
              placeholder="z.B. jsmith">
     </div>
 
@@ -114,7 +114,7 @@ require __DIR__ . '/partials/header.php';
       <label class="block text-sm font-medium mb-1">Anzeigename *</label>
       <input type="text" name="anzeigename" required
              value="<?= htmlspecialchars($benutzer_edit['anzeigename'] ?? '') ?>"
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+             class="input"
              placeholder="z.B. Jana Smith">
     </div>
 
@@ -123,16 +123,16 @@ require __DIR__ . '/partials/header.php';
         Passwort <?= $benutzer_edit ? '(leer lassen = unverändert)' : '*' ?>
       </label>
       <input type="password" name="passwort" <?= $benutzer_edit ? '' : 'required' ?>
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+             class="input"
              autocomplete="new-password">
     </div>
 
     <div class="md:col-span-2 flex gap-3 justify-end">
       <?php if ($benutzer_edit): ?>
-      <a href="/benutzer.php" class="text-sm text-gray-500 hover:text-gray-700 px-4 py-2">Abbrechen</a>
+      <a href="/benutzer.php" class="text-sm link-muted px-4 py-2">Abbrechen</a>
       <?php endif; ?>
       <button type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-2 rounded-lg">
+              class="btn btn--primary">
         <?= $benutzer_edit ? 'Speichern' : 'Benutzer anlegen' ?>
       </button>
     </div>
@@ -140,41 +140,39 @@ require __DIR__ . '/partials/header.php';
 </section>
 
 <!-- Liste aller Benutzer -->
-<section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-gray-50 border-b border-gray-200">
+<section class="card p-0 overflow-hidden">
+  <table class="table">
+    <thead>
       <tr>
-        <th class="text-left px-4 py-3 font-medium text-gray-600">Benutzername</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-600">Anzeigename</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
-        <th class="text-left px-4 py-3 font-medium text-gray-600">Erfasst am</th>
-        <th class="px-4 py-3"></th>
+        <th>Benutzername</th>
+        <th>Anzeigename</th>
+        <th>Status</th>
+        <th>Erfasst am</th>
+        <th></th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-100">
+    <tbody>
       <?php foreach ($alle_benutzer as $b): ?>
       <tr class="<?= $b['aktiv'] ? '' : 'opacity-50' ?>">
-        <td class="px-4 py-3 font-mono text-gray-700"><?= htmlspecialchars($b['benutzername']) ?></td>
-        <td class="px-4 py-3 text-gray-800"><?= htmlspecialchars($b['anzeigename']) ?></td>
-        <td class="px-4 py-3">
+        <td class="font-mono"><?= htmlspecialchars($b['benutzername']) ?></td>
+        <td><?= htmlspecialchars($b['anzeigename']) ?></td>
+        <td>
           <?php if ($b['aktiv']): ?>
-            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Aktiv</span>
+            <span class="badge badge--success">Aktiv</span>
           <?php else: ?>
-            <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Inaktiv</span>
+            <span class="badge badge--neutral">Inaktiv</span>
           <?php endif; ?>
         </td>
-        <td class="px-4 py-3 text-gray-500"><?= date('d.m.Y', strtotime($b['erstellt_am'])) ?></td>
-        <td class="px-4 py-3 flex gap-2 justify-end">
-          <a href="/benutzer.php?id=<?= $b['id'] ?>"
-             class="text-xs border border-gray-200 rounded px-2 py-1 hover:text-blue-600">
+        <td class="text-muted"><?= date('d.m.Y', strtotime($b['erstellt_am'])) ?></td>
+        <td class="flex gap-2 justify-end">
+          <a href="/benutzer.php?id=<?= $b['id'] ?>" class="btn btn--secondary btn--sm text-xs">
             Bearbeiten
           </a>
           <form method="post" action="/benutzer.php" class="inline">
             <input type="hidden" name="aktion" value="toggle_aktiv">
             <input type="hidden" name="id"    value="<?= $b['id'] ?>">
             <input type="hidden" name="aktiv" value="<?= $b['aktiv'] ? 0 : 1 ?>">
-            <button type="submit"
-                    class="text-xs border border-gray-200 rounded px-2 py-1 hover:text-orange-600">
+            <button type="submit" class="btn btn--secondary btn--sm text-xs">
               <?= $b['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?>
             </button>
           </form>

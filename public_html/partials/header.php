@@ -11,40 +11,38 @@ auth_erforderlich();
   <title><?= htmlspecialchars($pageTitle ?? APP_NAME) ?></title>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/assets/css/app.css">
-  <style>[x-cloak]{display:none !important}</style>
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/shared-ui.css">
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen">
+<body class="min-h-screen">
 
-<header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
-  <a href="/" class="text-lg font-semibold text-blue-700 hover:text-blue-900">
-    <?= APP_NAME ?>
-  </a>
-  <span class="text-gray-300">|</span>
-  <nav class="flex items-center gap-4 text-sm">
-    <a href="/"               class="hover:text-blue-600">Förderprogramme</a>
-    <a href="/simulieren.php" class="hover:text-blue-600">Simulator</a>
-    <a href="/verwendung.php" class="hover:text-blue-600">Beiträge &amp; Verwendung</a>
+<header class="navbar">
+  <a href="/" class="navbar__brand"><?= APP_NAME ?></a>
+  <span class="text-subtle">|</span>
+  <nav class="flex items-center gap-4">
+    <a href="/"               class="navbar__link">Förderprogramme</a>
+    <a href="/simulieren.php" class="navbar__link">Simulator</a>
+    <a href="/verwendung.php" class="navbar__link">Beiträge &amp; Verwendung</a>
     <div class="relative" x-data="{ offen: false }" @click.outside="offen = false">
       <button type="button" @click="offen = !offen"
-              class="hover:text-blue-600 flex items-center gap-1">
+              class="navbar__link flex items-center gap-1 cursor-pointer">
         Mehr
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
       <div x-show="offen" x-cloak
-           class="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-20">
-        <a href="/jahresbeitraege.php" class="block px-4 py-2 hover:bg-gray-50">Jahresbeiträge</a>
-        <a href="/events.php"          class="block px-4 py-2 hover:bg-gray-50">Events</a>
-        <a href="/anleitung.php"       class="block px-4 py-2 hover:bg-gray-50">Anleitung</a>
-        <a href="/docs/fachlogik.html" class="block px-4 py-2 hover:bg-gray-50" target="_blank">Fachlogik</a>
-        <a href="/releases.php"        class="block px-4 py-2 hover:bg-gray-50">Neuigkeiten</a>
-        <a href="/benutzer.php"        class="block px-4 py-2 hover:bg-gray-50">Benutzer</a>
+           class="menu absolute left-0 top-full mt-2 w-48 z-20">
+        <a href="/jahresbeitraege.php" class="menu__item">Jahresbeiträge</a>
+        <a href="/events.php"          class="menu__item">Events</a>
+        <a href="/anleitung.php"       class="menu__item">Anleitung</a>
+        <a href="/docs/fachlogik.html" class="menu__item" target="_blank">Fachlogik</a>
+        <a href="/releases.php"        class="menu__item">Neuigkeiten</a>
+        <a href="/benutzer.php"        class="menu__item">Benutzer</a>
       </div>
     </div>
   </nav>
   <div class="ml-auto flex items-center gap-3">
-    <span class="text-sm text-gray-400"><?= htmlspecialchars(auth_anzeigename()) ?></span>
-    <a href="/logout.php" class="text-sm text-gray-400 hover:text-red-600">Abmelden</a>
+    <span class="text-sm text-subtle"><?= htmlspecialchars(auth_anzeigename()) ?></span>
+    <a href="/logout.php" class="text-sm link--danger">Abmelden</a>
   </div>
 </header>
 

@@ -5,24 +5,24 @@ require __DIR__ . '/partials/header.php';
 
 <div class="mb-8">
   <h1 class="text-2xl font-semibold">Neuigkeiten</h1>
-  <p class="text-sm text-gray-500 mt-1">Was sich im Subventionssimulator geändert hat</p>
+  <p class="text-sm text-muted mt-1">Was sich im Subventionssimulator geändert hat</p>
 </div>
 
 <!-- Version 4 -->
-<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+<section class="card mb-6">
   <div class="flex items-center gap-3 mb-1">
-    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Version 4</span>
-    <span class="text-xs text-gray-400">18.07.2026</span>
+    <span class="badge badge--info">Version 4</span>
+    <span class="text-xs text-subtle">18.07.2026</span>
   </div>
-  <h2 class="font-semibold text-gray-800 mb-3">Erfassen ohne Anleitung: neue Nutzerführung</h2>
+  <h2 class="font-semibold mb-3">Erfassen ohne Anleitung: neue Nutzerführung</h2>
 
-  <p class="text-sm text-gray-600 leading-relaxed mb-4">
+  <p class="text-sm text-muted leading-relaxed mb-4">
     Die Erfassung wurde von Grund auf vereinfacht: Wer weiss, wie ein Förderbeitrag funktioniert,
     kann dieses Wissen jetzt <strong>ohne Anleitung</strong> eintragen. In den Masken heisst das
     Stammobjekt neu <strong>«Förderprogramm»</strong>.
   </p>
 
-  <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
+  <ul class="text-sm text-muted space-y-2 list-disc list-inside mb-4">
     <li><strong>Geführte Erfassung in vier Schritten:</strong> Beitrag → Berechnung → Bedingungen →
         Termine &amp; Beträge. Nur noch <strong>Name und Förderstelle sind Pflicht</strong> – alles
         andere kann später ergänzt werden.</li>
@@ -37,21 +37,21 @@ require __DIR__ . '/partials/header.php';
         unter «Beiträge &amp; Verwendung» eingetragen.</li>
   </ul>
 
-  <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-    <p class="font-medium text-gray-700 mb-1">Behobener Fehler</p>
+  <div class="card--muted text-sm text-muted">
+    <p class="font-medium mb-1">Behobener Fehler</p>
     <p>Beim Speichern gingen die typspezifischen Beitragssätze (z. B. J+S-Satz mit/ohne Übernachtung,
     Satz pro Ausbildungseinheit) verloren. Diese Werte werden jetzt korrekt gespeichert.</p>
   </div>
 </section>
 
 <!-- Version 3 -->
-<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+<section class="card mb-6">
   <div class="flex items-center gap-3 mb-1">
-    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Version 3</span>
-    <span class="text-xs text-gray-400">04.07.2026</span>
+    <span class="badge badge--info">Version 3</span>
+    <span class="text-xs text-subtle">04.07.2026</span>
   </div>
-  <h2 class="font-semibold text-gray-800 mb-3">Neue Berechnungsarten, Jahresbeiträge und Verwendung</h2>
-  <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside">
+  <h2 class="font-semibold mb-3">Neue Berechnungsarten, Jahresbeiträge und Verwendung</h2>
+  <ul class="text-sm text-muted space-y-2 list-disc list-inside">
     <li><strong>Sechs Berechnungsarten</strong> statt einer Einheitsformel: additiv, J+S Teilnehmertag
         (mit/ohne Übernachtung), J+S Teilnehmerstunde, ZKS Ausbildungseinheit, Pauschale und
         Jahresbeitrag nach Kennzahl.</li>
@@ -65,22 +65,22 @@ require __DIR__ . '/partials/header.php';
 </section>
 
 <!-- Version 2 -->
-<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+<section class="card mb-6">
   <div class="flex items-center gap-3 mb-1">
-    <span class="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Version 2</span>
-    <span class="text-xs text-gray-400">19.06.2026</span>
+    <span class="badge badge--info">Version 2</span>
+    <span class="text-xs text-subtle">19.06.2026</span>
   </div>
-  <h2 class="font-semibold text-gray-800 mb-3">Events mit Subventionen verknüpfen</h2>
+  <h2 class="font-semibold mb-3">Events mit Subventionen verknüpfen</h2>
 
-  <p class="text-sm text-gray-600 leading-relaxed mb-4">
+  <p class="text-sm text-muted leading-relaxed mb-4">
     Der Subventionssimulator ist jetzt mit dem <strong>Class Manager Tool</strong> verbunden.
     Alle Anlässe (Events), die ein Class Manager dort eröffnet – zum Beispiel ein Trainingslager
     oder eine Regatta – erscheinen neu automatisch auch hier. Du musst sie nirgends doppelt erfassen.
     Für jedes Event kannst du festlegen, <strong>welche Subventionen dafür in Frage kommen</strong>.
   </p>
 
-  <p class="font-medium text-gray-700 text-sm mb-2">So funktioniert es</p>
-  <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside mb-4">
+  <p class="font-medium text-sm mb-2">So funktioniert es</p>
+  <ol class="text-sm text-muted space-y-2 list-decimal list-inside mb-4">
     <li><strong>Events ansehen:</strong> Über den Navigationspunkt «Events» siehst du alle Anlässe
         mit Datum, Ort, Segelklasse und Status.</li>
     <li><strong>Subventionen zuteilen:</strong> Klicke bei einem Event auf «Subventionen zuteilen»,
@@ -89,8 +89,8 @@ require __DIR__ . '/partials/header.php';
         Subventionen ihm bereits zugeordnet sind.</li>
   </ol>
 
-  <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-    <p class="font-medium text-gray-700 mb-1">Gut zu wissen</p>
+  <div class="card--muted text-sm text-muted">
+    <p class="font-medium mb-1">Gut zu wissen</p>
     <ul class="space-y-1 list-disc list-inside">
       <li>Events werden weiterhin im Class Manager Tool erstellt und bearbeitet – hier werden sie
           nur angezeigt und mit Subventionen verknüpft.</li>
@@ -101,13 +101,13 @@ require __DIR__ . '/partials/header.php';
 </section>
 
 <!-- Version 1 -->
-<section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+<section class="card mb-6">
   <div class="flex items-center gap-3 mb-1">
-    <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded">Version 1</span>
-    <span class="text-xs text-gray-400">Erste Version</span>
+    <span class="badge badge--neutral">Version 1</span>
+    <span class="text-xs text-subtle">Erste Version</span>
   </div>
-  <h2 class="font-semibold text-gray-800 mb-3">Grundfunktionen</h2>
-  <ul class="text-sm text-gray-600 space-y-1 list-disc list-inside">
+  <h2 class="font-semibold mb-3">Grundfunktionen</h2>
+  <ul class="text-sm text-muted space-y-1 list-disc list-inside">
     <li>Erfassen und Verwalten von Subventionstöpfen (J+S, NWF, kantonal)</li>
     <li>Simulator zur Berechnung von Subventionsbeträgen</li>
     <li>Benutzerverwaltung mit Login</li>

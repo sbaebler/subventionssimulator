@@ -75,7 +75,7 @@ VALUES (
 -- ID = 3
 
 -- Nur Grundbetrag + pro Tag
-INSERT INTO subvention_betraege (subvention_id, bezeichnung, grundbetrag, betrag_pro_teilnehmer, betrag_pro_tag, betrag_max_gesamt)
+INSERT INTO subvention_betraege (subvention_id, bezeichnung, grundbetrag, betrag_pro_teilnehmer, betrag_pro_tag, max_tage, betrag_max_gesamt)
 VALUES (3, 'Vereinspauschale', 100.00, 0.00, 20.00, 0, 800.00);
 
 -- Alle Trainerarten akzeptiert

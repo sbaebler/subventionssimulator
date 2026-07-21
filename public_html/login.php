@@ -30,17 +30,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anmelden – <?= defined('APP_NAME') ? htmlspecialchars(APP_NAME) : 'Subventionssimulator' ?></title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/shared-ui.css">
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex items-center justify-center">
+<body class="min-h-screen flex items-center justify-center">
 
-<div class="w-full max-w-sm bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+<div class="card w-full max-w-sm shadow-sm p-8">
   <h1 class="text-xl font-semibold text-center mb-1">
     <?= defined('APP_NAME') ? htmlspecialchars(APP_NAME) : 'Subventionssimulator' ?>
   </h1>
-  <p class="text-sm text-gray-500 text-center mb-6">Bitte melde dich an</p>
+  <p class="text-sm text-muted text-center mb-6">Bitte melde dich an</p>
 
   <?php if ($fehler): ?>
-  <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-4">
+  <div class="alert alert--error mb-4">
     Benutzername oder Passwort falsch.
   </div>
   <?php endif; ?>
@@ -50,15 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <label for="benutzer" class="block text-sm font-medium mb-1">Benutzername</label>
       <input type="text" id="benutzer" name="benutzer" required autofocus
              value="<?= htmlspecialchars($_POST['benutzer'] ?? '') ?>"
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+             class="input">
     </div>
     <div class="mb-6">
       <label for="passwort" class="block text-sm font-medium mb-1">Passwort</label>
       <input type="password" id="passwort" name="passwort" required
-             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+             class="input">
     </div>
-    <button type="submit"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2 rounded-lg">
+    <button type="submit" class="btn btn--primary w-full">
       Anmelden
     </button>
   </form>

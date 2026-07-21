@@ -151,21 +151,21 @@ require __DIR__ . '/partials/header.php';
 
 <div class="mb-6">
   <h1 class="text-2xl font-semibold">Simulator</h1>
-  <p class="text-sm text-gray-500 mt-1">Berechne deine Förderbeiträge für ein konkretes Event</p>
+  <p class="text-sm text-muted mt-1">Berechne deine Förderbeiträge für ein konkretes Event</p>
 </div>
 
 <!-- ── Eingabeformular ─────────────────────────────────────────── -->
 <form method="post" action="/simulieren.php">
   <input type="hidden" name="format" value="">
-  <section class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-    <h2 class="font-semibold text-gray-700 mb-4">Event-Parameter</h2>
+  <section class="card mb-6">
+    <h2 class="font-semibold mb-4">Event-Parameter</h2>
     <div class="grid grid-cols-1 gap-4 mb-4">
       <div>
         <label class="block text-sm font-medium mb-1">Anlassname</label>
         <input type="text" name="anlassname" required maxlength="200"
                value="<?= htmlspecialchars($params['anlassname']) ?>"
                placeholder="z.B. Sommerlager Zürichsee 2025"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -174,20 +174,20 @@ require __DIR__ . '/partials/header.php';
         <label class="block text-sm font-medium mb-1">Teilnehmende</label>
         <input type="number" name="anzahl_teilnehmer" min="1" max="999" required
                value="<?= (int)$params['anzahl_teilnehmer'] ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Tage</label>
         <input type="number" name="anzahl_tage" min="1" max="365" required
                value="<?= (int)$params['anzahl_tage'] ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+               class="input">
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Trainerart</label>
         <select name="trainerart"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                class="input">
           <?php foreach (Subvention::TRAINERARTEN as $key => $label): ?>
           <option value="<?= $key ?>" <?= $params['trainerart'] === $key ? 'selected' : '' ?>>
             <?= htmlspecialchars($label) ?>
@@ -199,7 +199,7 @@ require __DIR__ . '/partials/header.php';
       <div>
         <label class="block text-sm font-medium mb-1">Eventart</label>
         <select name="eventart"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                class="input">
           <?php foreach (Subvention::EVENTARTEN as $key => $label): ?>
           <option value="<?= $key ?>" <?= $params['eventart'] === $key ? 'selected' : '' ?>>
             <?= htmlspecialchars($label) ?>
@@ -216,7 +216,7 @@ require __DIR__ . '/partials/header.php';
       <div class="flex items-center gap-2 pt-6">
         <input type="checkbox" name="uebernachtung" id="uebernachtung" value="1"
                <?= $params['uebernachtung'] ? 'checked' : '' ?>
-               class="rounded border-gray-300 text-blue-600 focus:ring-blue-400">
+               class="checkbox">
         <label for="uebernachtung" class="text-sm font-medium">Mit Übernachtung</label>
       </div>
       <?php endif; ?>
@@ -225,8 +225,8 @@ require __DIR__ . '/partials/header.php';
         <label class="block text-sm font-medium mb-1">Stunden / Tag</label>
         <input type="number" name="stunden_pro_tag" min="0" max="24"
                value="<?= (int)$params['stunden_pro_tag'] ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
-        <p class="text-xs text-gray-400 mt-1">Für J+S Training (Teilnehmerstunden)</p>
+               class="input">
+        <p class="text-xs text-subtle mt-1">Für J+S Training (Teilnehmerstunden)</p>
       </div>
       <?php endif; ?>
       <?php if ($brauchtLektionen): ?>
@@ -234,16 +234,15 @@ require __DIR__ . '/partials/header.php';
         <label class="block text-sm font-medium mb-1">Lektionen / Tag</label>
         <input type="number" name="lektionen_pro_tag" min="0" max="24"
                value="<?= (int)$params['lektionen_pro_tag'] ?>"
-               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
-        <p class="text-xs text-gray-400 mt-1">Für ZKS Ausbildungseinheiten</p>
+               class="input">
+        <p class="text-xs text-subtle mt-1">Für ZKS Ausbildungseinheiten</p>
       </div>
       <?php endif; ?>
     </div>
     <?php endif; ?>
 
     <div class="mt-4 flex justify-end">
-      <button type="submit"
-              class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-6 py-2 rounded-lg">
+      <button type="submit" class="btn btn--primary">
         Berechnen
       </button>
     </div>
@@ -251,7 +250,7 @@ require __DIR__ . '/partials/header.php';
 </form>
 
 <?php if ($fehler): ?>
-<div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-4 py-3 mb-6">
+<div class="alert alert--error mb-6">
   <?= htmlspecialchars($fehler) ?>
 </div>
 <?php endif; ?>
@@ -262,23 +261,23 @@ require __DIR__ . '/partials/header.php';
 <?php
 $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']));
 ?>
-<div class="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-6">
+<div class="alert alert--info px-5 py-4 mb-6">
   <div class="flex flex-wrap gap-6 items-center">
     <?php if ($params['anlassname'] !== ''): ?>
     <div class="w-full mb-1">
-      <p class="text-xs text-blue-500 uppercase tracking-wide font-medium">Anlass</p>
-      <p class="text-lg font-semibold text-blue-900"><?= htmlspecialchars($params['anlassname']) ?></p>
+      <p class="text-xs uppercase tracking-wide font-medium opacity-70">Anlass</p>
+      <p class="text-lg font-semibold"><?= htmlspecialchars($params['anlassname']) ?></p>
     </div>
     <?php endif; ?>
     <div>
-      <p class="text-xs text-blue-500 uppercase tracking-wide font-medium">Förderberechtigt</p>
-      <p class="text-2xl font-bold text-blue-700"><?= $anzahlBerechtigt ?> von <?= count($ergebnisse) ?></p>
+      <p class="text-xs uppercase tracking-wide font-medium opacity-70">Förderberechtigt</p>
+      <p class="text-2xl font-bold"><?= $anzahlBerechtigt ?> von <?= count($ergebnisse) ?></p>
     </div>
     <div>
-      <p class="text-xs text-blue-500 uppercase tracking-wide font-medium">Möglicher Gesamtbetrag</p>
-      <p class="text-2xl font-bold text-blue-700">CHF <?= number_format($totalBerechtigt, 2, '.', "'") ?></p>
+      <p class="text-xs uppercase tracking-wide font-medium opacity-70">Möglicher Gesamtbetrag</p>
+      <p class="text-2xl font-bold">CHF <?= number_format($totalBerechtigt, 2, '.', "'") ?></p>
     </div>
-    <div class="text-xs text-blue-400 ml-auto">
+    <div class="text-xs opacity-60 ml-auto">
       <?= (int)$params['anzahl_teilnehmer'] ?> TN &nbsp;·&nbsp;
       <?= (int)$params['anzahl_tage'] ?> Tage &nbsp;·&nbsp;
       <?= htmlspecialchars(Subvention::TRAINERARTEN[$params['trainerart']]) ?> &nbsp;·&nbsp;
@@ -292,19 +291,19 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
 <?php foreach ($ergebnisse as $r): ?>
 
   <?php if ($r['berechtigt']): ?>
-  <div class="bg-white border border-green-200 rounded-xl p-5" x-data="{ offen: false }">
+  <div class="card card--success" x-data="{ offen: false }">
     <div class="flex items-start justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-0.5 rounded">Förderberechtigt</span>
+          <span class="badge badge--success">Förderberechtigt</span>
         </div>
-        <h3 class="font-semibold text-gray-900"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
-        <p class="text-sm text-gray-500"><?= htmlspecialchars($r['foerderstelle']) ?></p>
+        <h3 class="font-semibold"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
+        <p class="text-sm text-muted"><?= htmlspecialchars($r['foerderstelle']) ?></p>
       </div>
       <div class="text-right shrink-0">
-        <p class="text-2xl font-bold text-green-700">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></p>
+        <p class="text-2xl font-bold text-success">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></p>
         <button type="button" @click="offen = !offen"
-                class="text-xs text-blue-600 hover:underline mt-1">
+                class="link text-xs mt-1 cursor-pointer">
           <span x-text="offen ? 'Aufschlüsselung verbergen' : 'Aufschlüsselung zeigen'">Aufschlüsselung zeigen</span>
         </button>
       </div>
@@ -314,7 +313,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
       <table class="w-full text-sm">
         <tbody class="divide-y divide-gray-50">
           <?php foreach ($r['aufschluesselung'] as $zeile): ?>
-          <tr class="<?= $zeile['wert'] == 0 ? 'text-gray-300' : 'text-gray-600' ?>">
+          <tr class="<?= $zeile['wert'] == 0 ? 'text-subtle' : 'text-muted' ?>">
             <td class="py-1"><?= htmlspecialchars($zeile['label']) ?></td>
             <td class="py-1 text-right font-mono"><?php
               echo match ($zeile['format']) {
@@ -327,9 +326,9 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
           <?php endforeach; ?>
         </tbody>
         <tfoot>
-          <tr class="font-semibold text-gray-900 border-t border-gray-200">
+          <tr class="font-semibold border-t border-gray-200">
             <td class="pt-2">Total</td>
-            <td class="pt-2 text-right font-mono text-green-700">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></td>
+            <td class="pt-2 amount">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></td>
           </tr>
         </tfoot>
       </table>
@@ -337,17 +336,17 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
   </div>
 
   <?php else: ?>
-  <div class="bg-white border border-gray-200 rounded-xl p-5 opacity-60">
+  <div class="card opacity-60">
     <div class="flex items-start justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Nicht berechtigt</span>
-          <span class="text-xs text-gray-400"><?= htmlspecialchars($r['grund']) ?></span>
+          <span class="badge badge--neutral">Nicht berechtigt</span>
+          <span class="text-xs text-subtle"><?= htmlspecialchars($r['grund']) ?></span>
         </div>
-        <h3 class="font-semibold text-gray-500"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
-        <p class="text-sm text-gray-400"><?= htmlspecialchars($r['foerderstelle']) ?></p>
+        <h3 class="font-semibold text-muted"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
+        <p class="text-sm text-subtle"><?= htmlspecialchars($r['foerderstelle']) ?></p>
       </div>
-      <p class="text-gray-300 font-mono shrink-0">–</p>
+      <p class="text-subtle font-mono shrink-0">–</p>
     </div>
   </div>
   <?php endif; ?>
@@ -366,8 +365,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
   <?php if ($params['uebernachtung']): ?><input type="hidden" name="uebernachtung" value="1"><?php endif; ?>
   <input type="hidden" name="stunden_pro_tag"    value="<?= (int)$params['stunden_pro_tag'] ?>">
   <input type="hidden" name="lektionen_pro_tag"  value="<?= (int)$params['lektionen_pro_tag'] ?>">
-  <button type="submit"
-          class="flex items-center gap-2 border border-gray-300 hover:border-blue-400 text-gray-600 hover:text-blue-600 text-sm px-4 py-2 rounded-lg">
+  <button type="submit" class="btn btn--secondary">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
     </svg>
