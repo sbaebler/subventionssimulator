@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../includes/Subvention.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+auth_erforderlich();
+
 $fehler  = [];
 $erfolg  = false;
 $benutzer_edit = null;
@@ -13,10 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id           = $_POST['id'] ? (int)$_POST['id'] : null;
         $benutzername = trim($_POST['benutzername'] ?? '');
         $anzeigename  = trim($_POST['anzeigename']  ?? '');
+        $email        = trim($_POST['email'] ?? '') ?: null;
         $passwort     = $_POST['passwort'] ?? '';
 
         if (empty($benutzername)) $fehler[] = 'Benutzername ist pflicht.';
         if (empty($anzeigename))  $fehler[] = 'Anzeigename ist pflicht.';
+        if ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) $fehler[] = 'Ungültige E-Mail-Adresse.';
         if (!$id && empty($passwort)) $fehler[] = 'Passwort ist pflicht für neue Benutzer.';
 
         if (empty($fehler)) {
@@ -24,26 +28,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($id) {
                     if (!empty($passwort)) {
                         $stmt = db()->prepare(
-                            'UPDATE benutzer SET benutzername = ?, anzeigename = ?, passwort_hash = ? WHERE id = ?'
+                            'UPDATE benutzer SET benutzername = ?, anzeigename = ?, email = ?, passwort_hash = ? WHERE id = ?'
                         );
-                        $stmt->execute([$benutzername, $anzeigename, password_hash($passwort, PASSWORD_DEFAULT), $id]);
+                        $stmt->execute([$benutzername, $anzeigename, $email, password_hash($passwort, PASSWORD_DEFAULT), $id]);
                     } else {
                         $stmt = db()->prepare(
-                            'UPDATE benutzer SET benutzername = ?, anzeigename = ? WHERE id = ?'
+                            'UPDATE benutzer SET benutzername = ?, anzeigename = ?, email = ? WHERE id = ?'
                         );
-                        $stmt->execute([$benutzername, $anzeigename, $id]);
+                        $stmt->execute([$benutzername, $anzeigename, $email, $id]);
                     }
                 } else {
                     $stmt = db()->prepare(
-                        'INSERT INTO benutzer (benutzername, anzeigename, passwort_hash) VALUES (?, ?, ?)'
+                        'INSERT INTO benutzer (benutzername, anzeigename, email, passwort_hash) VALUES (?, ?, ?, ?)'
                     );
-                    $stmt->execute([$benutzername, $anzeigename, password_hash($passwort, PASSWORD_DEFAULT)]);
+                    $stmt->execute([$benutzername, $anzeigename, $email, password_hash($passwort, PASSWORD_DEFAULT)]);
                 }
                 header('Location: /benutzer.php?gespeichert=1');
                 exit;
             } catch (Throwable $e) {
                 error_log('[Subventionssimulator] benutzer speichern() Fehler: ' . $e->getMessage());
-                if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                if (str_contains($e->getMessage(), 'uq_benutzer_email')) {
+                    $fehler[] = 'Diese E-Mail-Adresse ist bereits vergeben.';
+                } elseif (str_contains($e->getMessage(), 'Duplicate entry')) {
                     $fehler[] = 'Dieser Benutzername ist bereits vergeben.';
                 } else {
                     $fehler[] = 'Beim Speichern ist ein Fehler aufgetreten.';
@@ -56,6 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         db()->prepare('UPDATE benutzer SET aktiv = ? WHERE id = ?')->execute([$aktiv, $id]);
         header('Location: /benutzer.php');
         exit;
+    } elseif ($aktion === 'loeschen') {
+        $id = (int)$_POST['id'];
+        if ($id === auth_benutzer_id()) {
+            $fehler[] = 'Du kannst deinen eigenen Account nicht löschen.';
+        } else {
+            db()->prepare('DELETE FROM benutzer WHERE id = ? AND aktiv = 0')->execute([$id]);
+            header('Location: /benutzer.php?geloescht=1');
+            exit;
+        }
     }
 }
 
@@ -66,6 +81,7 @@ if (isset($_GET['id'])) {
 }
 
 if (isset($_GET['gespeichert'])) $erfolg = true;
+$geloescht = isset($_GET['geloescht']);
 
 $alle_benutzer = db()->query('SELECT * FROM benutzer ORDER BY benutzername')->fetchAll();
 
@@ -80,6 +96,12 @@ require __DIR__ . '/partials/header.php';
 <?php if ($erfolg): ?>
 <div class="alert alert--success mb-6">
   Benutzer wurde gespeichert.
+</div>
+<?php endif; ?>
+
+<?php if ($geloescht): ?>
+<div class="alert alert--success mb-6">
+  Benutzer wurde gelöscht.
 </div>
 <?php endif; ?>
 
@@ -119,6 +141,14 @@ require __DIR__ . '/partials/header.php';
     </div>
 
     <div class="md:col-span-2">
+      <label class="block text-sm font-medium mb-1">E-Mail</label>
+      <input type="email" name="email"
+             value="<?= htmlspecialchars($benutzer_edit['email'] ?? '') ?>"
+             class="input"
+             placeholder="z.B. jana.smith@zurich-sailing.ch">
+    </div>
+
+    <div class="md:col-span-2">
       <label class="block text-sm font-medium mb-1">
         Passwort <?= $benutzer_edit ? '(leer lassen = unverändert)' : '*' ?>
       </label>
@@ -147,6 +177,7 @@ require __DIR__ . '/partials/header.php';
       <tr>
         <th>Benutzername</th>
         <th>Anzeigename</th>
+        <th>E-Mail</th>
         <th>Status</th>
         <th>Erfasst am</th>
         <th></th>
@@ -157,6 +188,7 @@ require __DIR__ . '/partials/header.php';
       <tr class="<?= $b['aktiv'] ? '' : 'opacity-50' ?>">
         <td class="font-mono"><?= htmlspecialchars($b['benutzername']) ?></td>
         <td><?= htmlspecialchars($b['anzeigename']) ?></td>
+        <td class="text-muted"><?= $b['email'] ? htmlspecialchars($b['email']) : '–' ?></td>
         <td>
           <?php if ($b['aktiv']): ?>
             <span class="badge badge--success">Aktiv</span>
@@ -177,6 +209,16 @@ require __DIR__ . '/partials/header.php';
               <?= $b['aktiv'] ? 'Deaktivieren' : 'Aktivieren' ?>
             </button>
           </form>
+          <?php if (!$b['aktiv']): ?>
+          <form method="post" action="/benutzer.php" class="inline"
+                onsubmit="return confirm('«<?= htmlspecialchars(addslashes($b['anzeigename'])) ?>» unwiderruflich löschen? Dies kann nicht rückgängig gemacht werden.');">
+            <input type="hidden" name="aktion" value="loeschen">
+            <input type="hidden" name="id" value="<?= $b['id'] ?>">
+            <button type="submit" class="btn btn--danger btn--sm text-xs">
+              Löschen
+            </button>
+          </form>
+          <?php endif; ?>
         </td>
       </tr>
       <?php endforeach; ?>

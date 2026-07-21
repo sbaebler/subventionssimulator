@@ -13,9 +13,30 @@ CREATE TABLE benutzer (
   id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   benutzername  VARCHAR(50)  NOT NULL UNIQUE,
   anzeigename   VARCHAR(100) NOT NULL,
+  email         VARCHAR(255) NULL,
   passwort_hash VARCHAR(255) NOT NULL,
   aktiv         TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
-  erstellt_am   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  erstellt_am   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_benutzer_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -------------------------------------------------------------
+-- 0b. Passwort-Reset-Tokens (Self-Service "Passwort vergessen")
+--     Nur der SHA-256-Hash des Tokens wird gespeichert, nie der
+--     Klartext (gleiches Prinzip wie passwort_hash).
+-- -------------------------------------------------------------
+CREATE TABLE passwort_reset_tokens (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  benutzer_id   INT UNSIGNED NOT NULL,
+  token_hash    CHAR(64) NOT NULL,
+  laeuft_ab_am  TIMESTAMP NOT NULL,
+  eingeloest_am TIMESTAMP NULL DEFAULT NULL,
+  erstellt_am   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_prt_token_hash (token_hash),
+  CONSTRAINT fk_prt_benutzer
+    FOREIGN KEY (benutzer_id) REFERENCES benutzer(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

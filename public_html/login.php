@@ -7,6 +7,7 @@ if (auth_eingeloggt()) {
     exit;
 }
 
+$erfolg = isset($_GET['zurueckgesetzt']);
 $fehler = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $benutzer = trim($_POST['benutzer'] ?? '');
@@ -41,6 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </h1>
   <p class="text-sm text-muted text-center mb-6">Bitte melde dich an</p>
 
+  <?php if ($erfolg): ?>
+  <div class="alert alert--success mb-4">
+    Passwort erfolgreich geändert. Du kannst dich jetzt anmelden.
+  </div>
+  <?php endif; ?>
+
   <?php if ($fehler): ?>
   <div class="alert alert--error mb-4">
     Benutzername oder Passwort falsch.
@@ -63,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       Anmelden
     </button>
   </form>
+
+  <p class="text-sm text-center mt-4">
+    <a href="/passwort-vergessen.php" class="link-muted">Passwort vergessen?</a>
+  </p>
 </div>
 
 </body>

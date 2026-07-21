@@ -12,5 +12,9 @@ define('APP_NAME', 'Subventionssimulator');
 define('APP_BASE_URL', 'https://subventionssimulator.zurich-sailing.ch');
 define('APP_ENV', 'production'); // 'development' | 'production'
 
+// Absenderadresse für System-E-Mails (Passwort-Reset etc.)
+define('MAIL_FROM_ADDRESS', 'noreply@deine-domain.ch');
+define('MAIL_FROM_NAME', APP_NAME);
+
 // Benutzer werden in der DB-Tabelle 'benutzer' verwaltet (nicht mehr in config.php).
 // Ersten Benutzer anlegen via sql/migration_benutzer.sql.
