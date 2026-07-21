@@ -123,9 +123,6 @@ require __DIR__ . '/partials/header.php';
         <a href="/erfassen.php?id=<?= $s['id'] ?>" class="btn btn--secondary btn--sm">
           Bearbeiten
         </a>
-        <a href="/simulieren.php?id=<?= $s['id'] ?>" class="btn btn--primary btn--sm">
-          Simulieren
-        </a>
         <form method="post" action="/index.php" class="inline"
               onsubmit="return confirm('«<?= htmlspecialchars(addslashes($s['bezeichnung'])) ?>» in den Papierkorb verschieben?');">
           <input type="hidden" name="aktion" value="in_papierkorb">
