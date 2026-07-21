@@ -234,7 +234,7 @@ $typKarten = [
 require __DIR__ . '/partials/header.php';
 ?>
 
-<div class="mb-6 flex items-start justify-between gap-4">
+<div class="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
   <div>
     <a href="/" class="text-sm link-muted">&larr; Zurück zur Übersicht</a>
     <h1 class="text-2xl font-semibold mt-2"><?= htmlspecialchars($pageTitle) ?></h1>

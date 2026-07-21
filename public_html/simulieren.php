@@ -292,7 +292,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
 
   <?php if ($r['berechtigt']): ?>
   <div class="card card--success" x-data="{ offen: false }">
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="badge badge--success">Förderberechtigt</span>
@@ -300,7 +300,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
         <h3 class="font-semibold"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
         <p class="text-sm text-muted"><?= htmlspecialchars($r['foerderstelle']) ?></p>
       </div>
-      <div class="text-right shrink-0">
+      <div class="sm:text-right sm:shrink-0">
         <p class="text-2xl font-bold text-success">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></p>
         <button type="button" @click="offen = !offen"
                 class="link text-xs mt-1 cursor-pointer">
@@ -337,7 +337,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
 
   <?php else: ?>
   <div class="card opacity-60">
-    <div class="flex items-start justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="badge badge--neutral">Nicht berechtigt</span>
@@ -346,7 +346,7 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
         <h3 class="font-semibold text-muted"><?= htmlspecialchars($r['bezeichnung']) ?></h3>
         <p class="text-sm text-subtle"><?= htmlspecialchars($r['foerderstelle']) ?></p>
       </div>
-      <p class="text-subtle font-mono shrink-0">–</p>
+      <p class="text-subtle font-mono sm:shrink-0">–</p>
     </div>
   </div>
   <?php endif; ?>

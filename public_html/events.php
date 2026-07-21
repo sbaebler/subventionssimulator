@@ -25,7 +25,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="grid gap-4">
     <?php foreach ($events as $e): ?>
-    <div class="card flex items-start justify-between gap-4">
+    <div class="card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1">
           <span class="badge <?= Event::STATUS_BADGE[$e['status']] ?? 'badge--neutral' ?>">
@@ -50,7 +50,7 @@ require __DIR__ . '/partials/header.php';
           <?= $anz === 1 ? '1 Subvention zugeordnet' : $anz . ' Subventionen zugeordnet' ?>
         </p>
       </div>
-      <div class="flex gap-2 shrink-0">
+      <div class="flex flex-wrap gap-2 sm:shrink-0">
         <a href="/events_zuordnen.php?id=<?= $e['id'] ?>"
            class="btn btn--primary btn--sm">
           Subventionen zuteilen

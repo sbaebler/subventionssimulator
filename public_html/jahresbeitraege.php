@@ -59,7 +59,7 @@ require __DIR__ . '/partials/header.php';
   <div class="grid gap-4">
   <?php foreach ($ergebnisse as $r): ?>
     <div class="card">
-      <div class="flex items-start justify-between gap-4">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-1">
             <span class="badge badge--info">
@@ -83,7 +83,7 @@ require __DIR__ . '/partials/header.php';
           <?php endif; ?>
         </div>
 
-        <div class="text-right shrink-0">
+        <div class="sm:text-right sm:shrink-0">
           <p class="text-2xl font-bold text-success">CHF <?= number_format($r['betrag'], 2, '.', "'") ?></p>
           <?php if ($r['referenz']): ?>
           <p class="text-xs text-subtle mt-1">

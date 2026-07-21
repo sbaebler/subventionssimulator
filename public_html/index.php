@@ -72,7 +72,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="grid gap-4">
     <?php foreach ($subventionen as $s): $fehlt = $fehltProProgramm[$s['id']]; ?>
-    <div class="card flex items-start justify-between gap-4">
+    <div class="card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1 flex-wrap">
           <?php if (empty($fehlt)): ?>
@@ -119,7 +119,7 @@ require __DIR__ . '/partials/header.php';
           <?php endif; ?>
         </p>
       </div>
-      <div class="flex gap-2 shrink-0">
+      <div class="flex flex-wrap gap-2 sm:shrink-0">
         <a href="/erfassen.php?id=<?= $s['id'] ?>" class="btn btn--secondary btn--sm">
           Bearbeiten
         </a>

@@ -66,7 +66,7 @@ require __DIR__ . '/partials/header.php';
 <?php else: ?>
   <div class="grid gap-4">
     <?php foreach ($eintraege as $s): ?>
-    <div class="card flex items-start justify-between gap-4">
+    <div class="card flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2 mb-1 flex-wrap">
           <span class="badge badge--info">
@@ -80,7 +80,7 @@ require __DIR__ . '/partials/header.php';
           am <?= date('d.m.Y H:i', strtotime($s['geloescht_am'])) ?> Uhr
         </p>
       </div>
-      <div class="flex gap-2 shrink-0">
+      <div class="flex flex-wrap gap-2 sm:shrink-0">
         <form method="post" action="/papierkorb.php" class="inline">
           <input type="hidden" name="aktion" value="wiederherstellen">
           <input type="hidden" name="id" value="<?= $s['id'] ?>">
