@@ -57,10 +57,16 @@ CREATE TABLE subventionen (
   geaendert_von   INT UNSIGNED NULL,
   erstellt_am     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   geaendert_am    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  -- Papierkorb: gesetzt = in den Papierkorb verschoben, NULL = aktiv/normal sichtbar.
+  -- Erst nach Verweilen im Papierkorb wird ein Eintrag endgültig (hart) gelöscht.
+  geloescht_am    TIMESTAMP NULL DEFAULT NULL,
+  geloescht_von   INT UNSIGNED NULL,
   CONSTRAINT fk_sv_erstellt_von
     FOREIGN KEY (erstellt_von)  REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT fk_sv_geaendert_von
-    FOREIGN KEY (geaendert_von) REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (geaendert_von) REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_sv_geloescht_von
+    FOREIGN KEY (geloescht_von) REFERENCES benutzer(id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

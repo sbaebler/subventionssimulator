@@ -42,6 +42,7 @@ auth_erforderlich();
         <a href="/docs/fachlogik.html" class="menu__item" target="_blank">Fachlogik</a>
         <a href="/releases.php"        class="menu__item">Neuigkeiten</a>
         <a href="/benutzer.php"        class="menu__item">Benutzer</a>
+        <a href="/papierkorb.php"      class="menu__item">Papierkorb</a>
       </div>
     </div>
   </nav>

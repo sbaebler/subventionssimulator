@@ -46,13 +46,76 @@ class Subvention {
             FROM subventionen s
             LEFT JOIN benutzer b1 ON b1.id = s.erstellt_von
             LEFT JOIN benutzer b2 ON b2.id = s.geaendert_von
+            WHERE s.geloescht_am IS NULL
         ';
         if ($nurAktive) {
-            $sql .= ' WHERE s.aktiv = 1
+            $sql .= ' AND s.aktiv = 1
                         AND (s.gueltig_bis IS NULL OR s.gueltig_bis >= CURDATE())';
         }
         $sql .= ' ORDER BY s.foerderstelle, s.bezeichnung';
         return db()->query($sql)->fetchAll();
+    }
+
+    // ------------------------------------------------------------------
+    // Papierkorb: in den Papierkorb verschobene Förderprogramme
+    // ------------------------------------------------------------------
+    public static function papierkorb(): array {
+        $sql = '
+            SELECT s.*,
+                   b1.anzeigename AS erstellt_von_name,
+                   b3.anzeigename AS geloescht_von_name
+            FROM subventionen s
+            LEFT JOIN benutzer b1 ON b1.id = s.erstellt_von
+            LEFT JOIN benutzer b3 ON b3.id = s.geloescht_von
+            WHERE s.geloescht_am IS NOT NULL
+            ORDER BY s.geloescht_am DESC
+        ';
+        return db()->query($sql)->fetchAll();
+    }
+
+    // In den Papierkorb verschieben (weiche Löschung) – Eintrag bleibt in der
+    // DB und verschwindet nur aus den regulären Listen (alle()).
+    public static function inPapierkorbVerschieben(int $id, ?int $benutzer_id = null): void {
+        $stmt = db()->prepare('
+            UPDATE subventionen
+            SET geloescht_am = NOW(), geloescht_von = ?
+            WHERE id = ?
+        ');
+        $stmt->execute([$benutzer_id, $id]);
+    }
+
+    // Aus dem Papierkorb zurückholen
+    public static function wiederherstellen(int $id): void {
+        $stmt = db()->prepare('
+            UPDATE subventionen
+            SET geloescht_am = NULL, geloescht_von = NULL
+            WHERE id = ?
+        ');
+        $stmt->execute([$id]);
+    }
+
+    // Endgültig (hart) löschen – nur aus dem Papierkorb heraus zulässig.
+    // simulationen verweist mit ON DELETE RESTRICT auf subventionen, daher
+    // werden protokollierte Simulationen hier bewusst mitgelöscht; alle
+    // anderen Detailtabellen räumt die DB selbst per ON DELETE CASCADE auf.
+    public static function endgueltigLoeschen(int $id): void {
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            $check = $pdo->prepare('SELECT geloescht_am FROM subventionen WHERE id = ?');
+            $check->execute([$id]);
+            $geloescht_am = $check->fetchColumn();
+            if ($geloescht_am === false || $geloescht_am === null) {
+                throw new RuntimeException('Endgültiges Löschen ist nur aus dem Papierkorb heraus möglich.');
+            }
+
+            $pdo->prepare('DELETE FROM simulationen WHERE subvention_id = ?')->execute([$id]);
+            $pdo->prepare('DELETE FROM subventionen WHERE id = ?')->execute([$id]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 
     // ------------------------------------------------------------------

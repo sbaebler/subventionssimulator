@@ -1,7 +1,19 @@
 <?php
 require_once __DIR__ . '/../includes/Subvention.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+// Löschen (= in den Papierkorb verschieben) erfordert Login, da geloescht_von
+// gesetzt wird und die Aktion nachvollziehbar sein muss.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['aktion'] ?? '') === 'in_papierkorb') {
+    auth_erforderlich();
+    Subvention::inPapierkorbVerschieben((int)$_POST['id'], auth_benutzer_id() ?: null);
+    header('Location: /?geloescht=1');
+    exit;
+}
+
 $pageTitle = 'Förderprogramme – Übersicht';
 $subventionen = Subvention::alle();
+$anzahlPapierkorb = count(Subvention::papierkorb());
 
 // Vollständigkeit pro Programm ermitteln (für Badges und Fortschritt)
 $fehltProProgramm = [];
@@ -17,10 +29,24 @@ require __DIR__ . '/partials/header.php';
 
 <div class="page-header mb-2">
   <h1 class="text-2xl font-semibold">Förderprogramme</h1>
-  <a href="/erfassen.php" class="btn btn--primary btn--sm">
-    + Neues Förderprogramm
-  </a>
+  <div class="flex gap-2">
+    <?php if ($anzahlPapierkorb > 0): ?>
+    <a href="/papierkorb.php" class="btn btn--secondary btn--sm">
+      Papierkorb (<?= $anzahlPapierkorb ?>)
+    </a>
+    <?php endif; ?>
+    <a href="/erfassen.php" class="btn btn--primary btn--sm">
+      + Neues Förderprogramm
+    </a>
+  </div>
 </div>
+
+<?php if (isset($_GET['geloescht'])): ?>
+<div class="alert alert--success mb-6">
+  Förderprogramm wurde in den Papierkorb verschoben.
+  <a href="/papierkorb.php" class="link">Papierkorb ansehen</a>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($subventionen)): ?>
 <div class="mb-6">
@@ -100,6 +126,14 @@ require __DIR__ . '/partials/header.php';
         <a href="/simulieren.php?id=<?= $s['id'] ?>" class="btn btn--primary btn--sm">
           Simulieren
         </a>
+        <form method="post" action="/index.php" class="inline"
+              onsubmit="return confirm('«<?= htmlspecialchars(addslashes($s['bezeichnung'])) ?>» in den Papierkorb verschieben?');">
+          <input type="hidden" name="aktion" value="in_papierkorb">
+          <input type="hidden" name="id" value="<?= $s['id'] ?>">
+          <button type="submit" class="btn btn--secondary-danger btn--sm" title="In den Papierkorb verschieben">
+            Löschen
+          </button>
+        </form>
       </div>
     </div>
     <?php endforeach; ?>

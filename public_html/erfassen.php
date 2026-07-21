@@ -234,11 +234,23 @@ $typKarten = [
 require __DIR__ . '/partials/header.php';
 ?>
 
-<div class="mb-6">
-  <a href="/" class="text-sm link-muted">&larr; Zurück zur Übersicht</a>
-  <h1 class="text-2xl font-semibold mt-2"><?= htmlspecialchars($pageTitle) ?></h1>
-  <?php if (!$subv): ?>
-  <p class="text-sm text-muted mt-1">Trage ein, was du weisst – alles ausser Name und Förderstelle kannst du jederzeit später ergänzen.</p>
+<div class="mb-6 flex items-start justify-between gap-4">
+  <div>
+    <a href="/" class="text-sm link-muted">&larr; Zurück zur Übersicht</a>
+    <h1 class="text-2xl font-semibold mt-2"><?= htmlspecialchars($pageTitle) ?></h1>
+    <?php if (!$subv): ?>
+    <p class="text-sm text-muted mt-1">Trage ein, was du weisst – alles ausser Name und Förderstelle kannst du jederzeit später ergänzen.</p>
+    <?php endif; ?>
+  </div>
+  <?php if ($subv): ?>
+  <form method="post" action="/index.php"
+        onsubmit="return confirm('«<?= htmlspecialchars(addslashes($subv['bezeichnung'])) ?>» in den Papierkorb verschieben?');">
+    <input type="hidden" name="aktion" value="in_papierkorb">
+    <input type="hidden" name="id" value="<?= $subv['id'] ?>">
+    <button type="submit" class="btn btn--secondary-danger btn--sm shrink-0">
+      In Papierkorb verschieben
+    </button>
+  </form>
   <?php endif; ?>
 </div>
 
