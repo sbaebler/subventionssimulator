@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erste Schritte – Subventionssimulator Zurich Sailing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      .no-print { display: none; }
+      body { font-size: 12px; }
+      section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-white text-gray-800 max-w-4xl mx-auto px-8 py-10">
+
+  <!-- Titel -->
+  <div class="border-b border-gray-200 pb-6 mb-8">
+    <p class="text-sm text-gray-400 uppercase tracking-wide mb-1">Zurich Sailing Federation</p>
+    <h1 class="text-3xl font-bold text-gray-900">Subventionssimulator</h1>
+    <p class="text-gray-500 mt-2">Erste Schritte – Anmelden und ein Förderprogramm erfassen</p>
+    <p class="text-xs text-gray-400 mt-1">Stand: Juli 2026 &nbsp;·&nbsp; <a href="https://subventionssimulator.zurich-sailing.ch" class="underline hover:text-blue-600">subventionssimulator.zurich-sailing.ch</a></p>
+  </div>
+
+  <!-- Inhaltsverzeichnis -->
+  <nav class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-10 no-print">
+    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Inhalt</p>
+    <ol class="list-decimal list-inside space-y-1 text-sm text-blue-700">
+      <li><a href="#anmelden" class="hover:underline">Erstes Anmelden (Passwort festlegen)</a></li>
+      <li><a href="#erfassen" class="hover:underline">Ein Förderprogramm erfassen</a></li>
+      <li><a href="#beispiel" class="hover:underline">Konkretes Beispiel</a></li>
+    </ol>
+  </nav>
+
+
+  <!-- 1. Erstes Anmelden -->
+  <section id="anmelden" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">1. Erstes Anmelden</h2>
+    <p class="text-gray-700 leading-relaxed mb-3">
+      Dein Benutzerkonto wird vom <strong>Aktuar</strong> angelegt – Benutzername und Startpasswort werden dabei
+      automatisch vergeben und sind dir nicht bekannt. Du legst dein eigenes Passwort deshalb über
+      <strong>«Passwort vergessen»</strong> fest.
+    </p>
+    <p class="text-gray-700 leading-relaxed mb-3">
+      Als E-Mail-Adresse ist dabei jeweils eine Adresse auf <strong>@zsv.info</strong> hinterlegt – wo möglich die
+      Funktionsadresse (z.B. <span class="font-mono text-sm">praesident@zsv.info</span>). Bei Co-Präsidien und
+      Trainer:innen, wo mehrere Personen dieselbe Funktion innehaben, wird stattdessen
+      <span class="font-mono text-sm">vorname.nachname@zsv.info</span> verwendet.
+    </p>
+
+    <div class="space-y-5 mt-6">
+      <div class="flex gap-4">
+        <div class="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">1</div>
+        <div>
+          <p class="font-semibold text-gray-900">Login-Seite öffnen</p>
+          <p class="text-sm text-gray-600 mt-1">
+            Rufe <a href="https://subventionssimulator.zurich-sailing.ch" class="text-blue-600 underline">subventionssimulator.zurich-sailing.ch</a>
+            auf. Klicke auf der Anmeldeseite unterhalb des Formulars auf den Link <strong>«Passwort vergessen?»</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <div class="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">2</div>
+        <div>
+          <p class="font-semibold text-gray-900">Link anfordern</p>
+          <p class="text-sm text-gray-600 mt-1">
+            Gib deinen <strong>Benutzernamen oder deine E-Mail-Adresse</strong> ein und klicke auf
+            <strong>«Link anfordern»</strong>. Falls dir dein automatisch vergebener Benutzername nicht bekannt
+            ist, verwende einfach deine @zsv.info-Adresse. Aus Sicherheitsgründen erscheint immer dieselbe
+            Meldung, unabhängig davon, ob ein Konto gefunden wurde.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <div class="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">3</div>
+        <div>
+          <p class="font-semibold text-gray-900">E-Mail öffnen</p>
+          <p class="text-sm text-gray-600 mt-1">
+            Öffne die E-Mail mit dem Reset-Link (bei Bedarf auch im Spam-Ordner nachsehen) und klicke auf den
+            enthaltenen Link. Der Link ist ab dem Anfordern <strong>60 Minuten gültig</strong> und danach nicht
+            mehr verwendbar – in diesem Fall einfach über Schritt 2 einen neuen Link anfordern.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <div class="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">4</div>
+        <div>
+          <p class="font-semibold text-gray-900">Neues Passwort setzen</p>
+          <p class="text-sm text-gray-600 mt-1">
+            Der Benutzername ist bereits ausgefüllt. Gib ein neues Passwort ein
+            (<strong>mindestens 8 Zeichen</strong>) und wiederhole es im zweiten Feld. Klicke auf
+            <strong>«Passwort speichern»</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <div class="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">5</div>
+        <div>
+          <p class="font-semibold text-gray-900">Anmelden</p>
+          <p class="text-sm text-gray-600 mt-1">
+            Du wirst zur Anmeldeseite zurückgeführt. Melde dich mit deinem Benutzernamen und dem neu gesetzten
+            Passwort an.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-900">
+      <strong>Hinweis:</strong> Ein neues Konto muss vorgängig von einer bereits angemeldeten Person unter
+      «Benutzer» angelegt werden. Solltest du keine E-Mail erhalten, wende dich an eine Person mit bestehendem
+      Zugang.
+    </div>
+  </section>
+
+
+  <!-- 2. Förderprogramm erfassen -->
+  <section id="erfassen" class="mb-12">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">2. Ein Förderprogramm erfassen</h2>
+    <p class="text-gray-700 leading-relaxed mb-3">
+      Nach der Anmeldung gelangst du auf die Übersicht <strong>«Förderprogramme»</strong>. Klicke oben rechts auf
+      <strong>«+ Neues Förderprogramm»</strong>. Die Erfassung führt dich in vier Schritten durch ein Formular.
+    </p>
+    <p class="text-sm text-gray-500 mb-6">
+      Wichtigste Regel: <strong>Nur Name und Förderstelle sind Pflichtfelder.</strong> Trage ein, was du weisst –
+      alles andere kannst du jederzeit später ergänzen. Unvollständige Förderprogramme werden in der Übersicht
+      amber markiert, damit klar ist, was noch fehlt.
+    </p>
+
+    <!-- Schritt 1 -->
+    <div class="mb-8">
+      <h3 class="text-base font-bold text-gray-900 mb-2">Schritt 1 – Beitrag</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-50 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Feld</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Pflicht</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bedeutung</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Name des Förderprogramms</td>
+              <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+              <td class="px-4 py-2.5 text-gray-600">z.B. «ZKS Ausbildungsbeitrag». Erscheint in der Übersicht und im Simulator.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Förderstelle</td>
+              <td class="px-4 py-2.5"><span class="text-red-500 font-medium">Ja</span></td>
+              <td class="px-4 py-2.5 text-gray-600">Wer zahlt den Beitrag aus, z.B. «Zürcher Kantonalverband für Sport (ZKS)». Bekannte Förderstellen werden als Vorschlag angezeigt, freie Eingabe ist möglich.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Kategorie</td>
+              <td class="px-4 py-2.5 text-gray-400">Nein</td>
+              <td class="px-4 py-2.5 text-gray-600">Ausbildung, Lager, Wettkampf, Infrastruktur, Jugend oder Sonstiges.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Beschreibung</td>
+              <td class="px-4 py-2.5 text-gray-400">Nein</td>
+              <td class="px-4 py-2.5 text-gray-600">In ein, zwei Sätzen: Wofür zahlt die Förderstelle diesen Beitrag?</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schritt 2 -->
+    <div class="mb-8">
+      <h3 class="text-base font-bold text-gray-900 mb-2">Schritt 2 – Berechnung</h3>
+      <p class="text-sm text-gray-600 mb-3">
+        Wähle das passende Berechnungsmuster als Karte. Danach erscheinen nur die dazu passenden Felder, und
+        eine Probe-Rechnung zeigt sofort, was die eingegebenen Sätze ergeben würden.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-50 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Muster</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Berechnung</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Beispiel</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Fixer Betrag</td>
+              <td class="px-4 py-2.5 text-gray-600">Ein fester Betrag pro Jahr oder Projekt.</td>
+              <td class="px-4 py-2.5 text-gray-500">ZKS Grundbeitrag</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Pro Teilnehmer und Tag</td>
+              <td class="px-4 py-2.5 text-gray-600">Satz × Teilnehmer × Tage, mit oder ohne Übernachtung.</td>
+              <td class="px-4 py-2.5 text-gray-500">J+S Lager</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Pro Teilnehmerstunde</td>
+              <td class="px-4 py-2.5 text-gray-600">Satz × Teilnehmer × Tage × Stunden pro Tag.</td>
+              <td class="px-4 py-2.5 text-gray-500">J+S Training</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Pro Ausbildungseinheit</td>
+              <td class="px-4 py-2.5 text-gray-600">Satz × Teilnehmer × Lektionen pro Tag × Tage.</td>
+              <td class="px-4 py-2.5 text-gray-500">ZKS Ausbildungsbeitrag</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Grundbetrag plus Zuschläge</td>
+              <td class="px-4 py-2.5 text-gray-600">Grundbetrag + Betrag pro Teilnehmer + Betrag pro Tag.</td>
+              <td class="px-4 py-2.5 text-gray-500">Kantonale Beiträge</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Nach Jahreskennzahl</td>
+              <td class="px-4 py-2.5 text-gray-600">Betrag pro Einheit einer Verbandskennzahl.</td>
+              <td class="px-4 py-2.5 text-gray-500">Pro Aktivmitglied</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Weiss ich noch nicht</td>
+              <td class="px-4 py-2.5 text-gray-600">Berechnung in eigenen Worten beschreiben – Zahlen können später ergänzt werden.</td>
+              <td class="px-4 py-2.5 text-gray-500">Kein Problem, einfach speichern</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-gray-500 mt-3">
+        Bei den meisten Mustern lässt sich zusätzlich ein <strong>Maximalbetrag pro Jahr</strong> hinterlegen –
+        leer lassen bedeutet «kein Limit». Mit <strong>«+ weitere Beitragskomponente»</strong> lassen sich
+        mehrere Berechnungsteile desselben Förderprogramms erfassen.
+      </p>
+    </div>
+
+    <!-- Schritt 3 -->
+    <div class="mb-8">
+      <h3 class="text-base font-bold text-gray-900 mb-2">Schritt 3 – Bedingungen <span class="font-normal text-gray-400 text-sm">(optional)</span></h3>
+      <p class="text-sm text-gray-600 mb-3">
+        Hier werden Voraussetzungen, Berechtigte, Einschränkungen und verlangte Unterlagen als Freitext erfasst.
+        Zusätzlich lässt sich der Beitrag über Checkboxen auf bestimmte Event- oder Trainerarten einschränken –
+        <strong>keine Auswahl bedeutet, dass er für alle gilt</strong>. Diese Einschränkung nur setzen, wenn die
+        Förderstelle sie wirklich vorschreibt.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-50 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Feld</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bedeutung</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Voraussetzungen</td>
+              <td class="px-4 py-2.5 text-gray-600">z.B. Mindestalter, Mitgliedschaft, Anerkennungen.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Wer ist berechtigt?</td>
+              <td class="px-4 py-2.5 text-gray-600">z.B. Vereine mit Sitz im Kanton Zürich.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Einschränkungen / Vorgaben</td>
+              <td class="px-4 py-2.5 text-gray-600">z.B. keine Wettkämpfe, max. 6 Lektionen pro Tag.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Verlangte Unterlagen</td>
+              <td class="px-4 py-2.5 text-gray-600">z.B. Teilnehmerliste, Kursprogramm, Leiterausweise.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Eventarten (Checkboxen)</td>
+              <td class="px-4 py-2.5 text-gray-600">Lager und/oder Training. Pro angekreuzter Art lässt sich zusätzlich ein Faktor auf den Betrag und eine Bemerkung hinterlegen.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Trainerarten (Checkboxen)</td>
+              <td class="px-4 py-2.5 text-gray-600">J+S-Trainer, NWF-Trainer oder Trainer ohne Anerkennung. Pro angekreuzter Art lässt sich zusätzlich ein Zusatzbetrag und eine Bemerkung hinterlegen.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Schritt 4 -->
+    <div class="mb-8">
+      <h3 class="text-base font-bold text-gray-900 mb-2">Schritt 4 – Termine &amp; Beträge <span class="font-normal text-gray-400 text-sm">(optional)</span></h3>
+      <p class="text-sm text-gray-600 mb-3">
+        Fristen sind reine Hinweise ohne Einfluss auf die Berechnung. Erhaltene Beträge pro Jahr können auch
+        später jederzeit unter «Beiträge &amp; Verwendung» erfasst oder nachgetragen werden.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-50 text-left">
+            <tr>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Feld</th>
+              <th class="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200">Bedeutung</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Eingabefrist bei der Förderstelle</td>
+              <td class="px-4 py-2.5 text-gray-600">Datum, bis wann der Antrag eingereicht sein muss.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Link zur Förderstelle</td>
+              <td class="px-4 py-2.5 text-gray-600">Externer Link zu den offiziellen Richtlinien.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Gültig von / bis</td>
+              <td class="px-4 py-2.5 text-gray-600">Zeitraum der Gültigkeit. «Gültig bis» leer lassen, wenn unbefristet – abgelaufene Programme werden in Übersicht und Simulator automatisch ausgeblendet.</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Weitere Termine</td>
+              <td class="px-4 py-2.5 text-gray-600">Beliebig viele zusätzliche Termine mit Bezeichnung, Datum und Hinweis, z.B. «Musterteilnehmerliste».</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Erhaltene Beträge pro Jahr</td>
+              <td class="px-4 py-2.5 text-gray-600">Was in einem Jahr tatsächlich erhalten oder erwartet wurde – Basis für die spätere Verteilung unter «Beiträge &amp; Verwendung».</td>
+            </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2.5 font-medium">Aktiv</td>
+              <td class="px-4 py-2.5 text-gray-600">Nur aktive Förderprogramme erscheinen in Übersicht und Simulator.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-900">
+      <strong>Speichern:</strong> Der Button «Speichern» ist erst aktiv, sobald Name und Förderstelle
+      (Schritt 1) ausgefüllt sind. Alle übrigen Angaben sind optional und können jederzeit über «Bearbeiten»
+      nachgetragen werden.
+    </div>
+  </section>
+
+
+  <!-- 3. Beispiel -->
+  <section id="beispiel" class="mb-4">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">3. Konkretes Beispiel: ZKS Ausbildungsbeitrag</h2>
+    <p class="text-gray-700 leading-relaxed mb-4">
+      Der ZKS-Ausbildungsbeitrag fördert Ausbildungstätigkeit (Lager, Kadertrainings, Coach2Coach) und wird über
+      Ausbildungseinheiten berechnet. So wird er erfasst:
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium whitespace-nowrap w-28">Schritt 1</td>
+            <td class="px-4 py-2.5 text-gray-600">Name «ZKS Ausbildungsbeitrag», Förderstelle «Zürcher Kantonalverband für Sport (ZKS)», Kategorie «Ausbildung».</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium whitespace-nowrap w-28">Schritt 2</td>
+            <td class="px-4 py-2.5 text-gray-600">Muster «Pro Ausbildungseinheit», Satz <strong>2.80</strong>, max. <strong>6 Lektionen pro Tag</strong>.</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium whitespace-nowrap w-28">Schritt 3</td>
+            <td class="px-4 py-2.5 text-gray-600">Keine Meisterschaften/Wettkämpfe; Regatten nur, wenn als Ausbildung deklariert. Unterlagen: ZKS-Musterteilnehmerliste, Kursprogramm, Anwesenheitsliste, J+S-Leiterausweise. Eventarten Lager + Training angekreuzt, Trainerart J+S.</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 font-medium whitespace-nowrap w-28">Schritt 4</td>
+            <td class="px-4 py-2.5 text-gray-600">Termine: Musterteilnehmerliste an Leiter Subvention bis 28.02., Einreichung bis 31.03. des Folgejahres. Erhaltene Beträge: 2024 CHF 12'949.00, 2025 ca. CHF 30'000.00.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-gray-400 mt-4">
+      Weiterführende Informationen zur Übersicht, zum Simulator und zur Verwendung erhaltener Beiträge findest du
+      nach der Anmeldung unter «Anleitung» in der App.
+    </p>
+  </section>
+
+</body>
+</html>
