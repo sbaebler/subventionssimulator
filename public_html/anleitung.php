@@ -19,6 +19,49 @@ require __DIR__ . '/partials/header.php';
   </p>
 </section>
 
+<!-- Bahnübersicht -->
+<section class="card mb-6">
+  <h2 class="font-semibold mb-3">Der Weg durch die Applikation</h2>
+  <p class="text-sm text-muted leading-relaxed mb-4">
+    Der Ablauf folgt denselben Phasen wie eine Wettfahrt: von den Regeln über den Start
+    bis ins Ziel und die Auswertung danach. Die Ziffern im Bild entsprechen der Liste darunter.
+  </p>
+
+  <a href="/docs/diagramme/bahnuebersicht-subventionssimulator.svg" target="_blank" rel="noopener">
+    <img src="/docs/diagramme/bahnuebersicht-subventionssimulator.svg"
+         alt="Bahnübersicht des Subventionssimulators: sechs Stationen von der Erfassung der Förderprogramme bis zur Verwendung der Beiträge"
+         style="width:100%;max-width:100%;height:auto;border-radius:var(--radius);">
+  </a>
+  <p class="text-xs text-subtle mt-2 mb-4">Zum Vergrössern auf das Bild tippen.</p>
+
+  <ol class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">1</span>
+      <span><strong>Förderprogramme erfassen.</strong> <span class="text-muted">Die Regeln der Fördergeber – wer zahlt was, unter welchen Bedingungen.</span></span>
+    </li>
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">2</span>
+      <span><strong>Simulieren.</strong> <span class="text-muted">Für ein konkretes Lager oder Training prüfen, welches Programm wie viel bringt.</span></span>
+    </li>
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">3</span>
+      <span><strong>Events erfassen.</strong> <span class="text-muted">Was tatsächlich stattgefunden hat, und welchen Förderprogrammen es zugeordnet ist.</span></span>
+    </li>
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">4</span>
+      <span><strong>Fristen und Vollständigkeit.</strong> <span class="text-muted">Was dem Antrag noch fehlt und bis wann er eingereicht sein muss.</span></span>
+    </li>
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">5</span>
+      <span><strong>Jahresbeiträge.</strong> <span class="text-muted">Was pro Jahr tatsächlich eingegangen ist.</span></span>
+    </li>
+    <li class="flex gap-3">
+      <span class="step-dot step-dot--mark">6</span>
+      <span><strong>Beiträge verwenden.</strong> <span class="text-muted">Verteilung auf Events, Kaderklassen und weitere Empfänger.</span></span>
+    </li>
+  </ol>
+</section>
+
 <!-- Kurzregel -->
 <section class="card mb-6">
   <h2 class="font-semibold mb-3">Das Wichtigste in Kürze</h2>

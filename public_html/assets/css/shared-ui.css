@@ -377,6 +377,11 @@ body {
   font-weight: 700;
   flex-shrink: 0;
 }
+/* Orange Variante: Legende zu einer Bahn-Illustration. Nimmt die Farbe der
+   Bahnmarken im SVG auf, damit Ziffer im Bild und Ziffer im Text als
+   dasselbe gelesen werden — und sich vom blauen .step-dot der eigenen
+   Seitenschritte unterscheiden. */
+.step-dot--mark { background: var(--color-warning); }
 .badge--warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
 .badge--error   { background: var(--color-error-bg);   color: var(--color-error-text); }
 .badge--info    { background: var(--color-info-bg);    color: var(--color-info-text); }

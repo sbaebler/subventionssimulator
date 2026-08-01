@@ -10,3 +10,9 @@ config/config.php
 
 # Logs
 *.log
+
+# Vorlagen für die Bahn-Diagramme: fremde, urheberrechtlich geschützte
+# Illustrationen (Allen Rules Chart, RYA, Playa Sail). Nur lokale
+# Stilreferenz. Das Repo ist öffentlich, und die Deploy-Action lädt das
+# Repo-Root hoch — der Ordner darf weder ins Repo noch auf den Server.
+docs/diagramm-beispiele/
