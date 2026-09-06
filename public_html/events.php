@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/Event.php';
 $pageTitle = 'Events – Übersicht';
 $events = Event::alle();
+$foerderstatus = Event::foerderstatusFuerEvents(array_column($events, 'id'));
 require __DIR__ . '/partials/header.php';
 ?>
 
@@ -49,6 +50,27 @@ require __DIR__ . '/partials/header.php';
           <?php $anz = (int)$e['anzahl_subventionen']; ?>
           <?= $anz === 1 ? '1 Subvention zugeordnet' : $anz . ' Subventionen zugeordnet' ?>
         </p>
+        <?php
+          // Förderstatus nur bei Events zeigen, die tatsächlich Fördergeld
+          // auslösen können – provisorisch geplante/abgeschlossene Events
+          // bleiben ohne Badge.
+          $fs = $foerderstatus[(int)$e['id']] ?? ['foerderfaehig' => false, 'betrag_zugeteilt' => null];
+          $zeigeFoerderstatus = in_array($e['status'], ['geplant', 'durchgefuehrt'], true)
+                                && ($fs['foerderfaehig'] || $fs['betrag_zugeteilt'] !== null);
+        ?>
+        <?php if ($zeigeFoerderstatus): ?>
+        <p class="mt-2">
+          <?php if ($fs['betrag_zugeteilt'] !== null): ?>
+          <span class="badge badge--success">
+            CHF <?= number_format($fs['betrag_zugeteilt'], 2, '.', "'") ?> zugeteilt
+          </span>
+          <?php else: ?>
+          <span class="badge badge--info" title="Mindestens ein zugeordnetes Förderprogramm ist vollständig erfasst.">
+            Förderfähig
+          </span>
+          <?php endif; ?>
+        </p>
+        <?php endif; ?>
       </div>
       <div class="flex flex-wrap gap-2 sm:shrink-0">
         <a href="/events_zuordnen.php?id=<?= $e['id'] ?>"

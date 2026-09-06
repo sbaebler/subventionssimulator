@@ -66,6 +66,69 @@ class Event {
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
     }
 
+    // Förderstatus mehrerer Events auf einen Blick: pro Event, ob mindestens
+    // eine zugeordnete Subvention vollständig erfasst ist (Subvention::
+    // vollstaendigkeit()) und ob dafür bereits ein konkreter Betrag in
+    // subvention_verwendung zugeteilt wurde. Für die Badges auf events.php –
+    // gezielt für Events mit Status 'geplant'/'durchgefuehrt' gedacht.
+    //
+    // Rückgabe: [event_id => ['foerderfaehig' => bool, 'betrag_zugeteilt' => ?float]]
+    public static function foerderstatusFuerEvents(array $event_ids): array {
+        require_once __DIR__ . '/Subvention.php';
+
+        $ergebnis = [];
+        foreach ($event_ids as $id) {
+            $ergebnis[(int)$id] = ['foerderfaehig' => false, 'betrag_zugeteilt' => null];
+        }
+        if (empty($event_ids)) return $ergebnis;
+
+        $platzhalter = implode(',', array_fill(0, count($event_ids), '?'));
+
+        // 1) Zuordnungen je Event
+        $stmt = db()->prepare("
+            SELECT event_id, subvention_id FROM subvention_events
+            WHERE event_id IN ($platzhalter)
+        ");
+        $stmt->execute(array_map('intval', $event_ids));
+        $subventionIdsProEvent = [];
+        foreach ($stmt->fetchAll() as $z) {
+            $subventionIdsProEvent[(int)$z['event_id']][] = (int)$z['subvention_id'];
+        }
+
+        // 2) Vollständigkeit je distinktem Förderprogramm (Kardinalität =
+        // Anzahl Programme, nicht Anzahl Events).
+        $alleSubventionIds = array_unique(array_merge(...array_values($subventionIdsProEvent ?: [[]])));
+        $vollstaendigJeSubvention = [];
+        foreach ($alleSubventionIds as $sid) {
+            $subv = Subvention::laden($sid);
+            $vollstaendigJeSubvention[$sid] = $subv && Subvention::vollstaendigkeit($subv) === [];
+        }
+
+        // 3) Bereits zugeteilte Beträge je Event
+        $stmt = db()->prepare("
+            SELECT ziel_event_id, SUM(betrag) AS summe
+            FROM subvention_verwendung
+            WHERE ziel_typ = 'event' AND ziel_event_id IN ($platzhalter)
+            GROUP BY ziel_event_id
+        ");
+        $stmt->execute(array_map('intval', $event_ids));
+        foreach ($stmt->fetchAll() as $z) {
+            $ergebnis[(int)$z['ziel_event_id']]['betrag_zugeteilt'] = round((float)$z['summe'], 2);
+        }
+
+        // 4) Zusammenführen
+        foreach ($subventionIdsProEvent as $eventId => $sids) {
+            foreach ($sids as $sid) {
+                if (!empty($vollstaendigJeSubvention[$sid])) {
+                    $ergebnis[$eventId]['foerderfaehig'] = true;
+                    break;
+                }
+            }
+        }
+
+        return $ergebnis;
+    }
+
     // Zuordnung speichern: bestehende Zuordnungen ersetzen (DELETE + INSERT),
     // analog zum Muster in Subvention::trainerartenSpeichern().
     public static function zuordnungSpeichern(int $event_id, array $subvention_ids, ?int $benutzer_id = null): void {
