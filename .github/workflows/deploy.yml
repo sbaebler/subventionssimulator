@@ -83,6 +83,7 @@ jobs:
             **/.git*
             **/.git*/**
             **/sql/**
+            **/tests/**
             **/config/config.example.php
             **/CLAUDE.md
             **/README.md

@@ -76,11 +76,12 @@ subventionssimulator/
 │   ├── schema.sql               Vollständige Tabellenstruktur
 │   ├── migration_*.sql          Einzelmigrationen, chronologisch
 │   └── seed.sql, seed_katalog.sql
+├── tests/                       Standalone-Prüfskripte, `php tests/<datei>.php`
 └── .github/workflows/deploy.yml
 ```
 
 > `config/config.php` nie committen.  
-> `sql/` wird nicht deployed — nur lokal / phpMyAdmin.  
+> `sql/` und `tests/` werden nicht deployed — nur lokal.  
 > **`docs/` und alles unter `public_html/` wird deployed** (siehe Deployment).
 
 -----
@@ -144,7 +145,13 @@ Das Class Manager Tool baut die vier Kriterien read-only als SQL nach
 (`Budget::vollstaendigeSubventionenFuerEvents()`, dortiges `includes/Budget.php`),
 um bei Events anzuzeigen, welche zugeordneten Förderprogramme vollständig
 erfasst sind. Bei Änderungen an `vollstaendigkeit()` **immer auch** die
-SQL-Nachbildung im Class Manager Tool anpassen.
+SQL-Nachbildung im Class Manager Tool anpassen. `tests/vollstaendigkeit_matrix.php`
+prüft alle 16 Kombinationen der vier Kriterien gegen `vollstaendigkeit()`
+selbst (`php tests/vollstaendigkeit_matrix.php`, keine DB nötig); das
+gleichnamige Skript im Class Manager Tool prüft dieselben Kombinationen
+gegen die SQL-Nachbildung (braucht eine Dev-DB mit beiden Schemas). Beide
+Skripte laufen unabhängig, weil beide Repos eine globale Klasse `Event`
+und Funktion `db()` deklarieren und sich nicht in einem Prozess laden lassen.
 
 ### Berechnung
 
