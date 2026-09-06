@@ -232,7 +232,7 @@ kein manueller Upload. Nur auf ausdrückliche Anweisung pushen.
 
 - Ziel: `/public_html/subventionssimulator/` auf cyon
 - `local-dir: ./` — **das gesamte Repo-Root wird hochgeladen**, abzüglich der Exclude-Liste
-- Ausgeschlossen: `.git*`, `sql/`, `config/config.example.php`, `CLAUDE.md`, `README.md`, `.gitignore`, `.env`, `*.log`, `.DS_Store`
+- Ausgeschlossen: `.git*`, `sql/`, `tests/`, `*.docx`, `config/config.example.php`, `CLAUDE.md`, `README.md`, `.gitignore`, `.env`, `*.log`, `.DS_Store`
 - `config/config.php` wird im Workflow aus GitHub-Secrets erzeugt und mitdeployed
 - Manueller Trigger über `workflow_dispatch` möglich
 

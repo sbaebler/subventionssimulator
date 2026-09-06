@@ -84,6 +84,7 @@ jobs:
             **/.git*/**
             **/sql/**
             **/tests/**
+            **/*.docx
             **/config/config.example.php
             **/CLAUDE.md
             **/README.md
