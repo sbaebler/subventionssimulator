@@ -73,78 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fehler = 'Beim Berechnen ist ein Fehler aufgetreten.';
         }
     }
-
-    // CSV-Export: vor jeglichem HTML-Output
-    if ($ergebnisse !== null && ($_POST['format'] ?? '') === 'csv') {
-        $dateiname = 'simulation_' . date('Y-m-d')
-            . ($params['anlassname'] !== '' ? '_' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $params['anlassname']) : '')
-            . '.csv';
-
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $dateiname . '"');
-        header('Cache-Control: no-cache');
-
-        $out = fopen('php://output', 'w');
-        // UTF-8 BOM für Excel
-        fputs($out, "\xEF\xBB\xBF");
-
-        // Metazeilen
-        fputcsv($out, ['Anlassname', $params['anlassname']], ';');
-        fputcsv($out, ['Datum', date('d.m.Y')], ';');
-        fputcsv($out, ['Teilnehmende', $params['anzahl_teilnehmer']], ';');
-        fputcsv($out, ['Tage', $params['anzahl_tage']], ';');
-        fputcsv($out, ['Trainerart', Subvention::TRAINERARTEN[$params['trainerart']]], ';');
-        fputcsv($out, ['Eventart', Subvention::EVENTARTEN[$params['eventart']]], ';');
-        fputcsv($out, ['Übernachtung', $params['uebernachtung'] ? 'Ja' : 'Nein'], ';');
-        fputcsv($out, ['Stunden/Tag', $params['stunden_pro_tag']], ';');
-        fputcsv($out, ['Lektionen/Tag', $params['lektionen_pro_tag']], ';');
-        fputcsv($out, [], ';');
-
-        // Titelzeile
-        fputcsv($out, [
-            'Förderprogramm', 'Förderstelle', 'Berechnungstyp', 'Berechtigt', 'Betrag (CHF)', 'Berechnung',
-        ], ';');
-
-        foreach ($ergebnisse as $r) {
-            $typLabel = Subvention::BERECHNUNGSTYPEN[$r['berechnungstyp'] ?? 'additiv'] ?? ($r['berechnungstyp'] ?? '');
-            if ($r['berechtigt']) {
-                // Aufschlüsselung als lesbaren Text zusammensetzen
-                $teile = [];
-                foreach ($r['aufschluesselung'] as $zeile) {
-                    $wert = match ($zeile['format']) {
-                        'faktor' => '× ' . number_format($zeile['wert'], 3, '.', ''),
-                        'zahl'   => (string)(0 + $zeile['wert']),
-                        default  => number_format($zeile['wert'], 2, '.', '') . ' CHF',
-                    };
-                    $teile[] = $zeile['label'] . ': ' . $wert;
-                }
-                fputcsv($out, [
-                    $r['bezeichnung'],
-                    $r['foerderstelle'],
-                    $typLabel,
-                    'Ja',
-                    number_format($r['betrag'], 2, '.', ''),
-                    implode(' | ', $teile),
-                ], ';');
-            } else {
-                fputcsv($out, [
-                    $r['bezeichnung'],
-                    $r['foerderstelle'],
-                    $typLabel,
-                    'Nein – ' . ($r['grund'] ?? ''),
-                    '', '',
-                ], ';');
-            }
-        }
-
-        // Totalszeile
-        $total = array_sum(array_map(fn($r) => $r['berechtigt'] ? $r['betrag'] : 0, $ergebnisse));
-        fputcsv($out, [], ';');
-        fputcsv($out, ['Total förderberechtigt', '', '', '', number_format($total, 2, '.', ''), ''], ';');
-
-        fclose($out);
-        exit;
-    }
 }
 
 $totalBerechtigt = $ergebnisse
@@ -163,7 +91,6 @@ require __DIR__ . '/partials/header.php';
 
 <!-- ── Eingabeformular ─────────────────────────────────────────── -->
 <form method="post" action="/simulieren.php">
-  <input type="hidden" name="format" value="">
   <section class="card mb-6">
     <h2 class="font-semibold mb-4">Event-Parameter</h2>
     <div class="grid grid-cols-1 gap-4 mb-4">
@@ -360,25 +287,6 @@ $anzahlBerechtigt = count(array_filter($ergebnisse, fn($r) => $r['berechtigt']))
 
 <?php endforeach; ?>
 </div>
-
-<!-- ── CSV-Download ────────────────────────────────────────────── -->
-<form method="post" action="/simulieren.php" class="mt-6 flex justify-end">
-  <input type="hidden" name="format"             value="csv">
-  <input type="hidden" name="anlassname"         value="<?= htmlspecialchars($params['anlassname']) ?>">
-  <input type="hidden" name="anzahl_teilnehmer"  value="<?= (int)$params['anzahl_teilnehmer'] ?>">
-  <input type="hidden" name="anzahl_tage"        value="<?= (int)$params['anzahl_tage'] ?>">
-  <input type="hidden" name="trainerart"         value="<?= htmlspecialchars($params['trainerart']) ?>">
-  <input type="hidden" name="eventart"           value="<?= htmlspecialchars($params['eventart']) ?>">
-  <?php if ($params['uebernachtung']): ?><input type="hidden" name="uebernachtung" value="1"><?php endif; ?>
-  <input type="hidden" name="stunden_pro_tag"    value="<?= (int)$params['stunden_pro_tag'] ?>">
-  <input type="hidden" name="lektionen_pro_tag"  value="<?= (int)$params['lektionen_pro_tag'] ?>">
-  <button type="submit" class="btn btn--secondary">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
-    </svg>
-    Als CSV herunterladen
-  </button>
-</form>
 
 <?php endif; ?>
 
