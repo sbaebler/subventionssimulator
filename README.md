@@ -3,7 +3,7 @@
 Subventionssimulator für zurich-sailing.ch
 
 **URL:** `https://subventionssimulator.zurich-sailing.ch`  
-**Stack:** PHP 8.2 · MariaDB 10.6 · Alpine.js · Tailwind CSS (CDN)  
+**Stack:** PHP 8.2 · MariaDB 10.6 · Alpine.js · eigene Utility-Klassen  
 **Hosting:** cyon.ch
 
 ---

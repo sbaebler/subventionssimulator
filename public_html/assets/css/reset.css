@@ -1,0 +1,28 @@
+/* =========================================================
+   reset.css — Basis-Reset (Auszug aus Tailwind Preflight).
+   Wird VOR theme.css und shared-ui.css eingebunden, damit die
+   Komponenten des UI-Kits den Reset überstimmen.
+   ========================================================= */
+
+*, ::before, ::after { border-width: 0; border-style: solid; border-color: var(--color-border); }
+html { line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; }
+blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre { margin: 0; }
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+ol, ul, menu { list-style: none; margin: 0; padding: 0; }
+a { color: inherit; text-decoration: inherit; }
+b, strong { font-weight: bolder; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 1em; }
+table { text-indent: 0; border-color: inherit; border-collapse: collapse; }
+button, input, optgroup, select, textarea {
+  font-family: inherit; font-size: 100%; font-weight: inherit; line-height: inherit;
+  color: inherit; margin: 0; padding: 0;
+}
+button, select { text-transform: none; }
+button, [type="button"], [type="submit"] { -webkit-appearance: button; background-color: transparent; background-image: none; }
+button, [role="button"] { cursor: pointer; }
+:disabled { cursor: default; }
+textarea { resize: vertical; }
+input::placeholder, textarea::placeholder { opacity: 1; color: var(--color-text-subtle); }
+img, svg, video { display: block; vertical-align: middle; }
+img, video { max-width: 100%; height: auto; }
+[hidden] { display: none; }

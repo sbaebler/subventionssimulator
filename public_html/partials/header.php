@@ -10,9 +10,10 @@ auth_erforderlich();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle ?? APP_NAME) ?></title>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/css/reset.css">
   <link rel="stylesheet" href="/assets/css/theme.css">
   <link rel="stylesheet" href="/assets/css/shared-ui.css">
+  <link rel="stylesheet" href="/assets/css/utilities.css">
 </head>
 <body class="min-h-screen">
 
@@ -36,10 +37,9 @@ auth_erforderlich();
       </button>
       <div x-show="offen" x-cloak
            class="menu absolute left-0 top-full mt-2 w-48 z-20">
-        <a href="/jahresbeitraege.php" class="menu__item">Jahresbeiträge</a>
         <a href="/events.php"          class="menu__item">Events</a>
         <a href="/anleitung.php"       class="menu__item">Anleitung</a>
-        <a href="/docs/fachlogik.html" class="menu__item" target="_blank">Fachlogik</a>
+        <a href="/fachlogik.php"       class="menu__item">Fachlogik</a>
         <a href="/releases.php"        class="menu__item">Neuigkeiten</a>
         <a href="/benutzer.php"        class="menu__item">Benutzer</a>
         <a href="/papierkorb.php"      class="menu__item">Papierkorb</a>

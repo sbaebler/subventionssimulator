@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/Subvention.php';
 
+// Zweite Ansicht des Simulators: verbandsweite Jahresbeiträge
+if (($_GET['ansicht'] ?? '') === 'jahr') {
+    require __DIR__ . '/partials/jahresbeitraege.php';
+    exit;
+}
+
 $pageTitle = 'Simulator';
 
 $params = [
@@ -16,7 +22,7 @@ $params = [
 
 // Aktive Subventionen laden. Der Event-Simulator behandelt nur event-basierte
 // Berechnungstypen – verbandsweite Pauschalen/Jahresbeiträge gehören in die
-// separate Ansicht "Jahresbeiträge" und würden ein Event-Total verfälschen.
+// Ansicht «Jahresbeiträge» (?ansicht=jahr) und würden ein Event-Total verfälschen.
 $alleSubv = array_values(array_filter(
     Subvention::alle(),
     fn($s) => !in_array($s['berechnungstyp'] ?? 'additiv', Subvention::JAHRESTYPEN, true)
@@ -152,6 +158,8 @@ require __DIR__ . '/partials/header.php';
   <h1 class="text-2xl font-semibold">Simulator</h1>
   <p class="text-sm text-muted mt-1">Berechne deine Förderbeiträge für ein konkretes Event</p>
 </div>
+
+<?php $simulatorAnsicht = 'event'; require __DIR__ . '/partials/simulator_tabs.php'; ?>
 
 <!-- ── Eingabeformular ─────────────────────────────────────────── -->
 <form method="post" action="/simulieren.php">

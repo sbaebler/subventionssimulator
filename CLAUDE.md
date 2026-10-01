@@ -23,7 +23,7 @@ Projektkontext und Arbeitsregeln für Claude Code.
 |Backend   |PHP 8.2                                            |Kein Composer, kein Framework       |
 |Datenbank |MariaDB 10.6                                       |PDO, utf8mb4                        |
 |Frontend  |Alpine.js 3.x (CDN)                                |Kein Build-Tool                     |
-|Styling   |ZSF Tools UI Kit (`theme.css` + `shared-ui.css`)   |Tailwind CDN nur für Layout/Abstände|
+|Styling   |ZSF Tools UI Kit (`theme.css` + `shared-ui.css`)   |Layout-Klassen in `utilities.css`, kein Tailwind-CDN|
 |Deployment|GitHub Actions → FTPS auf cyon                     |`.github/workflows/deploy.yml`      |
 
 **Kein Node.js, kein npm, kein Composer, kein Build-Schritt.** Alles läuft direkt auf cyon Shared Hosting.
@@ -39,26 +39,29 @@ subventionssimulator/
 ├── public_html/                 ← Web-Root (auf cyon: public_html/subventionssimulator/)
 │   ├── index.php                Übersicht aller Förderprogramme
 │   ├── erfassen.php             Erfassung als vierstufiger Wizard (neu + bearbeiten)
-│   ├── simulieren.php           Simulator-Eingabe und Ergebnis
+│   ├── simulieren.php           Simulator: Ansicht «Event» und (?ansicht=jahr) «Jahresbeiträge»
 │   ├── verwendung.php           Beiträge & Verwendung: Verteilung auf Empfänger
-│   ├── jahresbeitraege.php      Erhaltene Beträge pro Jahr
 │   ├── events.php               Events (read-only aus cm_events)
 │   ├── events_zuordnen.php      Event ↔ Förderprogramm verknüpfen
 │   ├── papierkorb.php           Soft-gelöschte Programme, Wiederherstellen
 │   ├── benutzer.php             Benutzerverwaltung
 │   ├── anleitung.php            Anleitung inkl. Bahnübersicht-Diagramm
+│   ├── fachlogik.php            Berechnungstypen und Regeln (Beispielbeträge aus Foerderrechner)
 │   ├── releases.php             Rendert RELEASES.md
 │   ├── login.php / logout.php
 │   ├── passwort-vergessen.php / passwort-zuruecksetzen.php
 │   ├── .htaccess                HTTPS-Redirect, Sicherheitsheader, Verzeichnisschutz
 │   ├── assets/css/
+│   │   ├── reset.css            Basis-Reset (vor dem Kit geladen)
 │   │   ├── theme.css            Farbvariablen dieser App
-│   │   └── shared-ui.css        Layout + Komponenten (farbneutral)
+│   │   ├── shared-ui.css        Komponenten (farbneutral)
+│   │   └── utilities.css        Layout-Klassen (nach dem Kit geladen)
 │   ├── docs/
-│   │   ├── fachlogik.html       Statische Fachdokumentation
 │   │   └── diagramme/*.svg      Bahn-Illustrationen (Skill zsf-tools-diagramme)
 │   └── partials/
-│       ├── header.php           DOCTYPE, Nav, Alpine/Tailwind CDN, CSS-Einbindung
+│       ├── header.php           DOCTYPE, Nav, Alpine CDN, CSS-Einbindung
+│       ├── jahresbeitraege.php  Ansicht «Jahresbeiträge» des Simulators
+│       ├── simulator_tabs.php   Umschalter Event / Jahresbeiträge
 │       └── footer.php           Closing tags
 ├── includes/
 │   ├── db.php                   PDO-Singleton via db()-Funktion
@@ -184,8 +187,8 @@ Formeln unterscheiden sich deutlich.
 - **Sprache:** Deutsch für alle Labels, Fehlermeldungen, Kommentare und Variablennamen (ausser PHP-Klassen/Methoden in PascalCase/camelCase)
 - **PHP:** Typisierte Parameter und Rückgabewerte wo möglich; `match` statt `switch`; kein `die()`
 - **SQL:** Ausschliesslich Prepared Statements (PDO); kein Query-Building durch String-Konkatenation
-- **HTML:** Semantisch korrekt; Komponenten aus `shared-ui.css` bevorzugen, Tailwind nur für Layout und Abstände; Alpine.js `x-data` nur auf dem nächstnötigen Element
-- **Farben:** Nie Hex-Werte oder Tailwind-Farbklassen direkt setzen, immer `var(--color-*)` aus `theme.css`
+- **HTML:** Semantisch korrekt; Komponenten aus `shared-ui.css` bevorzugen, für Layout und Abstände die Klassen aus `utilities.css` (Tailwind-Namen; fehlt eine Klasse, dort ergänzen); Alpine.js `x-data` nur auf dem nächstnötigen Element
+- **Farben:** Nie Hex-Werte oder Farbklassen direkt setzen, immer `var(--color-*)` aus `theme.css`
 - **Fehlerbehandlung:** Exceptions fangen, sinnvolle Fehlermeldung anzeigen, nie rohe PHP-Fehler ans Frontend
 - **Kein `var_dump` / `print_r` / `die()` im committed Code**
 
@@ -272,6 +275,6 @@ SSL (Let's Encrypt) für `subventionssimulator.zurich-sailing.ch` aktivieren.
 - Kein `npm` / Build-Tools – kein Node.js verfügbar
 - Kein `.env` – wir nutzen `config/config.php` mit `define()`
 - `config/config.php` nie committen
-- Keine externen CDN-Ressourcen ausser: jsdelivr.net, cdn.tailwindcss.com, alpinejs.dev
+- Keine externen CDN-Ressourcen ausser: jsdelivr.net, alpinejs.dev
 - Nicht in `cm_*`-Tabellen schreiben – die gehören dem Class Manager Tool
 - Ohne ausdrückliche Anweisung nicht nach `main` pushen – das deployt live
