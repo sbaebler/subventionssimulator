@@ -224,7 +224,7 @@ Jahresbeiträge, Events und Zuordnung, Papierkorb, Benutzerverwaltung mit
 Passwort-Reset, Anleitung.
 
 Offen / optional: PDF-Export der Simulation.
-Migration `sql/migration_simulationen_entfernen.sql` muss auf Prod noch ausgeführt werden.
+Migration `sql/migration_simulationen_entfernen.sql` auf Prod ausgeführt (2026-10-01).
 
 -----
 
