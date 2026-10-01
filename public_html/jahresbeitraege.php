@@ -5,10 +5,9 @@ $pageTitle = 'Jahresbeiträge';
 
 // Nur verbandsweite Beiträge: Pauschalen und kennzahlbasierte Jahresbeiträge.
 // Diese sind nicht event-basiert und haben daher eine eigene Ansicht.
-$JAHRESTYPEN = ['pauschale', 'jahresbeitrag'];
 $beitraege = array_values(array_filter(
     Subvention::alle(),
-    fn($s) => in_array($s['berechnungstyp'] ?? 'additiv', $JAHRESTYPEN, true)
+    fn($s) => in_array($s['berechnungstyp'] ?? 'additiv', Subvention::JAHRESTYPEN, true)
 ));
 
 $jahr      = (int)($_POST['jahr'] ?? date('Y'));

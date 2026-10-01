@@ -80,6 +80,7 @@ jobs:
           server-dir: /public_html/subventionssimulator/
           dangerous-clean-slate: false
           exclude: |
+            docs/**
             **/.git*
             **/.git*/**
             **/sql/**

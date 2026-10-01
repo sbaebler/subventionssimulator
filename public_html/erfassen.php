@@ -7,12 +7,7 @@ require_once __DIR__ . '/../includes/auth.php';
 // und das Speichern verletzt den Fremdschlüssel auf benutzer(id).
 auth_erforderlich();
 
-// CHF-Beträge werden mit Punkt als Dezimaltrennzeichen erfasst.
-// Eine allfällige Komma-Eingabe (z.B. "9,00") wird hier auf Punkt
-// normalisiert, damit (float) den Nachkommateil nicht verliert.
-function dezimal($wert): float {
-    return (float) str_replace([',', "'"], ['.', ''], (string)$wert);
-}
+// CHF-Beträge: Komma-Eingaben normalisiert Subvention::dezimal().
 
 // Für die Anzeige: 0 bzw. 0.00 als leeres Feld ("leer = unbegrenzt / kein Wert"),
 // Dezimalwerte ohne überflüssige Nullen (2.8000 → 2.8).
@@ -57,20 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Betraege aus POST – Zeilen ohne einen einzigen Wert werden nicht gespeichert
     // (ein Förderprogramm ohne Beitragssatz gilt als "unvollständig", nicht als Fehler)
-    foreach ($_POST['betraege'] ?? [] as $b) {
+    foreach (array_slice($_POST['betraege'] ?? [], 0, 1) as $b) {
         $zeile = [
             'bezeichnung'             => trim($b['bezeichnung'] ?? '') ?: 'Hauptbeitrag',
-            'grundbetrag'             => dezimal($b['grundbetrag'] ?? 0),
-            'betrag_pro_teilnehmer'   => dezimal($b['betrag_pro_teilnehmer'] ?? 0),
-            'betrag_pro_tag'          => dezimal($b['betrag_pro_tag'] ?? 0),
+            'grundbetrag'             => Subvention::dezimal($b['grundbetrag'] ?? 0),
+            'betrag_pro_teilnehmer'   => Subvention::dezimal($b['betrag_pro_teilnehmer'] ?? 0),
+            'betrag_pro_tag'          => Subvention::dezimal($b['betrag_pro_tag'] ?? 0),
             'max_teilnehmer'          => (int)($b['max_teilnehmer'] ?? 0),
             'max_tage'                => (int)($b['max_tage'] ?? 0),
-            'betrag_max_gesamt'       => dezimal($b['betrag_max_gesamt'] ?? 0),
-            'satz_mit_uebernachtung'  => dezimal($b['satz_mit_uebernachtung'] ?? 0),
-            'satz_ohne_uebernachtung' => dezimal($b['satz_ohne_uebernachtung'] ?? 0),
-            'betrag_pro_stunde'       => dezimal($b['betrag_pro_stunde'] ?? 0),
+            'betrag_max_gesamt'       => Subvention::dezimal($b['betrag_max_gesamt'] ?? 0),
+            'satz_mit_uebernachtung'  => Subvention::dezimal($b['satz_mit_uebernachtung'] ?? 0),
+            'satz_ohne_uebernachtung' => Subvention::dezimal($b['satz_ohne_uebernachtung'] ?? 0),
+            'betrag_pro_stunde'       => Subvention::dezimal($b['betrag_pro_stunde'] ?? 0),
             'max_stunden_pro_tag'     => (int)($b['max_stunden_pro_tag'] ?? 0),
-            'betrag_pro_einheit'      => dezimal($b['betrag_pro_einheit'] ?? 0),
+            'betrag_pro_einheit'      => Subvention::dezimal($b['betrag_pro_einheit'] ?? 0),
             'max_lektionen_pro_tag'   => (int)($b['max_lektionen_pro_tag'] ?? 0),
         ];
         $hatWert = false;
@@ -85,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($t['trainerart'])) continue;
         $data['trainerarten'][] = [
             'trainerart'   => $t['trainerart'],
-            'zusatzbetrag' => dezimal($t['zusatzbetrag'] ?? 0),
+            'zusatzbetrag' => Subvention::dezimal($t['zusatzbetrag'] ?? 0),
             'bemerkung'    => trim($t['bemerkung'] ?? '') ?: null,
         ];
     }
@@ -95,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($e['eventart'])) continue;
         $data['eventarten'][] = [
             'eventart'     => $e['eventart'],
-            'multiplikator'=> dezimal($e['multiplikator'] ?? 1) ?: 1.0,
+            'multiplikator'=> Subvention::dezimal($e['multiplikator'] ?? 1) ?: 1.0,
             'bemerkung'    => trim($e['bemerkung'] ?? '') ?: null,
         ];
     }
@@ -115,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($h['jahr'])) continue;
         $data['historie'][] = [
             'jahr'      => (int)$h['jahr'],
-            'betrag'    => dezimal($h['betrag'] ?? 0),
+            'betrag'    => Subvention::dezimal($h['betrag'] ?? 0),
             'bemerkung' => trim($h['bemerkung'] ?? '') ?: null,
         ];
     }
@@ -282,7 +277,6 @@ require __DIR__ . '/partials/header.php';
         eventarten:   <?= $alpineEventarten ?>,
         fristen:      <?= $alpineFristen ?>,
         historie:     <?= $alpineHistorie ?>,
-        beispielOffen: false,
         detailsTrainer: {},
         detailsEvent: {},
 
@@ -300,44 +294,7 @@ require __DIR__ . '/partials/header.php';
                   satz_ohne_uebernachtung:'',betrag_pro_stunde:'',max_stunden_pro_tag:'',
                   betrag_pro_einheit:'',max_lektionen_pro_tag:''}
         },
-        addBetrag()    { const z = this.leereZeile(); if (this.betraege.length > 0) z.bezeichnung = 'Weitere Komponente'; this.betraege.push(z) },
-        rmBetrag(i)    { this.betraege.splice(i,1) },
-
-        zahl(v) { return parseFloat(String(v ?? '').replace(/'/g,'').replace(',', '.')) || 0 },
-        cap(wert, max) { const m = this.zahl(max); return m > 0 ? Math.min(wert, m) : wert },
-        get beispielText() {
-          const b = this.betraege[0];
-          if (!b) return '';
-          const chf = v => {
-            const max = this.zahl(b.betrag_max_gesamt);
-            if (max > 0 && v > max) v = max;
-            return 'CHF ' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, &quot;'&quot;);
-          };
-          const tn = this.cap(20, b.max_teilnehmer), tage = this.cap(5, b.max_tage);
-          switch (this.berechnungstyp) {
-            case 'additiv':
-              return 'Beispiel: 20 Teilnehmer, 5 Tage ergeben ' + chf(this.zahl(b.grundbetrag) + this.zahl(b.betrag_pro_teilnehmer)*tn + this.zahl(b.betrag_pro_tag)*tage);
-            case 'js_teilnehmertag':
-              return 'Beispiel: 20 Teilnehmer, 5 Tage mit Übernachtung ergeben ' + chf(this.zahl(b.satz_mit_uebernachtung)*tn*tage);
-            case 'js_teilnehmerstunde': {
-              const std = this.cap(2, b.max_stunden_pro_tag);
-              return 'Beispiel: 20 Teilnehmer, 5 Tage à 2 Stunden ergeben ' + chf(this.zahl(b.betrag_pro_stunde)*tn*tage*std);
-            }
-            case 'zks_ausbildungseinheit': {
-              const lek = this.cap(4, b.max_lektionen_pro_tag);
-              return 'Beispiel: 20 Teilnehmer, 4 Lektionen/Tag, 5 Tage ergeben ' + chf(this.zahl(b.betrag_pro_einheit)*tn*lek*tage);
-            }
-            case 'pauschale':
-              return 'Fixer Betrag: ' + chf(this.zahl(b.grundbetrag));
-            case 'jahresbeitrag': {
-              const satz = this.zahl(b.betrag_pro_einheit);
-              return satz > 0
-                ? 'Beispiel: 300 Einheiten ergeben ' + chf(satz*300)
-                : 'Referenzbetrag: ' + chf(this.zahl(b.grundbetrag));
-            }
-            default: return '';
-          }
-        },
+        addBetrag()    { this.betraege.push(this.leereZeile()) },
 
         hatTrainer(ta)    { return this.trainerarten.some(t => t.trainerart === ta) },
         trainerIndex(ta)  { return this.trainerarten.findIndex(t => t.trainerart === ta) },
@@ -440,24 +397,6 @@ require __DIR__ . '/partials/header.php';
       <?php endforeach; ?>
     </div>
 
-    <!-- Beispiel-Panel (Inline-Hilfe) -->
-    <div class="mb-5">
-      <button type="button" @click="beispielOffen = !beispielOffen"
-              class="link text-sm">
-        <span x-text="beispielOffen ? '▾' : '▸'"></span> Beispiel ansehen: ZKS Ausbildungsbeitrag
-      </button>
-      <div x-show="beispielOffen" x-cloak class="alert alert--info mt-2 p-4">
-        <p class="mb-2"><strong>So wurde der ZKS Ausbildungsbeitrag erfasst:</strong></p>
-        <ul class="space-y-1 list-disc list-inside">
-          <li>Muster: <em>Pro Ausbildungseinheit</em> (Teilnehmer × Lektionen × Tage)</li>
-          <li>Satz pro Ausbildungseinheit: <strong>2.80</strong>, max. <strong>6 Lektionen pro Tag</strong></li>
-          <li>Gilt für Lager und Trainings, die als Ausbildung deklariert sind – keine Wettkämpfe</li>
-          <li>Fristen: Musterteilnehmerliste bis 28.02., Einreichung bis 31.03. des Folgejahres</li>
-          <li>Erhaltene Beträge: 2024 CHF 12'949.00, 2025 ca. CHF 30'000.00</li>
-        </ul>
-      </div>
-    </div>
-
     <!-- Hinweis, solange kein Typ gewählt -->
     <p x-show="berechnungstyp === ''" class="text-sm text-subtle" x-cloak>
       Noch kein Muster gewählt. Wenn du unsicher bist, nimm «Weiss ich noch nicht» und beschreibe die Berechnung unten in Worten.
@@ -474,17 +413,9 @@ require __DIR__ . '/partials/header.php';
 
     <!-- Betragsfelder je Typ -->
     <template x-for="(b, i) in betraege" :key="i">
-      <div x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt'"
+      <div x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt' && i === 0"
            class="card card--muted mb-3">
-        <input type="hidden" :name="'betraege['+i+'][bezeichnung]'" x-model="b.bezeichnung" x-show="i === 0">
-        <div x-show="i > 0" class="flex justify-between items-center mb-3">
-          <input type="text" :name="i > 0 ? 'betraege['+i+'][bezeichnung]' : null" x-model="b.bezeichnung"
-                 placeholder="Name der Komponente"
-                 class="text-sm font-medium border-0 bg-transparent focus:outline-none focus:ring-1 rounded px-1 w-64">
-          <button type="button" @click="rmBetrag(i)" class="link--danger text-xs">
-            Entfernen
-          </button>
-        </div>
+        <input type="hidden" :name="'betraege['+i+'][bezeichnung]'" x-model="b.bezeichnung">
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'pauschale' || berechnungstyp === 'jahresbeitrag'">
             <label class="block text-xs text-muted mb-1" x-text="berechnungstyp === 'additiv' ? 'Grundbetrag (CHF)' : 'Betrag (CHF)'">Grundbetrag (CHF)</label>
@@ -561,19 +492,6 @@ require __DIR__ . '/partials/header.php';
         </div>
       </div>
     </template>
-
-    <!-- Live-Beispielrechnung -->
-    <div x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt' && betraege.length > 0 && beispielText"
-         class="alert alert--success" x-cloak>
-      <span x-text="beispielText"></span>
-      <span class="text-xs opacity-75">(Probe-Rechnung mit deinen Sätzen)</span>
-    </div>
-
-    <button type="button" x-show="berechnungstyp !== '' && berechnungstyp !== 'unbekannt' && betraege.length >= 1"
-            @click="addBetrag()"
-            class="btn btn--secondary btn--sm mt-4" x-cloak>
-      + weitere Beitragskomponente
-    </button>
   </section>
 
   <!-- ── Schritt 3: Bedingungen (optional) ───────────── -->

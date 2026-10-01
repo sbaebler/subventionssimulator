@@ -17,10 +17,9 @@ $params = [
 // Aktive Subventionen laden. Der Event-Simulator behandelt nur event-basierte
 // Berechnungstypen – verbandsweite Pauschalen/Jahresbeiträge gehören in die
 // separate Ansicht "Jahresbeiträge" und würden ein Event-Total verfälschen.
-$JAHRESTYPEN = ['pauschale', 'jahresbeitrag'];
 $alleSubv = array_values(array_filter(
     Subvention::alle(),
-    fn($s) => !in_array($s['berechnungstyp'] ?? 'additiv', $JAHRESTYPEN, true)
+    fn($s) => !in_array($s['berechnungstyp'] ?? 'additiv', Subvention::JAHRESTYPEN, true)
 ));
 $typen    = array_column($alleSubv, 'berechnungstyp');
 $brauchtUebernachtung = in_array('js_teilnehmertag', $typen, true);

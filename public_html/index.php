@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['aktion'] ?? '') === 'in_pa
 
 $pageTitle = 'Förderprogramme – Übersicht';
 $subventionen = Subvention::alle();
-$anzahlPapierkorb = count(Subvention::papierkorb());
+$anzahlPapierkorb = Subvention::papierkorbAnzahl();
 
 // Vollständigkeit pro Programm ermitteln (für Badges und Fortschritt)
 $fehltProProgramm = [];

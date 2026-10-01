@@ -6,10 +6,6 @@ require_once __DIR__ . '/../includes/auth.php';
 // Login vor der POST-Verarbeitung erzwingen (Schreibvorgang, Audit-Spalte).
 auth_erforderlich();
 
-function dezimal($wert): float {
-    return (float) str_replace([',', "'"], ['.', ''], (string)$wert);
-}
-
 $pageTitle = 'Beiträge & Verwendung';
 
 $subventionen = Subvention::alle(false);
@@ -31,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['betrag_setzen'])) {
         $fehler[] = 'Bitte ein Förderprogramm wählen.';
     } else {
         try {
-            Subvention::historieSetzen($subventionId, $jahr, dezimal($_POST['erhalten_betrag'] ?? 0));
+            Subvention::historieSetzen($subventionId, $jahr, Subvention::dezimal(_POST['erhalten_betrag'] ?? 0));
             header('Location: /verwendung.php?subvention_id=' . $subventionId . '&jahr=' . $jahr . '&betrag_gespeichert=1');
             exit;
         } catch (Throwable $e) {
@@ -49,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['speichern'])) {
             'ziel_event_id'  => $v['ziel_event_id']  ?? null,
             'ziel_klasse_id' => $v['ziel_klasse_id'] ?? null,
             'ziel_text'      => $v['ziel_text'] ?? '',
-            'betrag'         => dezimal($v['betrag'] ?? 0),
+            'betrag'         => Subvention::dezimal(v['betrag'] ?? 0),
             'bemerkung'      => $v['bemerkung'] ?? '',
         ];
     }

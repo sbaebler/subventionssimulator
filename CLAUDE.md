@@ -55,7 +55,6 @@ subventionssimulator/
 │   │   ├── theme.css            Farbvariablen dieser App
 │   │   └── shared-ui.css        Layout + Komponenten (farbneutral)
 │   ├── docs/
-│   │   ├── erste-schritte.html  Statische Einstiegsanleitung
 │   │   ├── fachlogik.html       Statische Fachdokumentation
 │   │   └── diagramme/*.svg      Bahn-Illustrationen (Skill zsf-tools-diagramme)
 │   └── partials/
@@ -64,6 +63,7 @@ subventionssimulator/
 ├── includes/
 │   ├── db.php                   PDO-Singleton via db()-Funktion
 │   ├── Subvention.php           Model: CRUD, Soft-Delete, Vollständigkeit, Berechnung
+│   ├── Foerderrechner.php       Reine Formeln, ohne DB – identische Kopie im Class Manager Tool
 │   ├── Event.php                Read-only-Sicht auf cm_events + Zuordnung
 │   ├── auth.php                 Session-Auth gegen die Tabelle benutzer
 │   ├── mailer.php               Mailversand
@@ -82,7 +82,7 @@ subventionssimulator/
 
 > `config/config.php` nie committen.  
 > `sql/` und `tests/` werden nicht deployed — nur lokal.  
-> **`docs/` und alles unter `public_html/` wird deployed** (siehe Deployment).
+> Das Root-`docs/` (Konzeptdokumente) wird nicht deployed; alles unter `public_html/` schon.
 
 -----
 
@@ -104,7 +104,6 @@ subventionen                 Stammdaten: bezeichnung, foerderstelle, kategorie,
   ├── subvention_verwendung      Verteilung eines Jahresbetrags auf Empfänger
   └── subvention_events          Zuordnung Förderprogramm ↔ cm_events
 
-simulationen                 Protokoll der Berechnungen
 benutzer                     Login, Rolle, Aktivstatus
 passwort_reset_tokens        Token-Flow für Passwort-Reset
 
@@ -156,8 +155,12 @@ und Funktion `db()` deklarieren und sich nicht in einem Prozess laden lassen.
 ### Berechnung
 
 Einstieg: `Subvention::berechnen(int $id, array $params)` bzw.
-`berechneAusSubvention()`. Diese wählen anhand von `berechnungstyp` eine der
-sechs privaten Methoden. **Es gibt nicht eine Formel, sondern sechs.**
+`berechneAusSubvention()`. Die Formeln selbst stehen in
+`includes/Foerderrechner.php` (sechs Methoden, gewählt per `berechnungstyp`).
+Diese Datei liegt **identisch** auch im Class Manager Tool: Änderungen hier
+machen und 1:1 dorthin kopieren (`php tests/foerderrechner.php`; dort prüft
+`tests/foerderrechner_sync.php` die Gleichheit). Pro Förderprogramm gilt ein
+Beitragssatz (erste Zeile in `subvention_betraege`). **Es gibt nicht eine Formel, sondern sechs.**
 
 Beispiel für `'additiv'` (`berechneAdditiv()`):
 
@@ -221,6 +224,7 @@ Jahresbeiträge, Events und Zuordnung, Papierkorb, Benutzerverwaltung mit
 Passwort-Reset, Anleitung.
 
 Offen / optional: PDF-Export der Simulation.
+Migration `sql/migration_simulationen_entfernen.sql` muss auf Prod noch ausgeführt werden.
 
 -----
 

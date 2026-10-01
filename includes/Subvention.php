@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/Foerderrechner.php';
 
 class Subvention {
 
@@ -34,6 +35,15 @@ class Subvention {
         'pauschale'              => 'Pauschale (fixer Jahresbetrag)',
         'jahresbeitrag'          => 'Jahresbeitrag (verbandsweite Kennzahl)',
     ];
+
+    // Verbandsweite Typen: nicht event-basiert, daher nicht im Simulator,
+    // sondern unter «Jahresbeiträge».
+    public const JAHRESTYPEN = ['pauschale', 'jahresbeitrag'];
+
+    // Dezimalzahl aus Formulareingabe: Komma → Punkt, Tausenderapostroph weg.
+    public static function dezimal($wert): float {
+        return (float) str_replace([',', "'"], ['.', ''], (string)$wert);
+    }
 
     // ------------------------------------------------------------------
     // Alle aktiven Subventionen (für Listenansicht)
@@ -73,6 +83,10 @@ class Subvention {
         return db()->query($sql)->fetchAll();
     }
 
+    public static function papierkorbAnzahl(): int {
+        return (int)db()->query('SELECT COUNT(*) FROM subventionen WHERE geloescht_am IS NOT NULL')->fetchColumn();
+    }
+
     // In den Papierkorb verschieben (weiche Löschung) – Eintrag bleibt in der
     // DB und verschwindet nur aus den regulären Listen (alle()).
     public static function inPapierkorbVerschieben(int $id, ?int $benutzer_id = null): void {
@@ -95,26 +109,12 @@ class Subvention {
     }
 
     // Endgültig (hart) löschen – nur aus dem Papierkorb heraus zulässig.
-    // simulationen verweist mit ON DELETE RESTRICT auf subventionen, daher
-    // werden protokollierte Simulationen hier bewusst mitgelöscht; alle
-    // anderen Detailtabellen räumt die DB selbst per ON DELETE CASCADE auf.
+    // Die Detailtabellen räumt die DB selbst per ON DELETE CASCADE auf.
     public static function endgueltigLoeschen(int $id): void {
-        $pdo = db();
-        $pdo->beginTransaction();
-        try {
-            $check = $pdo->prepare('SELECT geloescht_am FROM subventionen WHERE id = ?');
-            $check->execute([$id]);
-            $geloescht_am = $check->fetchColumn();
-            if ($geloescht_am === false || $geloescht_am === null) {
-                throw new RuntimeException('Endgültiges Löschen ist nur aus dem Papierkorb heraus möglich.');
-            }
-
-            $pdo->prepare('DELETE FROM simulationen WHERE subvention_id = ?')->execute([$id]);
-            $pdo->prepare('DELETE FROM subventionen WHERE id = ?')->execute([$id]);
-            $pdo->commit();
-        } catch (Throwable $e) {
-            $pdo->rollBack();
-            throw $e;
+        $stmt = db()->prepare('DELETE FROM subventionen WHERE id = ? AND geloescht_am IS NOT NULL');
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() === 0) {
+            throw new RuntimeException('Endgültiges Löschen ist nur aus dem Papierkorb heraus möglich.');
         }
     }
 
@@ -259,44 +259,19 @@ class Subvention {
                 'aktiv'                => $data['aktiv'],
             ];
 
+            $spalten = array_keys($stammdaten);
             if (!empty($data['id'])) {
-                $stmt = $pdo->prepare('
-                    UPDATE subventionen SET
-                        bezeichnung          = :bezeichnung,
-                        beschreibung         = :beschreibung,
-                        foerderstelle        = :foerderstelle,
-                        kategorie            = :kategorie,
-                        berechnungstyp       = :berechnungstyp,
-                        voraussetzungen      = :voraussetzungen,
-                        berechtigte          = :berechtigte,
-                        einschraenkungen     = :einschraenkungen,
-                        verlangte_unterlagen = :verlangte_unterlagen,
-                        berechnungsgrundlage = :berechnungsgrundlage,
-                        antragsfrist         = :antragsfrist,
-                        gueltig_von          = :gueltig_von,
-                        gueltig_bis          = :gueltig_bis,
-                        link_extern          = :link_extern,
-                        aktiv                = :aktiv,
-                        geaendert_von        = :geaendert_von
-                    WHERE id = :id
-                ');
+                $set = implode(', ', array_map(fn($c) => "$c = :$c", $spalten));
+                $stmt = $pdo->prepare("UPDATE subventionen SET $set, geaendert_von = :geaendert_von WHERE id = :id");
                 $stmt->execute($stammdaten + ['geaendert_von' => $benutzer_id, 'id' => (int)$data['id']]);
                 $id = (int)$data['id'];
             } else {
-                $stmt = $pdo->prepare('
-                    INSERT INTO subventionen
-                        (bezeichnung, beschreibung, foerderstelle, kategorie,
-                         berechnungstyp, voraussetzungen, berechtigte, einschraenkungen,
-                         verlangte_unterlagen, berechnungsgrundlage,
-                         antragsfrist, gueltig_von, gueltig_bis,
-                         link_extern, aktiv, erstellt_von, geaendert_von)
-                    VALUES
-                        (:bezeichnung, :beschreibung, :foerderstelle, :kategorie,
-                         :berechnungstyp, :voraussetzungen, :berechtigte, :einschraenkungen,
-                         :verlangte_unterlagen, :berechnungsgrundlage,
-                         :antragsfrist, :gueltig_von, :gueltig_bis,
-                         :link_extern, :aktiv, :erstellt_von, :geaendert_von)
-                ');
+                $cols = implode(', ', $spalten);
+                $vals = implode(', ', array_map(fn($c) => ":$c", $spalten));
+                $stmt = $pdo->prepare("
+                    INSERT INTO subventionen ($cols, erstellt_von, geaendert_von)
+                    VALUES ($vals, :erstellt_von, :geaendert_von)
+                ");
                 $stmt->execute($stammdaten + ['erstellt_von' => $benutzer_id, 'geaendert_von' => $benutzer_id]);
                 $id = (int)$pdo->lastInsertId();
             }
@@ -326,7 +301,8 @@ class Subvention {
                  max_stunden_pro_tag, betrag_pro_einheit, max_lektionen_pro_tag)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
-        foreach ($rows as $r) {
+        // Pro Förderprogramm gilt ein Beitragssatz (die Berechnung nutzt nur die erste Zeile).
+        foreach (array_slice($rows, 0, 1) as $r) {
             $stmt->execute([
                 $id,
                 $r['bezeichnung']           ?? 'Standardbetrag',
@@ -525,137 +501,12 @@ class Subvention {
 
         $regel = $subv['betraege'][0] ?? [];
 
-        [$betrag, $aufschluesselung] = match ($typ) {
-            'js_teilnehmertag'       => self::berechneTeilnehmertag($regel, $tn, $tage, !empty($params['uebernachtung'])),
-            'js_teilnehmerstunde'    => self::berechneTeilnehmerstunde($regel, $tn, $tage, max(0, (int)($params['stunden_pro_tag'] ?? 0))),
-            'zks_ausbildungseinheit' => self::berechneAusbildungseinheit($regel, $tn, $tage, max(0, (int)($params['lektionen_pro_tag'] ?? 0))),
-            'pauschale'              => self::berechnePauschale($regel),
-            'jahresbeitrag'          => self::berechneJahresbeitrag($regel, (float)($params['anzahl_einheiten'] ?? 0)),
-            default                  => self::berechneAdditiv($regel, $tn, $tage, $trainerRow, $eventRow),
-        };
-
-        // Deckelung auf Maximalbetrag (0 = kein Limit) – für alle Typen einheitlich
-        $maxGesamt = (float)($regel['betrag_max_gesamt'] ?? 0);
-        if ($maxGesamt > 0 && $betrag > $maxGesamt) {
-            $betrag = $maxGesamt;
-            $aufschluesselung[] = ['label' => 'Deckelung auf Maximalbetrag', 'wert' => $maxGesamt, 'format' => 'chf'];
-        }
+        [$betrag, $aufschluesselung] = Foerderrechner::betrag($typ, $regel, $tn, $tage, $params, $trainerRow, $eventRow);
 
         return $meta + [
             'berechtigt'       => true,
             'betrag'           => round($betrag, 2),
             'aufschluesselung' => $aufschluesselung,
         ];
-    }
-
-    // Anrechenbare Menge unter Berücksichtigung einer Obergrenze (0 = kein Limit)
-    private static function begrenzt(int $wert, int $max): int {
-        return ($max > 0) ? min($wert, $max) : $wert;
-    }
-
-    // additiv: Grundbetrag + pro TN + pro Tag + Trainer-Zusatz, × Eventart-Faktor
-    private static function berechneAdditiv(array $r, int $tn, int $tage, ?array $trainerRow, ?array $eventRow): array {
-        $effTN   = self::begrenzt($tn,   (int)($r['max_teilnehmer'] ?? 0));
-        $effTage = self::begrenzt($tage, (int)($r['max_tage'] ?? 0));
-
-        $grund   = (float)($r['grundbetrag'] ?? 0);
-        $tnAnt   = (float)($r['betrag_pro_teilnehmer'] ?? 0) * $effTN;
-        $tageAnt = (float)($r['betrag_pro_tag'] ?? 0) * $effTage;
-        $zusatz  = (float)($trainerRow['zusatzbetrag'] ?? 0);
-        $faktor  = (float)($eventRow['multiplikator'] ?? 1);
-
-        $betrag = ($grund + $tnAnt + $tageAnt + $zusatz) * $faktor;
-
-        $auf = [
-            ['label' => 'Grundbetrag',       'wert' => $grund,   'format' => 'chf'],
-            ['label' => 'Teilnehmer-Anteil', 'wert' => $tnAnt,   'format' => 'chf'],
-            ['label' => 'Tages-Anteil',      'wert' => $tageAnt, 'format' => 'chf'],
-            ['label' => 'Trainer-Bonus',     'wert' => $zusatz,  'format' => 'chf'],
-        ];
-        if ($faktor != 1.0) {
-            $auf[] = ['label' => 'Eventart-Faktor', 'wert' => $faktor, 'format' => 'faktor'];
-        }
-        return [$betrag, $auf];
-    }
-
-    // js_teilnehmertag: Satz × TN × Tage (Satz je nach Übernachtung)
-    private static function berechneTeilnehmertag(array $r, int $tn, int $tage, bool $uebernachtung): array {
-        $satz    = $uebernachtung
-            ? (float)($r['satz_mit_uebernachtung'] ?? 0)
-            : (float)($r['satz_ohne_uebernachtung'] ?? 0);
-        $effTN   = self::begrenzt($tn,   (int)($r['max_teilnehmer'] ?? 0));
-        $effTage = self::begrenzt($tage, (int)($r['max_tage'] ?? 0));
-
-        $betrag = $satz * $effTN * $effTage;
-
-        $auf = [
-            ['label' => 'Satz pro Teilnehmer/Tag (' . ($uebernachtung ? 'mit' : 'ohne') . ' Übernachtung)', 'wert' => $satz, 'format' => 'chf'],
-            ['label' => 'Anrechenbare Teilnehmer', 'wert' => $effTN,   'format' => 'zahl'],
-            ['label' => 'Anrechenbare Tage',       'wert' => $effTage, 'format' => 'zahl'],
-        ];
-        return [$betrag, $auf];
-    }
-
-    // js_teilnehmerstunde: Satz × TN × Tage × Stunden/Tag
-    private static function berechneTeilnehmerstunde(array $r, int $tn, int $tage, int $stunden): array {
-        $satz       = (float)($r['betrag_pro_stunde'] ?? 0);
-        $effTN      = self::begrenzt($tn,      (int)($r['max_teilnehmer'] ?? 0));
-        $effTage    = self::begrenzt($tage,    (int)($r['max_tage'] ?? 0));
-        $effStunden = self::begrenzt($stunden, (int)($r['max_stunden_pro_tag'] ?? 0));
-
-        $betrag = $satz * $effTN * $effTage * $effStunden;
-
-        $auf = [
-            ['label' => 'Satz pro Teilnehmerstunde', 'wert' => $satz,       'format' => 'chf'],
-            ['label' => 'Anrechenbare Teilnehmer',   'wert' => $effTN,      'format' => 'zahl'],
-            ['label' => 'Anrechenbare Tage',         'wert' => $effTage,    'format' => 'zahl'],
-            ['label' => 'Anrechenbare Stunden/Tag',  'wert' => $effStunden, 'format' => 'zahl'],
-        ];
-        return [$betrag, $auf];
-    }
-
-    // zks_ausbildungseinheit: Satz × Ausbildungseinheiten (= TN × Lektionen/Tag × Tage)
-    private static function berechneAusbildungseinheit(array $r, int $tn, int $tage, int $lektionen): array {
-        $satz         = (float)($r['betrag_pro_einheit'] ?? 0);
-        $effTN        = self::begrenzt($tn,        (int)($r['max_teilnehmer'] ?? 0));
-        $effTage      = self::begrenzt($tage,      (int)($r['max_tage'] ?? 0));
-        $effLektionen = self::begrenzt($lektionen, (int)($r['max_lektionen_pro_tag'] ?? 0));
-
-        $einheiten = $effTN * $effLektionen * $effTage;
-        $betrag    = $satz * $einheiten;
-
-        $auf = [
-            ['label' => 'Satz pro Ausbildungseinheit', 'wert' => $satz,         'format' => 'chf'],
-            ['label' => 'Anrechenbare Teilnehmer',     'wert' => $effTN,        'format' => 'zahl'],
-            ['label' => 'Anrechenbare Lektionen/Tag',  'wert' => $effLektionen, 'format' => 'zahl'],
-            ['label' => 'Anrechenbare Tage',           'wert' => $effTage,      'format' => 'zahl'],
-            ['label' => 'Ausbildungseinheiten',        'wert' => $einheiten,    'format' => 'zahl'],
-        ];
-        return [$betrag, $auf];
-    }
-
-    // pauschale: fixer Betrag (im Grundbetrag hinterlegt)
-    private static function berechnePauschale(array $r): array {
-        $betrag = (float)($r['grundbetrag'] ?? 0);
-        return [$betrag, [
-            ['label' => 'Pauschalbetrag', 'wert' => $betrag, 'format' => 'chf'],
-        ]];
-    }
-
-    // jahresbeitrag: Satz pro Einheit × Anzahl Einheiten (Kennzahl-basiert, Phase 3).
-    // Ohne Einheiten fällt der Beitrag auf den Pauschalbetrag (Grundbetrag) zurück.
-    private static function berechneJahresbeitrag(array $r, float $einheiten): array {
-        $satz = (float)($r['betrag_pro_einheit'] ?? 0);
-        if ($satz > 0 && $einheiten > 0) {
-            $betrag = $satz * $einheiten;
-            return [$betrag, [
-                ['label' => 'Betrag pro Einheit', 'wert' => $satz,      'format' => 'chf'],
-                ['label' => 'Anzahl Einheiten',   'wert' => $einheiten, 'format' => 'zahl'],
-            ]];
-        }
-        $betrag = (float)($r['grundbetrag'] ?? 0);
-        return [$betrag, [
-            ['label' => 'Pauschalbetrag (Referenz)', 'wert' => $betrag, 'format' => 'chf'],
-        ]];
     }
 }
