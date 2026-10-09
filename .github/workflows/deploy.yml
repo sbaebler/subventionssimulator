@@ -1,10 +1,15 @@
-name: Deploy to cyon (FTPS)
+name: Deploy to cyon (rsync über SSH)
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Manueller Trigger via GitHub UI / gh CLI
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-Run: nur anzeigen, was passieren würde"
+        type: boolean
+        default: true
 
 # Nur ein Deployment gleichzeitig
 concurrency:
@@ -20,7 +25,7 @@ jobs:
     steps:
       # 1. Code auschecken
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -64,39 +69,66 @@ jobs:
             echo 'config.php generiert.' . PHP_EOL;
           "
 
-      # 4. Deploy nach cyon Shared Hosting via FTPS
-      # FTP-User landet direkt im Verzeichnis des Subventionssimulators
-      # → server-dir ist "/" (FTP-Root = Projektverzeichnis auf cyon)
-      # Deployed: public_html/, includes/, config/ (mit generiertem config.php)
-      # Nicht deployed: sql/, CLAUDE.md, README.md, .gitignore, config.example.php
-      - name: Deploy via FTPS to cyon
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server:   ${{ secrets.CYON_FTP_HOST }}
-          username: ${{ secrets.CYON_FTP_USER }}
-          password: ${{ secrets.CYON_FTP_PASS }}
-          protocol: ftps
-          port:     21
-          local-dir:  ./
-          server-dir: /
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/sql/**
-            **/config/config.example.php
-            **/CLAUDE.md
-            **/README.md
-            **/.gitignore
-            **/.env
-            **/*.log
-            **/.DS_Store
+      # 4. Modus und Ziel prüfen
+      # Echte Deploys erst, wenn die Repo-Variable CYON_RSYNC_LIVE = true ist.
+      # Bis dahin läuft jeder Deploy (auch bei Push) als Dry-Run.
+      - name: Check target and mode
+        id: mode
+        env:
+          TARGET_DIR: ${{ vars.CYON_TARGET_DIR }}
+          LIVE:       ${{ vars.CYON_RSYNC_LIVE }}
+          INPUT_DRY:  ${{ inputs.dry_run }}
+        run: |
+          case "$TARGET_DIR" in
+            ""|"/"|"~"|"~/"|"."|"./")
+              echo "::error::CYON_TARGET_DIR fehlt oder ist zu allgemein ('$TARGET_DIR'). Abbruch, damit --delete nichts Falsches löscht."
+              exit 1 ;;
+          esac
+          case "$TARGET_DIR" in
+            */) ;;
+            *) echo "::error::CYON_TARGET_DIR muss mit / enden."; exit 1 ;;
+          esac
+          if [ "$LIVE" != "true" ] || [ "$INPUT_DRY" = "true" ]; then
+            echo "flag=--dry-run" >> "$GITHUB_OUTPUT"
+            echo "::notice::Dry-Run: es wird nichts übertragen oder gelöscht."
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
 
-      # 5. Deploy-Status melden
+      # 5. SSH einrichten (Deploy-Key nur für dieses Repo, Host-Key gepinnt)
+      - name: Set up SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.CYON_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.CYON_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      # 6. Deploy via rsync
+      # Deployed: public_html/, includes/, config/ (mit generiertem config.php), api/
+      # Nicht deployed: siehe .deployignore
+      - name: Deploy via rsync to cyon
+        env:
+          TARGET: ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }}:${{ vars.CYON_TARGET_DIR }}
+          DRY:    ${{ steps.mode.outputs.flag }}
+        run: |
+          rsync -rlptz --delete --itemize-changes $DRY \
+            --exclude-from=.deployignore \
+            -e "ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes" \
+            ./ "$TARGET"
+
+      - name: Remove key
+        if: always()
+        run: rm -f ~/.ssh/id_deploy
+
+      # 7. Deploy-Status melden
       - name: Deployment summary
         if: success()
         run: |
-          echo "### Deployment erfolgreich! :rocket:" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.mode.outputs.flag }}" ]; then
+            echo "### Dry-Run abgeschlossen (nichts geändert)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Deployment erfolgreich! :rocket:" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Ziel:** subventionssimulator.zurich-sailing.ch" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,31 @@
+# Wird nie auf cyon übertragen und von rsync --delete auf dem Server nicht angefasst.
+# Pfade relativ zum Repo-Root (= Projektverzeichnis auf cyon).
+
+# Repo- und Tooling-Dateien
+.git/
+.github/
+.claude/
+.gitignore
+.deployignore
+CLAUDE.md
+AGENTS.md
+README.md
+.DS_Store
+.vscode/
+.idea/
+
+# Nur lokal / phpMyAdmin bzw. Dokumentation
+sql/
+docs/
+config/config.example.php
+
+# Geheimnisse (config/config.php wird im Workflow generiert und MUSS deployt werden)
+.env
+.env.*
+*.pem
+*.key
+
+# Serverseitig, nicht im Repo
+*.log
+.ftp-deploy-sync-state.json
+.well-known/

@@ -22,7 +22,7 @@ Projektkontext und Arbeitsregeln für Claude Code.
 |Datenbank |MariaDB 10.6       |PDO, utf8mb4                 |
 |Frontend  |Alpine.js 3.x (CDN)|Kein Build-Tool              |
 |Styling   |Tailwind CSS (CDN) |Kein Build-Tool              |
-|Deployment|FTP / SSH auf cyon |Kein CI/CD                   |
+|Deployment|GitHub Actions → rsync über SSH auf cyon|Workflow `.github/workflows/deploy.yml`|
 
 **Kein Node.js, kein npm, kein Composer, kein Build-Schritt.** Alles läuft direkt auf cyon Shared Hosting.
 
@@ -142,11 +142,13 @@ Implementiert in `Subvention::berechnen(int $id, array $params)`.
 
 ## Deployment auf cyon
 
-```bash
-# Nur public_html/, api/, includes/ deployen
-# config/ und sql/ bleiben lokal
-rsync -av --exclude='config/config.php' --exclude='sql/' . user@cyon-server:/pfad/
-```
+Automatisch bei Push auf `main` via `.github/workflows/deploy.yml` (rsync über SSH, kein FTP mehr).
+
+- Was **nicht** auf den Server geht, steht in `.deployignore` (u. a. `sql/`, `docs/`, `CLAUDE.md`). Neue lokale Ordner dort eintragen.
+- `config/config.php` wird im Workflow aus GitHub Secrets generiert und mitdeployt.
+- `rsync --delete` entfernt auf dem Server alles, was nicht im Repo und nicht in `.deployignore` steht.
+- Echte Deploys nur, wenn die Repo-Variable `CYON_RSYNC_LIVE` = `true` ist; sonst Dry-Run.
+- GitHub Secrets: `CYON_SSH_KEY`, `CYON_KNOWN_HOSTS`, `CYON_HOST`, `CYON_USER` (+ DB_*/AUTH_*/APP_BASE_URL). Variablen: `CYON_TARGET_DIR` (mit `/` am Ende), `CYON_RSYNC_LIVE`.
 
 PHP-Version in my.cyon auf **8.2** setzen.  
 SSL (Let’s Encrypt) für `subventionssimulator.zurich-sailing.ch` aktivieren.
