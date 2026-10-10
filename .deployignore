@@ -25,7 +25,8 @@ config/config.example.php
 *.pem
 *.key
 
-# Serverseitig, nicht im Repo
+# Serverseitig, nicht im Repo (von cPanel/cyon angelegt)
+cgi-bin/
 *.log
 .ftp-deploy-sync-state.json
 .well-known/
