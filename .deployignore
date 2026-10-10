@@ -27,6 +27,7 @@ config/config.example.php
 
 # Serverseitig, nicht im Repo (von cPanel/cyon angelegt)
 cgi-bin/
+RELEASES.md
 *.log
 .ftp-deploy-sync-state.json
 .well-known/
