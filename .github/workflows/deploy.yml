@@ -69,25 +69,15 @@ jobs:
             echo 'config.php generiert.' . PHP_EOL;
           "
 
-      # 4. Modus und Ziel prüfen
+      # 4. Modus prüfen
       # Echte Deploys erst, wenn die Repo-Variable CYON_RSYNC_LIVE = true ist.
       # Bis dahin läuft jeder Deploy (auch bei Push) als Dry-Run.
-      - name: Check target and mode
+      - name: Check mode
         id: mode
         env:
-          TARGET_DIR: ${{ vars.CYON_TARGET_DIR }}
-          LIVE:       ${{ vars.CYON_RSYNC_LIVE }}
-          INPUT_DRY:  ${{ inputs.dry_run }}
+          LIVE:      ${{ vars.CYON_RSYNC_LIVE }}
+          INPUT_DRY: ${{ inputs.dry_run }}
         run: |
-          case "$TARGET_DIR" in
-            ""|"/"|"~"|"~/"|"."|"./")
-              echo "::error::CYON_TARGET_DIR fehlt oder ist zu allgemein ('$TARGET_DIR'). Abbruch, damit --delete nichts Falsches löscht."
-              exit 1 ;;
-          esac
-          case "$TARGET_DIR" in
-            */) ;;
-            *) echo "::error::CYON_TARGET_DIR muss mit / enden."; exit 1 ;;
-          esac
           if [ "$LIVE" != "true" ] || [ "$INPUT_DRY" = "true" ]; then
             echo "flag=--dry-run" >> "$GITHUB_OUTPUT"
             echo "::notice::Dry-Run: es wird nichts übertragen oder gelöscht."
@@ -103,24 +93,38 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           printf '%s\n' "${{ secrets.CYON_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      # 6. Deploy via rsync
+      # 6. Sicherstellen, dass der Key auf dem Server per rrsync auf den
+      # Projektordner eingesperrt ist. Ein normaler Befehl MUSS scheitern.
+      # Sonst wäre das Ziel unten das ganze Home-Verzeichnis -> Abbruch.
+      - name: Verify key is restricted (rrsync)
+        env:
+          HOST: ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }}
+        run: |
+          if ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o BatchMode=yes "$HOST" true 2>/dev/null; then
+            echo "::error::Der Deploy-Key hat vollen Shell-Zugriff. In ~/.ssh/authorized_keys mit command=\"~/bin/rrsync -wo <projektordner>\",restrict einschränken. Abbruch."
+            exit 1
+          fi
+          echo "Key ist eingeschränkt. OK."
+
+      # 7. Deploy via rsync
+      # Zielpfad ist leer: rrsync auf dem Server legt den Projektordner fest.
       # Deployed: public_html/, includes/, config/ (mit generiertem config.php), api/
       # Nicht deployed: siehe .deployignore
       - name: Deploy via rsync to cyon
         env:
-          TARGET: ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }}:${{ vars.CYON_TARGET_DIR }}
-          DRY:    ${{ steps.mode.outputs.flag }}
+          HOST: ${{ secrets.CYON_USER }}@${{ secrets.CYON_HOST }}
+          DRY:  ${{ steps.mode.outputs.flag }}
         run: |
           rsync -rlptz --delete --itemize-changes $DRY \
             --exclude-from=.deployignore \
-            -e "ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes" \
-            ./ "$TARGET"
+            -e "ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o BatchMode=yes" \
+            ./ "$HOST:"
 
       - name: Remove key
         if: always()
         run: rm -f ~/.ssh/id_deploy
 
-      # 7. Deploy-Status melden
+      # 8. Deploy-Status melden
       - name: Deployment summary
         if: success()
         run: |

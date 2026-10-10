@@ -148,7 +148,8 @@ Automatisch bei Push auf `main` via `.github/workflows/deploy.yml` (rsync über 
 - `config/config.php` wird im Workflow aus GitHub Secrets generiert und mitdeployt.
 - `rsync --delete` entfernt auf dem Server alles, was nicht im Repo und nicht in `.deployignore` steht.
 - Echte Deploys nur, wenn die Repo-Variable `CYON_RSYNC_LIVE` = `true` ist; sonst Dry-Run.
-- GitHub Secrets: `CYON_SSH_KEY`, `CYON_KNOWN_HOSTS`, `CYON_HOST`, `CYON_USER` (+ DB_*/AUTH_*/APP_BASE_URL). Variablen: `CYON_TARGET_DIR` (mit `/` am Ende), `CYON_RSYNC_LIVE`.
+- Der Deploy-Key ist auf dem Server per `rrsync -wo` auf den Projektordner eingesperrt (`~/.ssh/authorized_keys`). Der Zielordner wird dort festgelegt, nicht im Workflow. Der Workflow bricht ab, wenn der Key nicht eingeschränkt ist.
+- GitHub Secrets: `CYON_SSH_KEY`, `CYON_KNOWN_HOSTS`, `CYON_HOST`, `CYON_USER` (+ DB_*/AUTH_*/APP_BASE_URL). Variable: `CYON_RSYNC_LIVE`.
 
 PHP-Version in my.cyon auf **8.2** setzen.  
 SSL (Let’s Encrypt) für `subventionssimulator.zurich-sailing.ch` aktivieren.
