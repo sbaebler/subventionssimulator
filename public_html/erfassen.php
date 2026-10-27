@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'betraege'             => [],
         'trainerarten'         => [],
         'eventarten'           => [],
+        'kategorie_ausschluss' => array_map('strval', (array)($_POST['kategorie_ausschluss'] ?? [])),
         'fristen'              => [],
         'historie'             => [],
     ];
@@ -524,6 +525,21 @@ require __DIR__ . '/partials/header.php';
         <textarea name="verlangte_unterlagen" rows="2"
                   class="input"
                   placeholder="z.B. Teilnehmerliste, Kursprogramm, Leiterausweise"><?= htmlspecialchars($subv['verlangte_unterlagen'] ?? '') ?></textarea>
+      </div>
+    </div>
+
+    <!-- Eventkategorien ausnehmen -->
+    <div class="mb-6">
+      <p class="text-sm font-medium mb-1">Gilt der Beitrag <strong>nicht</strong> für bestimmte Eventkategorien?</p>
+      <p class="text-xs text-subtle mb-2">Betrifft Events, denen das Programm als Standard zugeteilt ist (Events &rarr; Standard-Förderprogramme).</p>
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <?php foreach (Subvention::EVENTKATEGORIEN as $key => $label): ?>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" name="kategorie_ausschluss[]" value="<?= $key ?>" class="checkbox"
+                 <?= in_array($key, $subv['kategorie_ausschluss'] ?? [], true) ? 'checked' : '' ?>>
+          <?= htmlspecialchars($label) ?>
+        </label>
+        <?php endforeach; ?>
       </div>
     </div>
 

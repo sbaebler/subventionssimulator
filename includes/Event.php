@@ -76,16 +76,10 @@ class Event {
         return db()->query('SELECT id, bezeichnung FROM cm_klassen ORDER BY bezeichnung')->fetchAll();
     }
 
-    // Eventkategorien (wie cm_events.kategorie im Class Manager Tool).
-    public const KATEGORIEN = [
-        'breitensport' => 'Breitensport',
-        'rlz'          => 'RLZ',
-        'privat'       => 'Privat',
-    ];
-
     // Standard-Förderprogramme:
     //   [subvention_id => ['klassen' => [klasse_ids], 'kategorien' => [kategorie, ...]]]
-    // mit den jeweils ausgenommenen Klassen und Eventkategorien.
+    // mit den jeweils ausgenommenen Klassen (hier gepflegt) und Eventkategorien
+    // (pro Förderprogramm in erfassen.php gepflegt).
     // Nur nicht gelöschte, aktive Programme.
     public static function standardProgramme(): array {
         $ergebnis = [];
@@ -249,8 +243,10 @@ class Event {
     }
 
     // Standard speichern: pro Programm, ob es für alle Events gilt, und
-    // welche Klassen und Eventkategorien ausgenommen sind.
-    //   $standard: [subvention_id => ['klassen' => [...], 'kategorien' => [...]]]
+    // welche Klassen ausgenommen sind. Die ausgenommenen Eventkategorien
+    // gehören zum Förderprogramm (Subvention::speichern()) und bleiben hier
+    // unberührt.
+    //   $standard: [subvention_id => ['klassen' => [...]]]
     //              – nur Programme, die als Standard gelten, kommen vor.
     public static function standardSpeichern(array $standard): void {
         $pdo = db();
@@ -258,19 +254,14 @@ class Event {
         try {
             $pdo->exec('UPDATE subventionen SET gilt_standard = 0');
             $pdo->exec('DELETE FROM subvention_klassen_ausschluss');
-            $pdo->exec('DELETE FROM subvention_kategorie_ausschluss');
             $setzen = $pdo->prepare('UPDATE subventionen SET gilt_standard = 1 WHERE id = ?');
             $aus    = $pdo->prepare('INSERT INTO subvention_klassen_ausschluss (subvention_id, klasse_id) VALUES (?, ?)');
-            $ausKat = $pdo->prepare('INSERT INTO subvention_kategorie_ausschluss (subvention_id, kategorie) VALUES (?, ?)');
             foreach ($standard as $sid => $ausnahmen) {
                 $sid = (int)$sid;
                 if ($sid <= 0) continue;
                 $setzen->execute([$sid]);
                 foreach (array_unique(array_map('intval', (array)($ausnahmen['klassen'] ?? []))) as $kid) {
                     if ($kid > 0) $aus->execute([$sid, $kid]);
-                }
-                foreach (array_unique((array)($ausnahmen['kategorien'] ?? [])) as $kat) {
-                    if (isset(self::KATEGORIEN[$kat])) $ausKat->execute([$sid, $kat]);
                 }
             }
             $pdo->commit();

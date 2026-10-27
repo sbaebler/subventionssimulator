@@ -138,6 +138,7 @@ class Subvention {
         $row['betraege']     = self::betraege($id);
         $row['trainerarten'] = self::trainerarten($id);
         $row['eventarten']   = self::eventarten($id);
+        $row['kategorie_ausschluss'] = self::kategorieAusschluss($id);
         $row['fristen']      = self::fristen($id);
         $row['historie']     = self::betragHistorie($id);
         return $row;
@@ -162,6 +163,20 @@ class Subvention {
         $s = db()->prepare('SELECT * FROM subvention_eventarten WHERE subvention_id = ? ORDER BY eventart');
         $s->execute([$id]);
         return $s->fetchAll();
+    }
+
+    // Eventkategorien (cm_events.kategorie), für die das Programm trotz
+    // Standard-Zuteilung nicht gilt.
+    public const EVENTKATEGORIEN = [
+        'breitensport' => 'Breitensport',
+        'rlz'          => 'RLZ',
+        'privat'       => 'Privat',
+    ];
+
+    public static function kategorieAusschluss(int $id): array {
+        $s = db()->prepare('SELECT kategorie FROM subvention_kategorie_ausschluss WHERE subvention_id = ? ORDER BY kategorie');
+        $s->execute([$id]);
+        return $s->fetchAll(PDO::FETCH_COLUMN);
     }
 
     public static function fristen(int $id): array {
@@ -280,6 +295,7 @@ class Subvention {
             self::betraegeSpeichern($id, $data['betraege'] ?? []);
             self::trainerartenSpeichern($id, $data['trainerarten'] ?? []);
             self::eventartenSpeichern($id, $data['eventarten'] ?? []);
+            self::kategorieAusschlussSpeichern($id, $data['kategorie_ausschluss'] ?? []);
             self::fristenSpeichern($id, $data['fristen'] ?? []);
             self::betragHistorieSpeichern($id, $data['historie'] ?? []);
 
@@ -335,6 +351,14 @@ class Subvention {
                 (float)($r['zusatzbetrag'] ?? 0),
                 $r['bemerkung'] ?? null,
             ]);
+        }
+    }
+
+    private static function kategorieAusschlussSpeichern(int $id, array $kategorien): void {
+        db()->prepare('DELETE FROM subvention_kategorie_ausschluss WHERE subvention_id = ?')->execute([$id]);
+        $stmt = db()->prepare('INSERT INTO subvention_kategorie_ausschluss (subvention_id, kategorie) VALUES (?, ?)');
+        foreach (array_unique($kategorien) as $kat) {
+            if (isset(self::EVENTKATEGORIEN[$kat])) $stmt->execute([$id, $kat]);
         }
     }
 

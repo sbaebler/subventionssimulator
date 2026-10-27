@@ -14,8 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $standard = [];
     foreach ($gewaehlt as $sid) {
         $standard[$sid] = [
-            'klassen'    => array_map('intval', $_POST['ausschluss'][$sid] ?? []),
-            'kategorien' => array_map('strval', $_POST['ausschluss_kategorie'][$sid] ?? []),
+            'klassen' => array_map('intval', $_POST['ausschluss'][$sid] ?? []),
         ];
     }
     try {
@@ -46,7 +45,7 @@ require __DIR__ . '/partials/header.php';
 <p class="text-sm text-muted mb-6">
   Programme, die hier angehakt sind, gelten für <strong>alle Events</strong> &ndash;
   auch für neue, sobald sie im Class Manager Tool eröffnet werden. Einzelne
-  Klassen und Eventkategorien (Breitensport, RLZ, Privat) kannst du ausnehmen. Pro Event lässt sich der Standard weiterhin
+  Klassen kannst du ausnehmen; Eventkategorien (Breitensport, RLZ, Privat) legst du pro Förderprogramm in der Erfassung fest. Pro Event lässt sich der Standard weiterhin
   anpassen (&laquo;Subventionen zuteilen&raquo;).
 </p>
 
@@ -68,7 +67,6 @@ require __DIR__ . '/partials/header.php';
       $sid     = (int)$s['id'];
       $istStd  = isset($standard[$sid]);
       $ausgen  = $standard[$sid]['klassen'] ?? [];
-      $ausgenKat = $standard[$sid]['kategorien'] ?? [];
     ?>
     <div class="card px-4 py-3" x-data="{ aktiv: <?= $istStd ? 'true' : 'false' ?> }">
       <label class="flex items-start gap-3 cursor-pointer">
@@ -80,17 +78,6 @@ require __DIR__ . '/partials/header.php';
         </span>
       </label>
       <div x-show="aktiv" x-cloak class="mt-3 ml-7">
-        <p class="text-xs text-muted mb-2">Gilt <strong>nicht</strong> für die Kategorie:</p>
-        <div class="flex flex-wrap gap-x-4 gap-y-2 mb-3">
-          <?php foreach (Event::KATEGORIEN as $kat => $label): ?>
-          <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" name="ausschluss_kategorie[<?= $sid ?>][]" value="<?= $kat ?>"
-                   class="checkbox"
-                   <?= in_array($kat, $ausgenKat, true) ? 'checked' : '' ?>>
-            <?= htmlspecialchars($label) ?>
-          </label>
-          <?php endforeach; ?>
-        </div>
         <?php if ($klassen): ?>
         <p class="text-xs text-muted mb-2">Gilt <strong>nicht</strong> für die Klasse:</p>
         <div class="flex flex-wrap gap-x-4 gap-y-2">
