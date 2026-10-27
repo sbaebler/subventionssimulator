@@ -8,7 +8,10 @@ require_once __DIR__ . '/db.php';
 // Die Events selbst werden im ClassManagerTool (Tabelle cm_events) erfasst
 // und hier nur gelesen. Welche Subventionen für ein Event gelten, wird in
 // der Tabelle subvention_events festgehalten – diese gehört zum
-// Subventionssimulator und wird hier geschrieben.
+// Subventionssimulator und wird hier geschrieben. Zusätzlich gibt es einen
+// Standard (subventionen.gilt_standard): Programme, die für alle Events
+// gelten, mit ausgenommenen Klassen und Events. Massgebend ist die
+// «wirksame» Zuordnung (wirksameZuordnung()).
 //
 // STATUS/STATUS_BADGE entsprechen bewusst den Werten im ClassManagerTool
 // (includes/Event.php dort), damit dieselben Labels und Farben erscheinen.
@@ -33,18 +36,20 @@ class Event {
     ];
 
     // Alle Events über alle Klassen, inkl. Klassenname und Anzahl der
-    // zugeordneten Subventionen. Neueste zuerst.
+    // wirksam zugeordneten Subventionen (Standard + Anpassungen). Neueste zuerst.
     public static function alle(): array {
-        return db()->query('
-            SELECT e.*,
-                   k.bezeichnung AS klasse_bezeichnung,
-                   COUNT(se.id)  AS anzahl_subventionen
+        $events = db()->query('
+            SELECT e.*, k.bezeichnung AS klasse_bezeichnung
             FROM cm_events e
-            LEFT JOIN cm_klassen k        ON k.id        = e.klasse_id
-            LEFT JOIN subvention_events se ON se.event_id = e.id
-            GROUP BY e.id
+            LEFT JOIN cm_klassen k ON k.id = e.klasse_id
             ORDER BY e.datum_von DESC, e.erstellt_am DESC
         ')->fetchAll();
+        $zuordnung = self::wirksameZuordnung($events);
+        foreach ($events as &$e) {
+            $e['anzahl_subventionen'] = count($zuordnung[(int)$e['id']] ?? []);
+        }
+        unset($e);
+        return $events;
     }
 
     // Ein Event laden – null wenn nicht gefunden.
@@ -59,11 +64,75 @@ class Event {
         return $stmt->fetch() ?: null;
     }
 
-    // IDs der aktuell zugeordneten Subventionen (für Checkbox-Vorbelegung).
+    // IDs der wirksam zugeordneten Subventionen (für Checkbox-Vorbelegung).
     public static function zugeordneteSubventionIds(int $event_id): array {
-        $stmt = db()->prepare('SELECT subvention_id FROM subvention_events WHERE event_id = ?');
-        $stmt->execute([$event_id]);
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        $event = self::laden($event_id);
+        if (!$event) return [];
+        return self::wirksameZuordnung([$event])[$event_id] ?? [];
+    }
+
+    // Alle Klassen für Auswahl und Ausschlüsse.
+    public static function klassen(): array {
+        return db()->query('SELECT id, bezeichnung FROM cm_klassen ORDER BY bezeichnung')->fetchAll();
+    }
+
+    // Standard-Förderprogramme: [subvention_id => [ausgeschlossene klasse_ids]].
+    // Nur nicht gelöschte, aktive Programme.
+    public static function standardProgramme(): array {
+        $ergebnis = [];
+        $rows = db()->query('
+            SELECT id FROM subventionen
+            WHERE gilt_standard = 1 AND aktiv = 1 AND geloescht_am IS NULL
+        ')->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($rows as $sid) {
+            $ergebnis[(int)$sid] = [];
+        }
+        $stmt = db()->query('SELECT subvention_id, klasse_id FROM subvention_klassen_ausschluss');
+        foreach ($stmt->fetchAll() as $z) {
+            if (isset($ergebnis[(int)$z['subvention_id']])) {
+                $ergebnis[(int)$z['subvention_id']][] = (int)$z['klasse_id'];
+            }
+        }
+        return $ergebnis;
+    }
+
+    // Gilt das Programm per Standard für diese Klasse? (klasse_id null = keine
+    // Klasse: Standard gilt, da keine Klasse ausgenommen werden kann.)
+    private static function istStandard(array $standard, int $sid, ?int $klasse_id): bool {
+        return isset($standard[$sid])
+            && ($klasse_id === null || !in_array($klasse_id, $standard[$sid], true));
+    }
+
+    // Wirksame Zuordnung mehrerer Events: Standard der Klasse, abzüglich
+    // Event-Ausschlüssen, zuzüglich explizit zugeordneter Programme
+    // (subvention_events).
+    //
+    // Rückgabe: [event_id => [subvention_id, ...]]
+    public static function wirksameZuordnung(array $events): array {
+        $standard = self::standardProgramme();
+
+        $ausgenommen = [];
+        foreach (db()->query('SELECT subvention_id, event_id FROM subvention_event_ausschluss')->fetchAll() as $z) {
+            $ausgenommen[(int)$z['event_id']][(int)$z['subvention_id']] = true;
+        }
+        $explizit = [];
+        foreach (db()->query('SELECT subvention_id, event_id FROM subvention_events')->fetchAll() as $z) {
+            $explizit[(int)$z['event_id']][] = (int)$z['subvention_id'];
+        }
+
+        $ergebnis = [];
+        foreach ($events as $e) {
+            $eid = (int)$e['id'];
+            $klasse = $e['klasse_id'] !== null ? (int)$e['klasse_id'] : null;
+            $ids = $explizit[$eid] ?? [];
+            foreach ($standard as $sid => $_) {
+                if (self::istStandard($standard, $sid, $klasse) && empty($ausgenommen[$eid][$sid])) {
+                    $ids[] = $sid;
+                }
+            }
+            $ergebnis[$eid] = array_values(array_unique($ids));
+        }
+        return $ergebnis;
     }
 
     // Förderstatus mehrerer Events auf einen Blick: pro Event, ob mindestens
@@ -82,18 +151,11 @@ class Event {
         }
         if (empty($event_ids)) return $ergebnis;
 
+        // 1) Wirksame Zuordnungen je Event (Standard + Anpassungen)
         $platzhalter = implode(',', array_fill(0, count($event_ids), '?'));
-
-        // 1) Zuordnungen je Event
-        $stmt = db()->prepare("
-            SELECT event_id, subvention_id FROM subvention_events
-            WHERE event_id IN ($platzhalter)
-        ");
+        $stmt = db()->prepare("SELECT * FROM cm_events WHERE id IN ($platzhalter)");
         $stmt->execute(array_map('intval', $event_ids));
-        $subventionIdsProEvent = [];
-        foreach ($stmt->fetchAll() as $z) {
-            $subventionIdsProEvent[(int)$z['event_id']][] = (int)$z['subvention_id'];
-        }
+        $subventionIdsProEvent = self::wirksameZuordnung($stmt->fetchAll());
 
         // 2) Vollständigkeit je distinktem Förderprogramm (Kardinalität =
         // Anzahl Programme, nicht Anzahl Events).
@@ -129,21 +191,65 @@ class Event {
         return $ergebnis;
     }
 
-    // Zuordnung speichern: bestehende Zuordnungen ersetzen (DELETE + INSERT),
-    // analog zum Muster in Subvention::trainerartenSpeichern().
+    // Zuordnung eines Events speichern. Gespeichert wird nur die Abweichung
+    // vom Standard der Klasse: zusätzliche Programme in subvention_events,
+    // abgewählte Standardprogramme in subvention_event_ausschluss. So bleibt
+    // der Event bei späteren Änderungen am Standard auf dem Laufenden.
     public static function zuordnungSpeichern(int $event_id, array $subvention_ids, ?int $benutzer_id = null): void {
+        $event = self::laden($event_id);
+        if (!$event) {
+            throw new RuntimeException('Event nicht gefunden.');
+        }
+        $klasse   = $event['klasse_id'] !== null ? (int)$event['klasse_id'] : null;
+        $standard = self::standardProgramme();
+        $gewaehlt = array_unique(array_filter(array_map('intval', $subvention_ids), fn($i) => $i > 0));
+
         $pdo = db();
         $pdo->beginTransaction();
         try {
             $pdo->prepare('DELETE FROM subvention_events WHERE event_id = ?')->execute([$event_id]);
-            $stmt = $pdo->prepare('
+            $pdo->prepare('DELETE FROM subvention_event_ausschluss WHERE event_id = ?')->execute([$event_id]);
+
+            $ein = $pdo->prepare('
                 INSERT INTO subvention_events (event_id, subvention_id, erstellt_von)
                 VALUES (?, ?, ?)
             ');
-            // Doppelte IDs herausfiltern, damit der UNIQUE-Key nicht greift.
-            foreach (array_unique(array_map('intval', $subvention_ids)) as $sid) {
-                if ($sid > 0) {
-                    $stmt->execute([$event_id, $sid, $benutzer_id]);
+            foreach ($gewaehlt as $sid) {
+                if (!self::istStandard($standard, $sid, $klasse)) {
+                    $ein->execute([$event_id, $sid, $benutzer_id]);
+                }
+            }
+            $aus = $pdo->prepare('INSERT INTO subvention_event_ausschluss (subvention_id, event_id) VALUES (?, ?)');
+            foreach (array_keys($standard) as $sid) {
+                if (self::istStandard($standard, $sid, $klasse) && !in_array($sid, $gewaehlt, true)) {
+                    $aus->execute([$sid, $event_id]);
+                }
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    // Standard speichern: pro Programm, ob es für alle Events gilt, und
+    // welche Klassen ausgenommen sind.
+    //   $standard: [subvention_id => [ausgeschlossene klasse_ids]] – nur
+    //              Programme, die als Standard gelten, kommen vor.
+    public static function standardSpeichern(array $standard): void {
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            $pdo->exec('UPDATE subventionen SET gilt_standard = 0');
+            $pdo->exec('DELETE FROM subvention_klassen_ausschluss');
+            $setzen = $pdo->prepare('UPDATE subventionen SET gilt_standard = 1 WHERE id = ?');
+            $aus    = $pdo->prepare('INSERT INTO subvention_klassen_ausschluss (subvention_id, klasse_id) VALUES (?, ?)');
+            foreach ($standard as $sid => $klassenIds) {
+                $sid = (int)$sid;
+                if ($sid <= 0) continue;
+                $setzen->execute([$sid]);
+                foreach (array_unique(array_map('intval', (array)$klassenIds)) as $kid) {
+                    if ($kid > 0) $aus->execute([$sid, $kid]);
                 }
             }
             $pdo->commit();

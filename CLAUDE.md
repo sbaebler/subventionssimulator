@@ -105,7 +105,9 @@ subventionen                 Stammdaten: bezeichnung, foerderstelle, kategorie,
   ├── subvention_fristen         Termine und Eingabefristen
   ├── subvention_betrag_historie Erhaltene Beträge pro Jahr
   ├── subvention_verwendung      Verteilung eines Jahresbetrags auf Empfänger
-  └── subvention_events          Zuordnung Förderprogramm ↔ cm_events
+  ├── subvention_events          Zuordnung Förderprogramm ↔ cm_events (zusätzlich zum Standard)
+  ├── subvention_klassen_ausschluss  Klassen, die vom Standard (gilt_standard) ausgenommen sind
+  └── subvention_event_ausschluss     Einzelne Events, die vom Standard ausgenommen sind
 
 benutzer                     Login, Rolle, Aktivstatus
 passwort_reset_tokens        Token-Flow für Passwort-Reset

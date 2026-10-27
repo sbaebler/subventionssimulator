@@ -8,7 +8,14 @@ require __DIR__ . '/partials/header.php';
 
 <div class="page-header mb-6">
   <h1 class="text-2xl font-semibold">Events</h1>
+  <a href="/events_standard.php" class="btn btn--secondary btn--sm">Standard-Förderprogramme</a>
 </div>
+
+<?php if (isset($_GET['standard_gespeichert'])): ?>
+<div class="alert alert--success mb-6">
+  Standard wurde gespeichert.
+</div>
+<?php endif; ?>
 
 <?php if (isset($_GET['gespeichert'])): ?>
 <div class="alert alert--success mb-6">
@@ -17,8 +24,10 @@ require __DIR__ . '/partials/header.php';
 <?php endif; ?>
 
 <p class="text-sm text-muted mb-6">
-  Events werden im Class Manager Tool eröffnet. Hier legst du fest, welche
-  Subventionen für welches Event zum Tragen kommen.
+  Events werden im Class Manager Tool eröffnet. Welche Förderprogramme
+  standardmässig für alle Events gelten (inkl. neuer), legst du unter
+  &laquo;Standard-Förderprogramme&raquo; fest &ndash; pro Event kannst du
+  davon abweichen.
 </p>
 
 <?php if (empty($events)): ?>

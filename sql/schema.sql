@@ -74,6 +74,7 @@ CREATE TABLE subventionen (
   gueltig_bis     DATE,
   link_extern     VARCHAR(500),
   aktiv           TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+  gilt_standard   TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,  -- gilt für alle Events (Klassen/Events ausnehmbar)
   erstellt_von    INT UNSIGNED NULL,
   geaendert_von   INT UNSIGNED NULL,
   erstellt_am     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -218,6 +219,38 @@ CREATE TABLE subvention_events (
   CONSTRAINT fk_se_erstellt_von
     FOREIGN KEY (erstellt_von) REFERENCES benutzer(id)
     ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- -------------------------------------------------------------
+-- 6b. Standard-Zuteilung: Ausnahmen
+--
+-- subventionen.gilt_standard = 1: Programm gilt für alle Events, auch neue.
+-- Klassen bzw. einzelne Events können davon ausgenommen werden;
+-- subvention_events ergänzt umgekehrt einzelne Events ausserhalb des Standards.
+-- -------------------------------------------------------------
+CREATE TABLE subvention_klassen_ausschluss (
+  subvention_id INT UNSIGNED NOT NULL,
+  klasse_id     INT UNSIGNED NOT NULL,         -- referenziert cm_klassen(id)
+  PRIMARY KEY (subvention_id, klasse_id),
+  CONSTRAINT fk_ska_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ska_klasse
+    FOREIGN KEY (klasse_id) REFERENCES cm_klassen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE subvention_event_ausschluss (
+  subvention_id INT UNSIGNED NOT NULL,
+  event_id      INT UNSIGNED NOT NULL,         -- referenziert cm_events(id)
+  PRIMARY KEY (subvention_id, event_id),
+  CONSTRAINT fk_sea_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sea_event
+    FOREIGN KEY (event_id) REFERENCES cm_events(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

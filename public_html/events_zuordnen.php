@@ -73,7 +73,12 @@ require __DIR__ . '/partials/header.php';
   <form method="post" action="/events_zuordnen.php?id=<?= $event['id'] ?>">
     <input type="hidden" name="event_id" value="<?= $event['id'] ?>">
 
-    <h2 class="text-sm font-medium mb-3">Welche Subventionen kommen für dieses Event zum Tragen?</h2>
+    <h2 class="text-sm font-medium mb-1">Welche Subventionen kommen für dieses Event zum Tragen?</h2>
+    <p class="text-xs text-muted mb-3">
+      Vorbelegt mit dem <a href="/events_standard.php" class="link">Standard</a>
+      <?= $event['klasse_bezeichnung'] ? 'der Klasse ' . htmlspecialchars($event['klasse_bezeichnung']) : '' ?>.
+      Abweichungen gelten nur für dieses Event.
+    </p>
 
     <?php if (empty($subventionen)): ?>
       <p class="text-muted text-sm">Noch keine Subventionen erfasst.
