@@ -13,7 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gewaehlt = array_map('intval', $_POST['standard'] ?? []);
     $standard = [];
     foreach ($gewaehlt as $sid) {
-        $standard[$sid] = array_map('intval', $_POST['ausschluss'][$sid] ?? []);
+        $standard[$sid] = [
+            'klassen'    => array_map('intval', $_POST['ausschluss'][$sid] ?? []),
+            'kategorien' => array_map('strval', $_POST['ausschluss_kategorie'][$sid] ?? []),
+        ];
     }
     try {
         Event::standardSpeichern($standard);
@@ -43,7 +46,7 @@ require __DIR__ . '/partials/header.php';
 <p class="text-sm text-muted mb-6">
   Programme, die hier angehakt sind, gelten für <strong>alle Events</strong> &ndash;
   auch für neue, sobald sie im Class Manager Tool eröffnet werden. Einzelne
-  Klassen kannst du ausnehmen. Pro Event lässt sich der Standard weiterhin
+  Klassen und Eventkategorien (Breitensport, RLZ, Privat) kannst du ausnehmen. Pro Event lässt sich der Standard weiterhin
   anpassen (&laquo;Subventionen zuteilen&raquo;).
 </p>
 
@@ -64,7 +67,8 @@ require __DIR__ . '/partials/header.php';
     <?php
       $sid     = (int)$s['id'];
       $istStd  = isset($standard[$sid]);
-      $ausgen  = $standard[$sid] ?? [];
+      $ausgen  = $standard[$sid]['klassen'] ?? [];
+      $ausgenKat = $standard[$sid]['kategorien'] ?? [];
     ?>
     <div class="card px-4 py-3" x-data="{ aktiv: <?= $istStd ? 'true' : 'false' ?> }">
       <label class="flex items-start gap-3 cursor-pointer">
@@ -75,9 +79,20 @@ require __DIR__ . '/partials/header.php';
           <span class="block text-sm text-muted"><?= htmlspecialchars($s['foerderstelle']) ?></span>
         </span>
       </label>
-      <?php if ($klassen): ?>
       <div x-show="aktiv" x-cloak class="mt-3 ml-7">
-        <p class="text-xs text-muted mb-2">Gilt <strong>nicht</strong> für:</p>
+        <p class="text-xs text-muted mb-2">Gilt <strong>nicht</strong> für die Kategorie:</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-2 mb-3">
+          <?php foreach (Event::KATEGORIEN as $kat => $label): ?>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input type="checkbox" name="ausschluss_kategorie[<?= $sid ?>][]" value="<?= $kat ?>"
+                   class="checkbox"
+                   <?= in_array($kat, $ausgenKat, true) ? 'checked' : '' ?>>
+            <?= htmlspecialchars($label) ?>
+          </label>
+          <?php endforeach; ?>
+        </div>
+        <?php if ($klassen): ?>
+        <p class="text-xs text-muted mb-2">Gilt <strong>nicht</strong> für die Klasse:</p>
         <div class="flex flex-wrap gap-x-4 gap-y-2">
           <?php foreach ($klassen as $k): ?>
           <label class="flex items-center gap-2 text-sm cursor-pointer">
@@ -88,8 +103,8 @@ require __DIR__ . '/partials/header.php';
           </label>
           <?php endforeach; ?>
         </div>
+        <?php endif; ?>
       </div>
-      <?php endif; ?>
     </div>
     <?php endforeach; ?>
   </div>

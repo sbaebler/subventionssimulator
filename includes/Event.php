@@ -76,7 +76,16 @@ class Event {
         return db()->query('SELECT id, bezeichnung FROM cm_klassen ORDER BY bezeichnung')->fetchAll();
     }
 
-    // Standard-Förderprogramme: [subvention_id => [ausgeschlossene klasse_ids]].
+    // Eventkategorien (wie cm_events.kategorie im Class Manager Tool).
+    public const KATEGORIEN = [
+        'breitensport' => 'Breitensport',
+        'rlz'          => 'RLZ',
+        'privat'       => 'Privat',
+    ];
+
+    // Standard-Förderprogramme:
+    //   [subvention_id => ['klassen' => [klasse_ids], 'kategorien' => [kategorie, ...]]]
+    // mit den jeweils ausgenommenen Klassen und Eventkategorien.
     // Nur nicht gelöschte, aktive Programme.
     public static function standardProgramme(): array {
         $ergebnis = [];
@@ -85,22 +94,27 @@ class Event {
             WHERE gilt_standard = 1 AND aktiv = 1 AND geloescht_am IS NULL
         ')->fetchAll(PDO::FETCH_COLUMN);
         foreach ($rows as $sid) {
-            $ergebnis[(int)$sid] = [];
+            $ergebnis[(int)$sid] = ['klassen' => [], 'kategorien' => []];
         }
-        $stmt = db()->query('SELECT subvention_id, klasse_id FROM subvention_klassen_ausschluss');
-        foreach ($stmt->fetchAll() as $z) {
+        foreach (db()->query('SELECT subvention_id, klasse_id FROM subvention_klassen_ausschluss')->fetchAll() as $z) {
             if (isset($ergebnis[(int)$z['subvention_id']])) {
-                $ergebnis[(int)$z['subvention_id']][] = (int)$z['klasse_id'];
+                $ergebnis[(int)$z['subvention_id']]['klassen'][] = (int)$z['klasse_id'];
+            }
+        }
+        foreach (db()->query('SELECT subvention_id, kategorie FROM subvention_kategorie_ausschluss')->fetchAll() as $z) {
+            if (isset($ergebnis[(int)$z['subvention_id']])) {
+                $ergebnis[(int)$z['subvention_id']]['kategorien'][] = (string)$z['kategorie'];
             }
         }
         return $ergebnis;
     }
 
-    // Gilt das Programm per Standard für diese Klasse? (klasse_id null = keine
-    // Klasse: Standard gilt, da keine Klasse ausgenommen werden kann.)
-    private static function istStandard(array $standard, int $sid, ?int $klasse_id): bool {
+    // Gilt das Programm per Standard für Klasse und Kategorie des Events?
+    // (klasse_id null = keine Klasse, die ausgenommen sein könnte.)
+    private static function istStandard(array $standard, int $sid, ?int $klasse_id, ?string $kategorie): bool {
         return isset($standard[$sid])
-            && ($klasse_id === null || !in_array($klasse_id, $standard[$sid], true));
+            && ($klasse_id === null || !in_array($klasse_id, $standard[$sid]['klassen'], true))
+            && ($kategorie === null || !in_array($kategorie, $standard[$sid]['kategorien'], true));
     }
 
     // Wirksame Zuordnung mehrerer Events: Standard der Klasse, abzüglich
@@ -124,9 +138,10 @@ class Event {
         foreach ($events as $e) {
             $eid = (int)$e['id'];
             $klasse = $e['klasse_id'] !== null ? (int)$e['klasse_id'] : null;
+            $kategorie = $e['kategorie'] ?? null;
             $ids = $explizit[$eid] ?? [];
             foreach ($standard as $sid => $_) {
-                if (self::istStandard($standard, $sid, $klasse) && empty($ausgenommen[$eid][$sid])) {
+                if (self::istStandard($standard, $sid, $klasse, $kategorie) && empty($ausgenommen[$eid][$sid])) {
                     $ids[] = $sid;
                 }
             }
@@ -201,6 +216,7 @@ class Event {
             throw new RuntimeException('Event nicht gefunden.');
         }
         $klasse   = $event['klasse_id'] !== null ? (int)$event['klasse_id'] : null;
+        $kategorie = $event['kategorie'] ?? null;
         $standard = self::standardProgramme();
         $gewaehlt = array_unique(array_filter(array_map('intval', $subvention_ids), fn($i) => $i > 0));
 
@@ -215,13 +231,13 @@ class Event {
                 VALUES (?, ?, ?)
             ');
             foreach ($gewaehlt as $sid) {
-                if (!self::istStandard($standard, $sid, $klasse)) {
+                if (!self::istStandard($standard, $sid, $klasse, $kategorie)) {
                     $ein->execute([$event_id, $sid, $benutzer_id]);
                 }
             }
             $aus = $pdo->prepare('INSERT INTO subvention_event_ausschluss (subvention_id, event_id) VALUES (?, ?)');
             foreach (array_keys($standard) as $sid) {
-                if (self::istStandard($standard, $sid, $klasse) && !in_array($sid, $gewaehlt, true)) {
+                if (self::istStandard($standard, $sid, $klasse, $kategorie) && !in_array($sid, $gewaehlt, true)) {
                     $aus->execute([$sid, $event_id]);
                 }
             }
@@ -233,23 +249,28 @@ class Event {
     }
 
     // Standard speichern: pro Programm, ob es für alle Events gilt, und
-    // welche Klassen ausgenommen sind.
-    //   $standard: [subvention_id => [ausgeschlossene klasse_ids]] – nur
-    //              Programme, die als Standard gelten, kommen vor.
+    // welche Klassen und Eventkategorien ausgenommen sind.
+    //   $standard: [subvention_id => ['klassen' => [...], 'kategorien' => [...]]]
+    //              – nur Programme, die als Standard gelten, kommen vor.
     public static function standardSpeichern(array $standard): void {
         $pdo = db();
         $pdo->beginTransaction();
         try {
             $pdo->exec('UPDATE subventionen SET gilt_standard = 0');
             $pdo->exec('DELETE FROM subvention_klassen_ausschluss');
+            $pdo->exec('DELETE FROM subvention_kategorie_ausschluss');
             $setzen = $pdo->prepare('UPDATE subventionen SET gilt_standard = 1 WHERE id = ?');
             $aus    = $pdo->prepare('INSERT INTO subvention_klassen_ausschluss (subvention_id, klasse_id) VALUES (?, ?)');
-            foreach ($standard as $sid => $klassenIds) {
+            $ausKat = $pdo->prepare('INSERT INTO subvention_kategorie_ausschluss (subvention_id, kategorie) VALUES (?, ?)');
+            foreach ($standard as $sid => $ausnahmen) {
                 $sid = (int)$sid;
                 if ($sid <= 0) continue;
                 $setzen->execute([$sid]);
-                foreach (array_unique(array_map('intval', (array)$klassenIds)) as $kid) {
+                foreach (array_unique(array_map('intval', (array)($ausnahmen['klassen'] ?? []))) as $kid) {
                     if ($kid > 0) $aus->execute([$sid, $kid]);
+                }
+                foreach (array_unique((array)($ausnahmen['kategorien'] ?? [])) as $kat) {
+                    if (isset(self::KATEGORIEN[$kat])) $ausKat->execute([$sid, $kat]);
                 }
             }
             $pdo->commit();

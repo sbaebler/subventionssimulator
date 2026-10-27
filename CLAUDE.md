@@ -107,6 +107,7 @@ subventionen                 Stammdaten: bezeichnung, foerderstelle, kategorie,
   ├── subvention_verwendung      Verteilung eines Jahresbetrags auf Empfänger
   ├── subvention_events          Zuordnung Förderprogramm ↔ cm_events (zusätzlich zum Standard)
   ├── subvention_klassen_ausschluss  Klassen, die vom Standard (gilt_standard) ausgenommen sind
+  ├── subvention_kategorie_ausschluss Eventkategorien (breitensport/rlz/privat), vom Standard ausgenommen
   └── subvention_event_ausschluss     Einzelne Events, die vom Standard ausgenommen sind
 
 benutzer                     Login, Rolle, Aktivstatus

@@ -254,6 +254,17 @@ CREATE TABLE subvention_event_ausschluss (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+-- Eventkategorien (cm_events.kategorie), für die ein Standardprogramm nicht gilt.
+CREATE TABLE subvention_kategorie_ausschluss (
+  subvention_id INT UNSIGNED NOT NULL,
+  kategorie     ENUM('breitensport','rlz','privat') NOT NULL,
+  PRIMARY KEY (subvention_id, kategorie),
+  CONSTRAINT fk_skat_subvention
+    FOREIGN KEY (subvention_id) REFERENCES subventionen(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- -------------------------------------------------------------
 -- 7. Fristen / Termine pro Subvention
 --
