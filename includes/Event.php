@@ -200,6 +200,98 @@ class Event {
         return $ergebnis;
     }
 
+    // Jahresübersicht: alle Events eines Jahres (Datum von/bis im Jahr oder
+    // Beträge aus der Verwendung dieses Jahres) mit den wirksam zugeordneten
+    // Förderprogrammen und den dafür bereits zugeteilten Beträgen
+    // (subvention_verwendung, ziel_typ = 'event').
+    //
+    // Rückgabe: [
+    //   'events'    => [event + 'programme' => [sid => ['bezeichnung','foerderstelle','betrag'(?float)]], 'total'],
+    //   'programme' => [sid => ['bezeichnung','foerderstelle','anzahl_events','total']],
+    //   'total'     => float,
+    // ]
+    public static function jahresuebersicht(int $jahr): array {
+        $pdo = db();
+
+        $zugeteilt = [];   // [event_id][subvention_id] => Summe
+        $stmt = $pdo->prepare("
+            SELECT ziel_event_id, subvention_id, SUM(betrag) AS summe
+            FROM subvention_verwendung
+            WHERE ziel_typ = 'event' AND ziel_event_id IS NOT NULL AND jahr = ?
+            GROUP BY ziel_event_id, subvention_id
+        ");
+        $stmt->execute([$jahr]);
+        foreach ($stmt->fetchAll() as $z) {
+            $zugeteilt[(int)$z['ziel_event_id']][(int)$z['subvention_id']] = round((float)$z['summe'], 2);
+        }
+
+        $stmt = $pdo->prepare('
+            SELECT e.*, k.bezeichnung AS klasse_bezeichnung
+            FROM cm_events e
+            LEFT JOIN cm_klassen k ON k.id = e.klasse_id
+            WHERE YEAR(e.datum_von) = ? OR YEAR(e.datum_bis) = ?
+            ORDER BY e.datum_von, e.id
+        ');
+        $stmt->execute([$jahr, $jahr]);
+        $events = $stmt->fetchAll();
+        $vorhanden = array_column($events, 'id');
+        $fehlende = array_diff(array_keys($zugeteilt), array_map('intval', $vorhanden));
+        if ($fehlende) {
+            $platz = implode(',', array_fill(0, count($fehlende), '?'));
+            $stmt = $pdo->prepare("
+                SELECT e.*, k.bezeichnung AS klasse_bezeichnung
+                FROM cm_events e
+                LEFT JOIN cm_klassen k ON k.id = e.klasse_id
+                WHERE e.id IN ($platz)
+            ");
+            $stmt->execute(array_values($fehlende));
+            $events = array_merge($events, $stmt->fetchAll());
+            usort($events, fn($a, $b) => strcmp((string)$a['datum_von'], (string)$b['datum_von']));
+        }
+
+        require_once __DIR__ . '/Subvention.php';
+        $namen = [];
+        foreach (Subvention::alle() as $s) {
+            $namen[(int)$s['id']] = $s;
+        }
+        // Programme, die nur noch in der Verwendung vorkommen (z.B. inaktiv)
+        $zuordnung = self::wirksameZuordnung($events);
+
+        $programme = [];
+        $total = 0.0;
+        foreach ($events as &$e) {
+            $eid = (int)$e['id'];
+            $sids = array_unique(array_merge($zuordnung[$eid] ?? [], array_keys($zugeteilt[$eid] ?? [])));
+            $e['programme'] = [];
+            $e['total'] = 0.0;
+            foreach ($sids as $sid) {
+                $subv = $namen[$sid] ?? Subvention::laden($sid);
+                if (!$subv) continue;
+                $namen[$sid] = $subv;
+                $betrag = $zugeteilt[$eid][$sid] ?? null;
+                $e['programme'][$sid] = [
+                    'bezeichnung'   => $subv['bezeichnung'],
+                    'foerderstelle' => $subv['foerderstelle'] ?? '',
+                    'betrag'        => $betrag,
+                ];
+                $e['total'] += $betrag ?? 0;
+                $programme[$sid] ??= [
+                    'bezeichnung'   => $subv['bezeichnung'],
+                    'foerderstelle' => $subv['foerderstelle'] ?? '',
+                    'anzahl_events' => 0,
+                    'total'         => 0.0,
+                ];
+                $programme[$sid]['anzahl_events']++;
+                $programme[$sid]['total'] += $betrag ?? 0;
+            }
+            $total += $e['total'];
+        }
+        unset($e);
+        uasort($programme, fn($a, $b) => strcmp($a['bezeichnung'], $b['bezeichnung']));
+
+        return ['events' => $events, 'programme' => $programme, 'total' => $total];
+    }
+
     // Zuordnung eines Events speichern. Gespeichert wird nur die Abweichung
     // vom Standard der Klasse: zusätzliche Programme in subvention_events,
     // abgewählte Standardprogramme in subvention_event_ausschluss. So bleibt
