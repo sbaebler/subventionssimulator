@@ -11,10 +11,16 @@ if ($jahr < 2000 || $jahr > 2100) {
     $jahr = (int)date('Y');
 }
 
+$klasseId = (int)($_GET['klasse'] ?? 0) ?: null;
+$eventart = $_GET['eventart'] ?? '';
+$eventart = array_key_exists($eventart, Subvention::EVENTARTEN) ? $eventart : null;
+
 $fehler = null;
+$klassen = [];
 $u = ['events' => [], 'programme' => [], 'total' => 0.0, 'unvollstaendig' => 0];
 try {
-    $u = EventSchaetzung::jahresuebersicht($jahr);
+    $klassen = Event::klassen();
+    $u = EventSchaetzung::jahresuebersicht($jahr, $klasseId, $eventart);
 } catch (Throwable $e) {
     error_log('[Subventionssimulator] Jahresübersicht Fehler: ' . $e->getMessage());
     $fehler = 'Die Übersicht konnte nicht geladen werden.';
@@ -34,24 +40,46 @@ require __DIR__ . '/header.php';
 
 <form method="get" action="/simulieren.php" class="card mb-6">
   <input type="hidden" name="ansicht" value="events">
-  <div class="flex items-end gap-4">
+  <div class="flex flex-wrap items-end gap-4">
     <div>
       <label class="block text-sm font-medium mb-1" for="jahr">Jahr</label>
       <input type="number" id="jahr" name="jahr" min="2000" max="2100" value="<?= $jahr ?>" class="input w-32">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1" for="klasse">Klasse</label>
+      <select id="klasse" name="klasse" class="input">
+        <option value="">Alle Klassen</option>
+        <?php foreach ($klassen as $k): ?>
+        <option value="<?= (int)$k['id'] ?>" <?= $klasseId === (int)$k['id'] ? 'selected' : '' ?>>
+          <?= htmlspecialchars($k['bezeichnung']) ?>
+        </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1" for="eventart">Eventart</label>
+      <select id="eventart" name="eventart" class="input">
+        <option value="">Alle Eventarten</option>
+        <?php foreach (Subvention::EVENTARTEN as $key => $label): ?>
+        <option value="<?= $key ?>" <?= $eventart === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
     <button type="submit" class="btn btn--secondary">Anzeigen</button>
   </div>
   <p class="text-xs text-subtle mt-3">
     Geschätzt nach den aktuellen Förderprogrammen: Teilnehmende (geplant, nach dem Event die
     Anwesenden) × förderfähige Eventtage, mit denselben Regeln wie im Class Manager Tool.
-    Es zählen alle Events, die im gewählten Jahr beginnen.
+    Es zählen alle Events, die im gewählten Jahr beginnen. Die Eventart ergibt sich wie im
+    Class Manager Tool aus der Dauer (ab 4 Tagen Lager, sonst Training). Total und Summen
+    gelten für die gefilterten Events.
   </p>
 </form>
 
 <?php if ($fehler): ?>
 <div class="alert alert--error mb-6"><?= htmlspecialchars($fehler) ?></div>
 <?php elseif (empty($u['events'])): ?>
-<p class="empty-state">Für <?= $jahr ?> sind keine Events erfasst.</p>
+<p class="empty-state">Für <?= $jahr ?> sind keine Events<?= ($klasseId || $eventart) ? ' mit diesem Filter' : '' ?> erfasst.</p>
 <?php else: ?>
 
 <div class="alert alert--info px-5 py-4 mb-6">

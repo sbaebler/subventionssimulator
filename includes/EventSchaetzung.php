@@ -284,18 +284,20 @@ class EventSchaetzung {
     }
 
     // Jahresübersicht: alle Events, die im Jahr beginnen, mit ihrer Schätzung,
-    // dazu Summen pro Förderprogramm und gesamt.
+    // dazu Summen pro Förderprogramm und gesamt. Optional gefiltert auf eine
+    // Klasse (cm_klassen.id) und/oder eine Eventart ('lager'|'training', wie
+    // aus der Dauer abgeleitet); Summen gelten nur für die gefilterten Events.
     // Rückgabe: ['events' => [event + 'schaetzung'], 'programme' => [bezeichnung-Schlüssel => ...], 'total' => float,
     //            'unvollstaendig' => int (Events ohne berechenbare Summe)]
-    public static function jahresuebersicht(int $jahr): array {
+    public static function jahresuebersicht(int $jahr, ?int $klasseId = null, ?string $eventart = null): array {
         $stmt = db()->prepare('
             SELECT e.*, k.bezeichnung AS klasse_bezeichnung
             FROM cm_events e
             LEFT JOIN cm_klassen k ON k.id = e.klasse_id
-            WHERE YEAR(e.datum_von) = ?
+            WHERE YEAR(e.datum_von) = ?' . ($klasseId !== null ? ' AND e.klasse_id = ?' : '') . '
             ORDER BY e.datum_von, e.id
         ');
-        $stmt->execute([$jahr]);
+        $stmt->execute($klasseId !== null ? [$jahr, $klasseId] : [$jahr]);
         $events = $stmt->fetchAll();
 
         $zuordnung = Event::wirksameZuordnung($events);
@@ -304,8 +306,12 @@ class EventSchaetzung {
         $total = 0.0;
         $unvollstaendig = 0;
 
-        foreach ($events as &$e) {
+        foreach ($events as $i => &$e) {
             $e['schaetzung'] = self::fuerEvent($e, $zuordnung[(int)$e['id']] ?? [], $cache);
+            if ($eventart !== null && $e['schaetzung']['eventart'] !== $eventart) {
+                unset($events[$i]);
+                continue;
+            }
             if ($e['schaetzung']['summe'] === null) {
                 $unvollstaendig++;
             } else {
@@ -323,6 +329,6 @@ class EventSchaetzung {
         unset($e);
         ksort($programme);
 
-        return ['events' => $events, 'programme' => array_values($programme), 'total' => $total, 'unvollstaendig' => $unvollstaendig];
+        return ['events' => array_values($events), 'programme' => array_values($programme), 'total' => $total, 'unvollstaendig' => $unvollstaendig];
     }
 }

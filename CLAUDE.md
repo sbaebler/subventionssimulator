@@ -158,6 +158,22 @@ gegen die SQL-Nachbildung (braucht eine Dev-DB mit beiden Schemas). Beide
 Skripte laufen unabhängig, weil beide Repos eine globale Klasse `Event`
 und Funktion `db()` deklarieren und sich nicht in einem Prozess laden lassen.
 
+Ebenso gespiegelt: Die Ansicht «Events pro Jahr» (`?ansicht=events` im
+Simulator) schätzt die erwarteten Subventionen der Events über
+`includes/EventSchaetzung.php`. Das ist ein Spiegel von
+`Budget::subventionenSchaetzungFuerEventLaden()` und
+`subventionProgrammSchaetzen()` im Class Manager Tool (dortiges
+`includes/Budget.php`) und liest `cm_events`, `cm_teilnehmer`,
+`cm_event_personalaufwand`, `cm_users`. Bei Änderungen an den Regeln
+(J+S-Voraussetzungen, Lager ab 4 Tagen, förderfähige Tage, Teilnehmerzahl,
+Trainerart-Zulassung) **immer beide Seiten** anpassen, sonst zeigen die Apps
+verschiedene Beträge. Einzige gewollte Abweichung: verbandsweite Programme
+(`Subvention::JAHRESTYPEN`) werden hier nicht pro Event geschätzt.
+`php tests/event_schaetzung.php` prüft die Regeln ohne DB. Die Klassen
+`Event` und `db()` existieren in beiden Repos, die Apps lassen sich nicht in
+einem Prozess laden; ein Vergleich gegen das CM-Tool läuft daher in zwei
+Prozessen auf derselben DB.
+
 ### Berechnung
 
 Einstieg: `Subvention::berechnen(int $id, array $params)` bzw.
