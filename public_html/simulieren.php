@@ -7,6 +7,12 @@ if (($_GET['ansicht'] ?? '') === 'jahr') {
     exit;
 }
 
+// Dritte Ansicht: erwartete Subventionen aller Events eines Jahres
+if (($_GET['ansicht'] ?? '') === 'events') {
+    require __DIR__ . '/partials/events_jahr.php';
+    exit;
+}
+
 $pageTitle = 'Simulator';
 
 $params = [
