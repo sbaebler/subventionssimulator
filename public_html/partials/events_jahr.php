@@ -11,21 +11,12 @@ if ($jahr < 2000 || $jahr > 2100) {
     $jahr = (int)date('Y');
 }
 
-// Mehrfachauswahl: ?klasse[]=1&klasse[]=2&eventart[]=lager (leer = alle)
-$klasseIds = array_values(array_unique(array_filter(array_map('intval', (array)($_GET['klasse'] ?? [])))));
-$eventarten = array_values(array_filter(
-    array_unique(array_map('strval', (array)($_GET['eventart'] ?? []))),
-    fn($a) => array_key_exists($a, Subvention::EVENTARTEN)
-));
-
 $fehler = null;
 $klassen = [];
-$u = ['events' => [], 'programme' => [], 'total' => 0.0, 'unvollstaendig' => 0];
 try {
     $klassen = Event::klassen();
-    $u = EventSchaetzung::jahresuebersicht($jahr, $klasseIds, $eventarten);
 } catch (Throwable $e) {
-    error_log('[Subventionssimulator] Jahresübersicht Fehler: ' . $e->getMessage());
+    error_log('[Subventionssimulator] Klassen nicht ladbar: ' . $e->getMessage());
     $fehler = 'Die Übersicht konnte nicht geladen werden.';
 }
 
@@ -34,6 +25,35 @@ $testKlassenIds = array_map(
     fn($k) => (string)(int)$k['id'],
     array_filter($klassen, fn($k) => mb_strtolower(trim($k['bezeichnung'])) === 'testoli')
 );
+
+// Mehrfachauswahl: ?filter=1&klasse[]=1&klasse[]=2&eventart[]=lager.
+// Ohne «filter» (erster Aufruf) gilt die Standardauswahl: alle Klassen ausser
+// Testoli und alle Eventarten. Mit «filter» und ohne Haken in einer Gruppe
+// gilt «alle» (also inkl. Testoli).
+$gefiltert = isset($_GET['filter']);
+if ($gefiltert) {
+    $klasseIds = array_values(array_unique(array_filter(array_map('intval', (array)($_GET['klasse'] ?? [])))));
+    $eventarten = array_values(array_filter(
+        array_unique(array_map('strval', (array)($_GET['eventart'] ?? []))),
+        fn($a) => array_key_exists($a, Subvention::EVENTARTEN)
+    ));
+} else {
+    $klasseIds = array_values(array_map(
+        fn($k) => (int)$k['id'],
+        array_filter($klassen, fn($k) => !in_array((string)(int)$k['id'], $testKlassenIds, true))
+    ));
+    $eventarten = array_keys(Subvention::EVENTARTEN);
+}
+
+$u = ['events' => [], 'programme' => [], 'total' => 0.0, 'unvollstaendig' => 0];
+if (!$fehler) {
+    try {
+        $u = EventSchaetzung::jahresuebersicht($jahr, $klasseIds, $eventarten);
+    } catch (Throwable $e) {
+        error_log('[Subventionssimulator] Jahresübersicht Fehler: ' . $e->getMessage());
+        $fehler = 'Die Übersicht konnte nicht geladen werden.';
+    }
+}
 
 $chf = fn(float $b): string => 'CHF ' . number_format($b, 2, '.', "'");
 
@@ -50,6 +70,7 @@ require __DIR__ . '/header.php';
 <form method="get" action="/simulieren.php" class="card mb-6"
       x-data='{ klassen: <?= json_encode(array_map("strval", $klasseIds)) ?>, test: <?= json_encode(array_values($testKlassenIds)) ?> }'>
   <input type="hidden" name="ansicht" value="events">
+  <input type="hidden" name="filter" value="1">
   <div class="flex flex-wrap items-end gap-4">
     <div>
       <label class="block text-sm font-medium mb-1" for="jahr">Jahr</label>
@@ -84,7 +105,7 @@ require __DIR__ . '/header.php';
     Anwesenden) × förderfähige Eventtage, mit denselben Regeln wie im Class Manager Tool.
     Es zählen alle Events, die im gewählten Jahr beginnen. Die Eventart ergibt sich wie im
     Class Manager Tool aus der Dauer (ab 4 Tagen Lager, sonst Training). Total und Summen
-    gelten für die gefilterten Events. Ohne Auswahl zählen alle Klassen bzw. Eventarten.
+    gelten für die gefilterten Events. Standardmässig sind alle Klassen ausser Testoli gewählt; ohne Haken zählen alle.
   </p>
   <?php if ($testKlassenIds): ?>
   <div x-show="klassen.length === 0 || test.some(id => klassen.includes(id))" x-cloak role="alert"
