@@ -11,20 +11,29 @@ if ($jahr < 2000 || $jahr > 2100) {
     $jahr = (int)date('Y');
 }
 
-$klasseId = (int)($_GET['klasse'] ?? 0) ?: null;
-$eventart = $_GET['eventart'] ?? '';
-$eventart = array_key_exists($eventart, Subvention::EVENTARTEN) ? $eventart : null;
+// Mehrfachauswahl: ?klasse[]=1&klasse[]=2&eventart[]=lager (leer = alle)
+$klasseIds = array_values(array_unique(array_filter(array_map('intval', (array)($_GET['klasse'] ?? [])))));
+$eventarten = array_values(array_filter(
+    array_unique(array_map('strval', (array)($_GET['eventart'] ?? []))),
+    fn($a) => array_key_exists($a, Subvention::EVENTARTEN)
+));
 
 $fehler = null;
 $klassen = [];
 $u = ['events' => [], 'programme' => [], 'total' => 0.0, 'unvollstaendig' => 0];
 try {
     $klassen = Event::klassen();
-    $u = EventSchaetzung::jahresuebersicht($jahr, $klasseId, $eventart);
+    $u = EventSchaetzung::jahresuebersicht($jahr, $klasseIds, $eventarten);
 } catch (Throwable $e) {
     error_log('[Subventionssimulator] Jahresübersicht Fehler: ' . $e->getMessage());
     $fehler = 'Die Übersicht konnte nicht geladen werden.';
 }
+
+// Die Test-Klasse «Testoli» ist nur zum Testen da und verfälscht die Totals.
+$testKlassenIds = array_map(
+    fn($k) => (string)(int)$k['id'],
+    array_filter($klassen, fn($k) => mb_strtolower(trim($k['bezeichnung'])) === 'testoli')
+);
 
 $chf = fn(float $b): string => 'CHF ' . number_format($b, 2, '.', "'");
 
@@ -38,33 +47,36 @@ require __DIR__ . '/header.php';
 
 <?php $simulatorAnsicht = 'events'; require __DIR__ . '/simulator_tabs.php'; ?>
 
-<form method="get" action="/simulieren.php" class="card mb-6">
+<form method="get" action="/simulieren.php" class="card mb-6"
+      x-data='{ klassen: <?= json_encode(array_map("strval", $klasseIds)) ?>, test: <?= json_encode(array_values($testKlassenIds)) ?> }'>
   <input type="hidden" name="ansicht" value="events">
   <div class="flex flex-wrap items-end gap-4">
     <div>
       <label class="block text-sm font-medium mb-1" for="jahr">Jahr</label>
       <input type="number" id="jahr" name="jahr" min="2000" max="2100" value="<?= $jahr ?>" class="input w-32">
     </div>
-    <div>
-      <label class="block text-sm font-medium mb-1" for="klasse">Klasse</label>
-      <select id="klasse" name="klasse" class="input">
-        <option value="">Alle Klassen</option>
+    <fieldset>
+      <legend class="block text-sm font-medium mb-1">Klasse</legend>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
         <?php foreach ($klassen as $k): ?>
-        <option value="<?= (int)$k['id'] ?>" <?= $klasseId === (int)$k['id'] ? 'selected' : '' ?>>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="klasse[]" value="<?= (int)$k['id'] ?>" x-model="klassen" class="checkbox">
           <?= htmlspecialchars($k['bezeichnung']) ?>
-        </option>
+        </label>
         <?php endforeach; ?>
-      </select>
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1" for="eventart">Eventart</label>
-      <select id="eventart" name="eventart" class="input">
-        <option value="">Alle Eventarten</option>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend class="block text-sm font-medium mb-1">Eventart</legend>
+      <div class="flex flex-wrap gap-x-4 gap-y-1">
         <?php foreach (Subvention::EVENTARTEN as $key => $label): ?>
-        <option value="<?= $key ?>" <?= $eventart === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="eventart[]" value="<?= $key ?>" <?= in_array($key, $eventarten, true) ? 'checked' : '' ?> class="checkbox">
+          <?= htmlspecialchars($label) ?>
+        </label>
         <?php endforeach; ?>
-      </select>
-    </div>
+      </div>
+    </fieldset>
     <button type="submit" class="btn btn--secondary">Anzeigen</button>
   </div>
   <p class="text-xs text-subtle mt-3">
@@ -72,14 +84,21 @@ require __DIR__ . '/header.php';
     Anwesenden) × förderfähige Eventtage, mit denselben Regeln wie im Class Manager Tool.
     Es zählen alle Events, die im gewählten Jahr beginnen. Die Eventart ergibt sich wie im
     Class Manager Tool aus der Dauer (ab 4 Tagen Lager, sonst Training). Total und Summen
-    gelten für die gefilterten Events.
+    gelten für die gefilterten Events. Ohne Auswahl zählen alle Klassen bzw. Eventarten.
   </p>
+  <?php if ($testKlassenIds): ?>
+  <div x-show="klassen.length === 0 || test.some(id => klassen.includes(id))" x-cloak role="alert"
+       class="alert alert--warning mt-3">
+    Die Test-Klasse «Testoli» ist in dieser Auswahl enthalten<span x-show="klassen.length === 0"> (keine Klasse gewählt = alle)</span>.
+    Ihre Events sind nur zum Testen da und verfälschen die Summen.
+  </div>
+  <?php endif; ?>
 </form>
 
 <?php if ($fehler): ?>
 <div class="alert alert--error mb-6"><?= htmlspecialchars($fehler) ?></div>
 <?php elseif (empty($u['events'])): ?>
-<p class="empty-state">Für <?= $jahr ?> sind keine Events<?= ($klasseId || $eventart) ? ' mit diesem Filter' : '' ?> erfasst.</p>
+<p class="empty-state">Für <?= $jahr ?> sind keine Events<?= ($klasseIds || $eventarten) ? ' mit diesem Filter' : '' ?> erfasst.</p>
 <?php else: ?>
 
 <div class="alert alert--info px-5 py-4 mb-6">

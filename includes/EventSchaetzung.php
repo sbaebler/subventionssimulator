@@ -284,20 +284,23 @@ class EventSchaetzung {
     }
 
     // Jahresübersicht: alle Events, die im Jahr beginnen, mit ihrer Schätzung,
-    // dazu Summen pro Förderprogramm und gesamt. Optional gefiltert auf eine
-    // Klasse (cm_klassen.id) und/oder eine Eventart ('lager'|'training', wie
-    // aus der Dauer abgeleitet); Summen gelten nur für die gefilterten Events.
+    // dazu Summen pro Förderprogramm und gesamt. Optional gefiltert auf
+    // mehrere Klassen (cm_klassen.id) und/oder Eventarten ('lager'|'training',
+    // wie aus der Dauer abgeleitet); leere Liste = kein Filter. Summen gelten
+    // nur für die gefilterten Events.
     // Rückgabe: ['events' => [event + 'schaetzung'], 'programme' => [bezeichnung-Schlüssel => ...], 'total' => float,
     //            'unvollstaendig' => int (Events ohne berechenbare Summe)]
-    public static function jahresuebersicht(int $jahr, ?int $klasseId = null, ?string $eventart = null): array {
+    public static function jahresuebersicht(int $jahr, array $klasseIds = [], array $eventarten = []): array {
+        $klasseIds = array_values(array_unique(array_filter(array_map('intval', $klasseIds))));
         $stmt = db()->prepare('
             SELECT e.*, k.bezeichnung AS klasse_bezeichnung
             FROM cm_events e
             LEFT JOIN cm_klassen k ON k.id = e.klasse_id
-            WHERE YEAR(e.datum_von) = ?' . ($klasseId !== null ? ' AND e.klasse_id = ?' : '') . '
+            WHERE YEAR(e.datum_von) = ?'
+            . ($klasseIds ? ' AND e.klasse_id IN (' . implode(',', array_fill(0, count($klasseIds), '?')) . ')' : '') . '
             ORDER BY e.datum_von, e.id
         ');
-        $stmt->execute($klasseId !== null ? [$jahr, $klasseId] : [$jahr]);
+        $stmt->execute(array_merge([$jahr], $klasseIds));
         $events = $stmt->fetchAll();
 
         $zuordnung = Event::wirksameZuordnung($events);
@@ -308,7 +311,7 @@ class EventSchaetzung {
 
         foreach ($events as $i => &$e) {
             $e['schaetzung'] = self::fuerEvent($e, $zuordnung[(int)$e['id']] ?? [], $cache);
-            if ($eventart !== null && $e['schaetzung']['eventart'] !== $eventart) {
+            if ($eventarten && !in_array($e['schaetzung']['eventart'], $eventarten, true)) {
                 unset($events[$i]);
                 continue;
             }
