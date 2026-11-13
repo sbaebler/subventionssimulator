@@ -6,9 +6,11 @@ require_once __DIR__ . '/../../includes/EventSchaetzung.php';
 
 $pageTitle = 'Simulator – Events pro Jahr';
 
-$jahr = (int)($_GET['jahr'] ?? date('Y'));
+// Standardjahr: das Planungsjahr, für das die erwarteten Subventionen gelten.
+const EVENTS_JAHR_STANDARD = 2027;
+$jahr = (int)($_GET['jahr'] ?? EVENTS_JAHR_STANDARD);
 if ($jahr < 2000 || $jahr > 2100) {
-    $jahr = (int)date('Y');
+    $jahr = EVENTS_JAHR_STANDARD;
 }
 
 $fehler = null;
