@@ -61,5 +61,18 @@ pruefe('Leiter-Schlüssel', $v['teilnehmer'], 12);
 $r = EventSchaetzung::schaetzen([$js], 10, 1, [$leiter(true)], 2);
 pruefe('J+S zu wenige TN', $r['programme'][0]['status'], 'nicht_berechtigt');
 
+// J+S Lager und J+S Training schliessen sich aus: Lager hat Vorrang
+$jsLager = $js + [];
+$jsLager['eventarten'] = [['eventart' => 'lager', 'multiplikator' => 1]];
+$jsTraining = ['bezeichnung' => 'J+S Training'] + $js;
+$jsTraining['eventarten'] = [['eventart' => 'training', 'multiplikator' => 1]];
+$r = EventSchaetzung::schaetzen([$jsLager, $jsTraining], 20, 5, [$leiter(true), $leiter(true)], null);
+pruefe('Lager+Training: Lager zählt',      $r['programme'][0]['status'], 'berechnet');
+pruefe('Lager+Training: Training entfällt', $r['programme'][1]['status'], 'nicht_berechtigt');
+pruefe('Lager+Training: Summe nur Lager',  $r['summe'], $r['programme'][0]['betrag']);
+$r = EventSchaetzung::schaetzen([$jsTraining, $pauschal], 20, 5, [$leiter(true), $leiter(true)], null);
+pruefe('Nur Training: bleibt (Rückfall)',  $r['programme'][0]['status'], 'berechnet');
+pruefe('Nicht-J+S bleibt unberührt',       $r['programme'][1]['status'], 'berechnet');
+
 echo $fehler === 0 ? "\nAlle Prüfungen bestanden.\n" : "\n$fehler Fehler.\n";
 exit($fehler === 0 ? 0 : 1);

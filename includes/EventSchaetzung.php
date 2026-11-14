@@ -96,6 +96,33 @@ class EventSchaetzung {
                 'teilnehmer' => min($jsTn, self::JS_TEILNEHMER_PRO_LEITER * $jsLeiter)];
     }
 
+    // J+S-Regel: Für einen Anlass zählt entweder J+S Lager ODER J+S Training,
+    // nie beides. Ist mindestens ein J+S-Programm als Lager berechnet, hat
+    // Lager Vorrang: als Training berechnete J+S-Programme werden auf
+    // 'nicht_berechtigt' gesetzt. Erwartet je Eintrag 'ist_js' und 'eventart'.
+    // Rein. (Gleiche Regel: Budget::jsNurEineArt() im Class Manager Tool.)
+    public static function jsNurEineArt(array $programme): array {
+        $hatLager = false;
+        foreach ($programme as $p) {
+            if (!empty($p['ist_js']) && $p['status'] === 'berechnet' && ($p['eventart'] ?? '') === 'lager') {
+                $hatLager = true;
+                break;
+            }
+        }
+        if (!$hatLager) {
+            return $programme;
+        }
+        foreach ($programme as $i => $p) {
+            if (!empty($p['ist_js']) && $p['status'] === 'berechnet' && ($p['eventart'] ?? '') === 'training') {
+                $programme[$i]['status'] = 'nicht_berechtigt';
+                $programme[$i]['betrag'] = null;
+                $programme[$i]['grund']  = 'J+S Lager und J+S Training sind nicht kombinierbar – J+S Lager hat Vorrang';
+                $programme[$i]['aufschluesselung'] = [];
+            }
+        }
+        return $programme;
+    }
+
     // Ein Programm für eine Eventart schätzen. $subv ist Subvention::laden().
     // Rückgabe: ['bezeichnung','foerderstelle','status' => 'berechnet'|'nicht_berechtigt'|'nicht_berechenbar',
     //            'betrag' => ?float, 'grund' => ?string, 'aufschluesselung' => array]
@@ -181,8 +208,8 @@ class EventSchaetzung {
         }
         $jsTn = $jsTeilnehmer ?? $teilnehmer;
 
-        $summe = null;
         foreach ($programme as $subv) {
+            $eintragsart = $eventart;
             $eintrag = self::programmSchaetzen($subv, $eventart, $teilnehmer, $tage, $personalzeilen, $hatJs, $hatNwf, $jsTn, $jsLeiter);
             // Rückfall: Lager, das als Lager nicht rechenbar ist, wird als Training gefördert.
             if ($eventart === 'lager' && $eintrag['status'] !== 'berechnet') {
@@ -193,12 +220,19 @@ class EventSchaetzung {
                         'wert' => 1, 'format' => 'zahl',
                     ];
                     $eintrag = $alsTraining;
+                    $eintragsart = 'training';
                 }
             }
+            $eintrag['eventart'] = $eintragsart;
+            $eintrag['ist_js']   = self::istJsProgramm($subv);
+            $ergebnis['programme'][] = $eintrag;
+        }
+        $ergebnis['programme'] = self::jsNurEineArt($ergebnis['programme']);
+        $summe = null;
+        foreach ($ergebnis['programme'] as $eintrag) {
             if ($eintrag['status'] === 'berechnet') {
                 $summe = ($summe ?? 0.0) + $eintrag['betrag'];
             }
-            $ergebnis['programme'][] = $eintrag;
         }
         $ergebnis['summe'] = $summe;
         return $ergebnis;
