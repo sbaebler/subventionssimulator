@@ -23,6 +23,7 @@ require_once __DIR__ . '/Event.php';
 class EventSchaetzung {
 
     public const LEKTIONEN_PRO_LAGERTAG = 6;
+    public const LEKTIONEN_PRO_TRAININGSTAG = 6;
 
     public const JS_ALTER_MIN = 5;
     public const JS_ALTER_MAX = 20;
@@ -137,9 +138,10 @@ class EventSchaetzung {
         if ($typ === 'js_teilnehmerstunde') {
             return $offen('nicht_berechenbar', 'Braucht Stunden pro Tag – im Event-Simulator prüfen');
         }
-        if ($typ === 'zks_ausbildungseinheit' && $eventart !== 'lager') {
-            return $offen('nicht_berechenbar', 'Lektionen pro Tag werden nur für Lagertage automatisch angenommen – bei Training im Event-Simulator prüfen');
-        }
+        // zks_ausbildungseinheit: Lektionen pro Tag werden je Eventart pauschal
+        // angenommen (Lager und Training), ob das Programm für die Eventart
+        // gilt, entscheidet die Eventart-Zuordnung weiter unten.
+        $lektionenProTag = $eventart === 'lager' ? self::LEKTIONEN_PRO_LAGERTAG : self::LEKTIONEN_PRO_TRAININGSTAG;
         $regel = $subv['betraege'][0] ?? null;
         if ($regel === null) {
             return $offen('nicht_berechenbar', 'Kein Beitragssatz hinterlegt');
@@ -182,7 +184,7 @@ class EventSchaetzung {
 
         [$betrag, $auf] = Foerderrechner::betrag(
             $typ, $regel, $teilnehmer, $tage,
-            ['uebernachtung' => $tage > 1, 'lektionen_pro_tag' => self::LEKTIONEN_PRO_LAGERTAG],
+            ['uebernachtung' => $tage > 1, 'lektionen_pro_tag' => $lektionenProTag],
             $trainerRow, $eventRow
         );
         return $basis + ['status' => 'berechnet', 'betrag' => round($betrag, 2), 'grund' => null, 'aufschluesselung' => $auf];

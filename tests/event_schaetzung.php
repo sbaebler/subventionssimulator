@@ -74,5 +74,16 @@ $r = EventSchaetzung::schaetzen([$jsTraining, $pauschal], 20, 5, [$leiter(true),
 pruefe('Nur Training: bleibt (Rückfall)',  $r['programme'][0]['status'], 'berechnet');
 pruefe('Nicht-J+S bleibt unberührt',       $r['programme'][1]['status'], 'berechnet');
 
+// ZKS Ausbildungseinheit: auch im Training berechnet (6 Lektionen/Tag angenommen)
+$zks = ['bezeichnung' => 'ZKS Ausbildung', 'foerderstelle' => 'ZKS', 'berechnungstyp' => 'zks_ausbildungseinheit',
+        'betraege' => [['betrag_pro_einheit' => 2.5, 'max_lektionen_pro_tag' => 0]], 'trainerarten' => [], 'eventarten' => []];
+$r = EventSchaetzung::schaetzen([$zks], 20, 2, [], null);
+pruefe('ZKS Training berechnet', $r['programme'][0]['status'], 'berechnet');
+pruefe('ZKS Training: 2.50 × (20×6×2)', $r['summe'], 600.0);
+$zksLager = $zks;
+$zksLager['eventarten'] = [['eventart' => 'lager', 'multiplikator' => 1]];
+$r = EventSchaetzung::schaetzen([$zksLager], 20, 2, [], null);
+pruefe('ZKS nur Lager erfasst: Training nicht berechtigt', $r['programme'][0]['status'], 'nicht_berechtigt');
+
 echo $fehler === 0 ? "\nAlle Prüfungen bestanden.\n" : "\n$fehler Fehler.\n";
 exit($fehler === 0 ? 0 : 1);
