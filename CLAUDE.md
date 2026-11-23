@@ -130,6 +130,7 @@ Verbindlich sind die Klassenkonstanten in `includes/Subvention.php`.
 'js_teilnehmertag'       // J+S Teilnehmertag (Satz × TN × Tage)
 'js_teilnehmerstunde'    // J+S Teilnehmerstunde (Satz × TN × Tage × Stunden)
 'zks_ausbildungseinheit' // ZKS Ausbildungseinheit (Satz × TN × Lektionen × Tage)
+'nwf_trainertag'         // NWF Trainertag (Satz × NWF-Trainer × Tage)
 'pauschale'              // Fixer Jahresbetrag
 'jahresbeitrag'          // Verbandsweite Kennzahl
 

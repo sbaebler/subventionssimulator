@@ -29,7 +29,7 @@ class Foerderrechner {
     // subvention_betraege.
     //
     // $p: 'uebernachtung' bool, 'stunden_pro_tag' int, 'lektionen_pro_tag' int,
-    //     'anzahl_einheiten' float
+    //     'anzahl_einheiten' float, 'anzahl_trainer' int (NWF-Trainer pro Tag)
     public static function betrag(
         string $typ, array $regel, int $tn, int $tage, array $p = [],
         ?array $trainerRow = null, ?array $eventRow = null
@@ -38,6 +38,7 @@ class Foerderrechner {
             'js_teilnehmertag'       => self::teilnehmertag($regel, $tn, $tage, !empty($p['uebernachtung'])),
             'js_teilnehmerstunde'    => self::teilnehmerstunde($regel, $tn, $tage, max(0, (int)($p['stunden_pro_tag'] ?? 0))),
             'zks_ausbildungseinheit' => self::ausbildungseinheit($regel, $tn, $tage, max(0, (int)($p['lektionen_pro_tag'] ?? 0))),
+            'nwf_trainertag'         => self::trainertag($regel, max(0, (int)($p['anzahl_trainer'] ?? 0)), $tage),
             'pauschale'              => self::pauschale($regel),
             'jahresbeitrag'          => self::jahresbeitrag($regel, (float)($p['anzahl_einheiten'] ?? 0)),
             default                  => self::additiv($regel, $tn, $tage, $trainerRow, $eventRow),
@@ -128,6 +129,23 @@ class Foerderrechner {
             ['label' => 'Anrechenbare Lektionen/Tag',  'wert' => $effLektionen, 'format' => 'zahl'],
             ['label' => 'Anrechenbare Tage',           'wert' => $effTage,      'format' => 'zahl'],
             ['label' => 'Ausbildungseinheiten',        'wert' => $einheiten,    'format' => 'zahl'],
+        ];
+        return [$betrag, $auf];
+    }
+
+    // nwf_trainertag: Satz × Anzahl NWF-Trainer × Tage. Der Betrag hängt weder
+    // an Teilnehmenden noch am Tag allein, sondern an jedem anwesenden
+    // NWF-Trainer pro Tag: bei mehreren Trainern multipliziert er sich.
+    public static function trainertag(array $r, int $trainer, int $tage): array {
+        $satz    = (float)($r['betrag_pro_trainertag'] ?? 0);
+        $effTage = self::begrenzt($tage, (int)($r['max_tage'] ?? 0));
+
+        $betrag = $satz * $trainer * $effTage;
+
+        $auf = [
+            ['label' => 'Satz pro NWF-Trainer und Tag', 'wert' => $satz,    'format' => 'chf'],
+            ['label' => 'Anrechenbare NWF-Trainer',     'wert' => $trainer, 'format' => 'zahl'],
+            ['label' => 'Anrechenbare Tage',            'wert' => $effTage, 'format' => 'zahl'],
         ];
         return [$betrag, $auf];
     }

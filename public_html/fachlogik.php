@@ -32,6 +32,12 @@ $typen = [
         'regel'   => ['betrag_pro_einheit' => 2.8, 'max_lektionen_pro_tag' => 6],
         'params'  => ['lektionen_pro_tag' => 6],
     ],
+    'nwf_trainertag' => [
+        'formel'  => 'Satz × Anzahl NWF-Trainer × Tage (Betrag je Trainer und Tag, nicht je Teilnehmer)',
+        'einsatz' => 'NWF-Beitrag',
+        'regel'   => ['betrag_pro_trainertag' => 100],
+        'params'  => ['anzahl_trainer' => 2],
+    ],
     'pauschale' => [
         'formel'  => 'Fixer Betrag (im Grundbetrag hinterlegt)',
         'einsatz' => 'Feste Jahresbeiträge',

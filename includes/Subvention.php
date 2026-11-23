@@ -32,6 +32,7 @@ class Subvention {
         'js_teilnehmertag'       => 'J+S Teilnehmertag (Satz × TN × Tage)',
         'js_teilnehmerstunde'    => 'J+S Teilnehmerstunde (Satz × TN × Tage × Stunden)',
         'zks_ausbildungseinheit' => 'ZKS Ausbildungseinheit (Satz × TN × Lektionen × Tage)',
+        'nwf_trainertag'         => 'NWF Trainertag (Satz × NWF-Trainer × Tage)',
         'pauschale'              => 'Pauschale (fixer Jahresbetrag)',
         'jahresbeitrag'          => 'Jahresbeitrag (verbandsweite Kennzahl)',
     ];
@@ -314,8 +315,9 @@ class Subvention {
                 (subvention_id, bezeichnung, grundbetrag, betrag_pro_teilnehmer,
                  betrag_pro_tag, max_teilnehmer, max_tage, betrag_max_gesamt,
                  satz_mit_uebernachtung, satz_ohne_uebernachtung, betrag_pro_stunde,
-                 max_stunden_pro_tag, betrag_pro_einheit, max_lektionen_pro_tag)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 max_stunden_pro_tag, betrag_pro_einheit, max_lektionen_pro_tag,
+                 betrag_pro_trainertag)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         // Pro Förderprogramm gilt ein Beitragssatz (die Berechnung nutzt nur die erste Zeile).
         foreach (array_slice($rows, 0, 1) as $r) {
@@ -334,6 +336,7 @@ class Subvention {
                 (int)  ($r['max_stunden_pro_tag']     ?? 0),
                 (float)($r['betrag_pro_einheit']      ?? 0),
                 (int)  ($r['max_lektionen_pro_tag']   ?? 0),
+                (float)($r['betrag_pro_trainertag']   ?? 0),
             ]);
         }
     }
@@ -474,6 +477,7 @@ class Subvention {
     //   'uebernachtung'     => bool,   (js_teilnehmertag)
     //   'stunden_pro_tag'   => int,    (js_teilnehmerstunde)
     //   'lektionen_pro_tag' => int,    (zks_ausbildungseinheit)
+    //   'anzahl_trainer'    => int,    (nwf_trainertag: NWF-Trainer pro Tag)
     //   'anzahl_einheiten'  => float,  (jahresbeitrag – Phase 3)
     // ]
     //

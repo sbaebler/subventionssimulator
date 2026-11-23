@@ -61,6 +61,7 @@ CREATE TABLE subventionen (
                     'js_teilnehmertag',          -- Satz × TN × Tage (J+S Lager)
                     'js_teilnehmerstunde',       -- Satz × TN × Tage × Stunden (J+S Training)
                     'zks_ausbildungseinheit',    -- Satz × TN × Lektionen × Tage (ZKS Ausbildung)
+                    'nwf_trainertag',            -- Satz × NWF-Trainer × Tage (NWF)
                     'pauschale',                 -- fixer Jahresbetrag
                     'jahresbeitrag'              -- Kennzahl-basiert (verbandsweit, Phase 3)
                   ) NOT NULL DEFAULT 'additiv',
@@ -128,6 +129,7 @@ CREATE TABLE subvention_betraege (
   max_stunden_pro_tag      SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- js_teilnehmerstunde (0 = kein Limit)
   betrag_pro_einheit       DECIMAL(10,4) NOT NULL DEFAULT 0.0000, -- zks_ausbildungseinheit
   max_lektionen_pro_tag    SMALLINT UNSIGNED NOT NULL DEFAULT 0, -- zks_ausbildungseinheit (0 = kein Limit)
+  betrag_pro_trainertag    DECIMAL(8,2) NOT NULL DEFAULT 0.00,   -- nwf_trainertag: Satz pro NWF-Trainer und Tag
 
   CONSTRAINT fk_betraege_subvention
     FOREIGN KEY (subvention_id) REFERENCES subventionen(id)

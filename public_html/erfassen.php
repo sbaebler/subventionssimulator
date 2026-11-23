@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'max_stunden_pro_tag'     => (int)($b['max_stunden_pro_tag'] ?? 0),
             'betrag_pro_einheit'      => Subvention::dezimal($b['betrag_pro_einheit'] ?? 0),
             'max_lektionen_pro_tag'   => (int)($b['max_lektionen_pro_tag'] ?? 0),
+            'betrag_pro_trainertag'   => Subvention::dezimal($b['betrag_pro_trainertag'] ?? 0),
         ];
         $hatWert = false;
         foreach ($zeile as $feld => $wert) {
@@ -141,7 +142,7 @@ if (empty($fehler)) $subv = $id ? Subvention::laden($id) : null;
 
 // Betragszeilen für die Anzeige aufbereiten: 0-Werte als leeres Feld
 $betragFelderDezimal = ['grundbetrag','betrag_pro_teilnehmer','betrag_pro_tag','betrag_max_gesamt',
-                        'satz_mit_uebernachtung','satz_ohne_uebernachtung','betrag_pro_stunde','betrag_pro_einheit'];
+                        'satz_mit_uebernachtung','satz_ohne_uebernachtung','betrag_pro_stunde','betrag_pro_einheit','betrag_pro_trainertag'];
 $betragFelderGanz    = ['max_teilnehmer','max_tage','max_stunden_pro_tag','max_lektionen_pro_tag'];
 $betraegeAnzeige = [];
 foreach ($subv['betraege'] ?? [] as $b) {
@@ -209,6 +210,11 @@ $typKarten = [
         'titel'    => 'Pro Ausbildungseinheit',
         'text'     => 'Satz × Teilnehmer × Lektionen pro Tag × Tage.',
         'beispiel' => 'z.B. ZKS Ausbildungsbeitrag',
+    ],
+    'nwf_trainertag' => [
+        'titel'    => 'Pro NWF-Trainer und Tag',
+        'text'     => 'Satz × Anzahl anwesende NWF-Trainer × Tage. Mehrere Trainer vervielfachen den Betrag.',
+        'beispiel' => 'z.B. NWF-Beitrag',
     ],
     'additiv' => [
         'titel'    => 'Grundbetrag plus Zuschläge',
@@ -293,7 +299,7 @@ require __DIR__ . '/partials/header.php';
           return {bezeichnung:'Hauptbeitrag',grundbetrag:'',betrag_pro_teilnehmer:'',betrag_pro_tag:'',
                   max_teilnehmer:'',max_tage:'',betrag_max_gesamt:'',satz_mit_uebernachtung:'',
                   satz_ohne_uebernachtung:'',betrag_pro_stunde:'',max_stunden_pro_tag:'',
-                  betrag_pro_einheit:'',max_lektionen_pro_tag:''}
+                  betrag_pro_einheit:'',max_lektionen_pro_tag:'',betrag_pro_trainertag:''}
         },
         addBetrag()    { this.betraege.push(this.leereZeile()) },
 
@@ -472,13 +478,20 @@ require __DIR__ . '/partials/header.php';
                    class="input input--sm">
           </div>
 
+          <!-- nwf_trainertag -->
+          <div x-show="berechnungstyp === 'nwf_trainertag'">
+            <label class="block text-xs text-muted mb-1">Satz pro NWF-Trainer und Tag (CHF)</label>
+            <input type="text" inputmode="decimal" :name="'betraege['+i+'][betrag_pro_trainertag]'" x-model="b.betrag_pro_trainertag"
+                   class="input input--sm">
+          </div>
+
           <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
             <label class="block text-xs text-muted mb-1">Max. Teilnehmer</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_teilnehmer]'" x-model="b.max_teilnehmer"
                    placeholder="leer = unbegrenzt"
                    class="input input--sm">
           </div>
-          <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit'">
+          <div x-show="berechnungstyp === 'additiv' || berechnungstyp === 'js_teilnehmertag' || berechnungstyp === 'js_teilnehmerstunde' || berechnungstyp === 'zks_ausbildungseinheit' || berechnungstyp === 'nwf_trainertag'">
             <label class="block text-xs text-muted mb-1">Max. Tage</label>
             <input type="number" step="1" min="0" :name="'betraege['+i+'][max_tage]'" x-model="b.max_tage"
                    placeholder="leer = unbegrenzt"

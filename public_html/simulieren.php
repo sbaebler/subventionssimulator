@@ -24,6 +24,7 @@ $params = [
     'uebernachtung'     => 1,
     'stunden_pro_tag'   => 4,
     'lektionen_pro_tag' => 6,
+    'anzahl_trainer'    => 1,
 ];
 
 // Aktive Subventionen laden. Der Event-Simulator behandelt nur event-basierte
@@ -37,6 +38,7 @@ $typen    = array_column($alleSubv, 'berechnungstyp');
 $brauchtUebernachtung = in_array('js_teilnehmertag', $typen, true);
 $brauchtStunden       = in_array('js_teilnehmerstunde', $typen, true);
 $brauchtLektionen     = in_array('zks_ausbildungseinheit', $typen, true);
+$brauchtTrainer       = in_array('nwf_trainertag', $typen, true);
 
 $ergebnisse = null;
 $fehler     = null;
@@ -51,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'uebernachtung'     => isset($_POST['uebernachtung']) ? 1 : 0,
         'stunden_pro_tag'   => max(0, (int)($_POST['stunden_pro_tag']   ?? 0)),
         'lektionen_pro_tag' => max(0, (int)($_POST['lektionen_pro_tag'] ?? 0)),
+        'anzahl_trainer'    => max(0, (int)($_POST['anzahl_trainer'] ?? 0)),
     ];
 
     if (!array_key_exists($params['trainerart'], Subvention::TRAINERARTEN)) {
@@ -150,7 +153,7 @@ require __DIR__ . '/partials/header.php';
 
     </div>
 
-    <?php if ($brauchtUebernachtung || $brauchtStunden || $brauchtLektionen): ?>
+    <?php if ($brauchtUebernachtung || $brauchtStunden || $brauchtLektionen || $brauchtTrainer): ?>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
       <?php if ($brauchtUebernachtung): ?>
       <div class="flex items-center gap-2 pt-6">
@@ -176,6 +179,15 @@ require __DIR__ . '/partials/header.php';
                value="<?= (int)$params['lektionen_pro_tag'] ?>"
                class="input">
         <p class="text-xs text-subtle mt-1">Für ZKS Ausbildungseinheiten</p>
+      </div>
+      <?php endif; ?>
+      <?php if ($brauchtTrainer): ?>
+      <div>
+        <label class="block text-sm font-medium mb-1">NWF-Trainer pro Tag</label>
+        <input type="number" name="anzahl_trainer" min="0" max="50"
+               value="<?= (int)$params['anzahl_trainer'] ?>"
+               class="input">
+        <p class="text-xs text-subtle mt-1">Anwesende NWF-Trainer; der Betrag gilt je Trainer und Tag</p>
       </div>
       <?php endif; ?>
     </div>

@@ -155,6 +155,21 @@ class EventSchaetzung {
             $teilnehmer = $js['teilnehmer'];
         }
 
+        // nwf_trainertag: Betrag je NWF-Trainer und Tag. Wie viele NWF-Trainer
+        // am Event beteiligt sind, steht in den Personalaufwand-Zeilen; pro
+        // Trainer gilt jeder förderfähige Tag (Präsenz je Tag ist nicht erfasst).
+        $nwfTrainer = 0;
+        if ($typ === 'nwf_trainertag') {
+            foreach ($personalzeilen as $zeile) {
+                $nwfTrainer += self::personalzeileZulassungen($zeile)['nwf'] ? 1 : 0;
+            }
+            if ($nwfTrainer < 1) {
+                return $personalzeilen
+                    ? $offen('nicht_berechtigt', 'Kein NWF-Trainer im Personalaufwand erfasst')
+                    : $offen('nicht_berechenbar', 'Noch keine Personalaufwand-Zeile mit NWF-Trainer erfasst');
+            }
+        }
+
         $trainerRow = null;
         $trainerarten = $subv['trainerarten'] ?? [];
         if ($trainerarten) {
@@ -184,7 +199,7 @@ class EventSchaetzung {
 
         [$betrag, $auf] = Foerderrechner::betrag(
             $typ, $regel, $teilnehmer, $tage,
-            ['uebernachtung' => $tage > 1, 'lektionen_pro_tag' => $lektionenProTag],
+            ['uebernachtung' => $tage > 1, 'lektionen_pro_tag' => $lektionenProTag, 'anzahl_trainer' => $nwfTrainer],
             $trainerRow, $eventRow
         );
         return $basis + ['status' => 'berechnet', 'betrag' => round($betrag, 2), 'grund' => null, 'aufschluesselung' => $auf];

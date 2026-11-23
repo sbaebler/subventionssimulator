@@ -42,6 +42,21 @@ $r = EventSchaetzung::schaetzen([$pauschal], 20, 5, [], null);
 pruefe('additiv Summe', $r['summe'], 400.0);
 pruefe('Lager erkannt', $r['eventart'], 'lager');
 
+// NWF: Satz × NWF-Trainer × Tage, unabhängig von der Teilnehmerzahl
+$nwf = ['bezeichnung' => 'NWF', 'foerderstelle' => 'NWF', 'berechnungstyp' => 'nwf_trainertag',
+        'betraege' => [['betrag_pro_trainertag' => 100]], 'trainerarten' => [], 'eventarten' => []];
+$nwfKonto = fn() => ['benutzer_id' => 7, 'konto_js' => 0, 'konto_nwf' => 1];
+$r = EventSchaetzung::schaetzen([$nwf], 20, 3, [$nwfKonto()], null);
+pruefe('NWF 1 Trainer', $r['programme'][0]['betrag'], 300.0);
+$r = EventSchaetzung::schaetzen([$nwf], 20, 3, [$nwfKonto(), $nwfKonto(), $nwfKonto()], null);
+pruefe('NWF 3 Trainer multipliziert', $r['programme'][0]['betrag'], 900.0);
+$r = EventSchaetzung::schaetzen([$nwf], 5, 3, [$nwfKonto(), $nwfKonto(), $leiter(true)], null);
+pruefe('NWF zählt nur NWF-Trainer', $r['programme'][0]['betrag'], 600.0);
+$r = EventSchaetzung::schaetzen([$nwf], 20, 3, [$leiter(true)], null);
+pruefe('NWF ohne NWF-Trainer: nicht berechtigt', $r['programme'][0]['status'], 'nicht_berechtigt');
+$r = EventSchaetzung::schaetzen([$nwf], 20, 3, [], null);
+pruefe('NWF ohne Personal: nicht berechenbar', $r['programme'][0]['status'], 'nicht_berechenbar');
+
 // Keine Teilnehmenden -> keine Schätzung
 pruefe('ohne TN', EventSchaetzung::schaetzen([$pauschal], null, 5, [], null)['summe'], null);
 
