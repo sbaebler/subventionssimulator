@@ -266,7 +266,7 @@ behalten `Subvention`/`subventionen`.
 
 ## Aktueller Stand
 
-Produktiv im Einsatz. Version 4 veröffentlicht am 18.07.2026; Verlauf in
+Produktiv im Einsatz. Version 5 veröffentlicht am 28.11.2026; Verlauf in
 `RELEASES.md`, im UI unter «Neuigkeiten».
 
 Fertig und live: Erfassung (Wizard), Simulator, Beiträge & Verwendung,

@@ -1,5 +1,57 @@
 # Release-Notes – Subventionssimulator
 
+## Version 5 – Swiss-Sailing-Rapport und erwartete Subventionen pro Jahr
+
+*Veröffentlicht am 28.11.2026*
+
+### Neu: Swiss-Sailing-Rapport
+
+Unter «Mehr → Swiss-Sailing-Rapport» entsteht das Rapportformular «Promotion
+camp activity» für den Regionenbeitrag im Originallayout von Swiss Sailing.
+
+- **Ein Excel pro Förderlager**, gesammelt als ZIP. Wählbar sind durchgeführte
+  und abgeschlossene Breitensport-Events.
+- **Angaben aus der Anmeldung:** Name, Jahrgang, Club, Geschlecht,
+  Swiss-Sailing-Nummer, AHV-Nummer (= J+S-Nummer) und Segelklasse kommen aus dem
+  Class Manager Tool, soweit sie in der Anmeldung stehen. Fehlendes oder
+  Falsches ergänzt du auf der Seite.
+- **Nur wer zählt:** Ins Formular kommen die Anwesenden bis 18 Jahre (U19) ohne
+  Swiss Olympic Talent Card (SOTC). Eine Spalte zeigt, was noch fehlt.
+- **Demo zum Ausprobieren:** In der Auswahl «Daten» stehen drei fiktive
+  Szenarien. Dabei wird nichts gespeichert.
+- Versendet wird nichts automatisch. Die Dateien enthalten Personendaten
+  Minderjähriger.
+
+### Neu: Erwartete Subventionen aus den Events
+
+- **Simulator, Ansicht «Events pro Jahr»:** schätzt pro Event und Jahr die
+  Subventionen aus Teilnehmenden und förderfähigen Tagen, filterbar nach
+  Klasse und Eventart.
+- **Standard-Förderprogramme:** gelten für alle Events; Klassen, Eventkategorien
+  und einzelne Events lassen sich ausnehmen.
+- **Förderstatus bei den Events:** «Förderfähig» oder der zugeteilte Betrag.
+
+### Berechnung
+
+- Neue Berechnungsart **NWF Trainertag** (Satz × NWF-Trainer × Tage).
+- Pro Anlass zählt **J+S Lager oder J+S Training**, nie beides; Lager hat Vorrang.
+- ZKS Ausbildungseinheiten werden auch für Trainings geschätzt.
+
+### Bedienung
+
+- **Papierkorb:** Gelöschte Förderprogramme lassen sich wiederherstellen.
+- **Passwort vergessen:** neues Passwort selbst per E-Mail-Link setzen;
+  deaktivierte Benutzer können gelöscht werden.
+- «Jahresbeiträge» ist jetzt eine Ansicht des Simulators.
+- Neue Anleitung mit Bahnübersicht, Fachlogik mit nachgerechneten Beispielen.
+- Besser auf dem Smartphone: Menü und Karten passen sich an.
+
+### Entfernt
+
+- Der CSV-Export im Simulator.
+
+---
+
 ## Version 4 – Erfassen ohne Anleitung: neue Nutzerführung
 
 *Veröffentlicht am 18.07.2026*

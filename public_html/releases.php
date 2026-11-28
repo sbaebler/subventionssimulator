@@ -8,6 +8,59 @@ require __DIR__ . '/partials/header.php';
   <p class="text-sm text-muted mt-1">Was sich im Subventionssimulator geändert hat</p>
 </div>
 
+<!-- Version 5 -->
+<section class="card mb-6">
+  <div class="flex items-center gap-3 mb-1">
+    <span class="badge badge--info">Version 5</span>
+    <span class="text-xs text-subtle">28.11.2026</span>
+  </div>
+  <h2 class="font-semibold mb-3">Swiss-Sailing-Rapport und erwartete Subventionen pro Jahr</h2>
+
+  <p class="font-medium text-sm mb-2">Neu: Swiss-Sailing-Rapport</p>
+  <p class="text-sm text-muted leading-relaxed mb-3">
+    Unter «Mehr → <a href="/swisssailing.php">Swiss-Sailing-Rapport</a>» entsteht das Rapportformular
+    «Promotion camp activity» für den Regionenbeitrag im Originallayout von Swiss Sailing.
+  </p>
+  <ul class="text-sm text-muted space-y-2 list-disc list-inside mb-4">
+    <li><strong>Ein Excel pro Förderlager</strong>, gesammelt als ZIP – für durchgeführte und
+        abgeschlossene Breitensport-Events.</li>
+    <li><strong>Angaben aus der Anmeldung:</strong> Name, Jahrgang, Club, Geschlecht,
+        Swiss-Sailing-Nummer, AHV-Nummer (= J+S-Nummer) und Segelklasse kommen aus dem Class Manager
+        Tool, soweit sie in der Anmeldung stehen. Fehlendes ergänzt du auf der Seite.</li>
+    <li><strong>Nur wer zählt:</strong> Anwesende bis 18 Jahre (U19) ohne Swiss Olympic Talent Card
+        (SOTC). Eine Spalte zeigt, was noch fehlt.</li>
+    <li><strong>Demo zum Ausprobieren:</strong> In der Auswahl «Daten» stehen drei fiktive Szenarien.
+        Dabei wird nichts gespeichert.</li>
+  </ul>
+
+  <p class="font-medium text-sm mb-2">Neu: Erwartete Subventionen aus den Events</p>
+  <ul class="text-sm text-muted space-y-2 list-disc list-inside mb-4">
+    <li><strong>Simulator, Ansicht «Events pro Jahr»:</strong> Schätzung pro Event aus Teilnehmenden
+        und förderfähigen Tagen, filterbar nach Klasse und Eventart.</li>
+    <li><strong>Standard-Förderprogramme:</strong> gelten für alle Events; Klassen, Eventkategorien und
+        einzelne Events lassen sich ausnehmen.</li>
+    <li><strong>Förderstatus bei den Events:</strong> «Förderfähig» oder der zugeteilte Betrag.</li>
+  </ul>
+
+  <p class="font-medium text-sm mb-2">Berechnung und Bedienung</p>
+  <ul class="text-sm text-muted space-y-2 list-disc list-inside mb-4">
+    <li>Neue Berechnungsart <strong>NWF Trainertag</strong> (Satz × NWF-Trainer × Tage).</li>
+    <li>Pro Anlass zählt <strong>J+S Lager oder J+S Training</strong>, nie beides; Lager hat Vorrang.</li>
+    <li>ZKS Ausbildungseinheiten werden auch für Trainings geschätzt.</li>
+    <li><strong>Papierkorb</strong> für Förderprogramme und <strong>«Passwort vergessen»</strong> per
+        E-Mail-Link; deaktivierte Benutzer können gelöscht werden.</li>
+    <li>«Jahresbeiträge» ist jetzt eine Ansicht des Simulators.</li>
+    <li>Neue Anleitung mit Bahnübersicht, Fachlogik mit nachgerechneten Beispielen und eine bessere
+        Darstellung auf dem Smartphone.</li>
+  </ul>
+
+  <div class="card--muted text-sm text-muted">
+    <p class="font-medium mb-1">Gut zu wissen</p>
+    <p>Der Rapport enthält Personendaten Minderjähriger; versendet wird nichts automatisch.
+       Der CSV-Export im Simulator wurde entfernt.</p>
+  </div>
+</section>
+
 <!-- Version 4 -->
 <section class="card mb-6">
   <div class="flex items-center gap-3 mb-1">
