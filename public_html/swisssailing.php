@@ -75,7 +75,7 @@ if ($auswahl && !$fehler) {
                 if (SwissSailingRapport::juniorStatus($a['jahrgang'] ? (int)$a['jahrgang'] : null, $jahr, $maxAlter) === 'nein') {
                     continue;
                 }
-                $personen[$a['schluessel']] ??= $a + ['events' => [], 'event_klasse' => $a['klasse']];
+                $personen[$a['schluessel']] ??= $a + ['events' => []];
                 $personen[$a['schluessel']]['events'][] = $e['bezeichnung'];
             }
             $coaches = SwissSailingRapport::coaches((int)$e['id']);
@@ -175,13 +175,14 @@ require __DIR__ . '/partials/header.php';
   <section class="card mb-6">
     <h2 class="font-semibold mb-1">Angaben zu den Athletinnen und Athleten (<?= count($personen) ?>)</h2>
     <p class="text-sm text-muted mb-4">
-      Name, Jahrgang und Club kommen aus dem Class Manager Tool. Die übrigen Angaben erfasst du hier;
-      sie bleiben für spätere Rapporte gespeichert. Wer eine SOTC hat, erscheint nicht im Formular.
+      Die Angaben kommen aus der Anmeldung (Class Manager Tool) und erscheinen hier grau. Fülle nur aus,
+      was fehlt oder falsch ist; deine Eingabe hat Vorrang und bleibt für spätere Rapporte gespeichert.
+      Wer eine SOTC hat, erscheint nicht im Formular.
     </p>
     <div class="table-scroll">
       <table class="table text-sm">
         <thead>
-          <tr><th>Name</th><th>Geschlecht</th><th>Lizenz-Nr.</th><th>J+S-Nr.</th><th>Segelklasse</th><th>SOTC</th><th>Fehlt</th></tr>
+          <tr><th>Name</th><th>Geschlecht</th><th>Lizenz-Nr.</th><th>J+S-Nr. (AHV)</th><th>Segelklasse</th><th>SOTC</th><th>Fehlt</th></tr>
         </thead>
         <tbody>
           <?php foreach ($personen as $schluessel => $p): ?>
@@ -197,15 +198,15 @@ require __DIR__ . '/partials/header.php';
             </td>
             <td>
               <select name="<?= $n ?>[geschlecht]" class="input input--sm" aria-label="Geschlecht <?= $h($wer) ?>">
-                <option value="">–</option>
+                <option value=""><?= $h($p['vorgabe']['geschlecht'] ?: '–') ?></option>
                 <?php foreach (['M', 'F'] as $g): ?>
-                <option value="<?= $g ?>" <?= $p['geschlecht'] === $g ? 'selected' : '' ?>><?= $g ?></option>
+                <option value="<?= $g ?>" <?= $p['erfasst']['geschlecht'] === $g ? 'selected' : '' ?>><?= $g ?></option>
                 <?php endforeach; ?>
               </select>
             </td>
-            <td><input type="text" name="<?= $n ?>[lizenz_nr]" value="<?= $h($p['lizenz_nr']) ?>" maxlength="30" class="input input--sm w-28" aria-label="Lizenz-Nr. <?= $h($wer) ?>"></td>
-            <td><input type="text" name="<?= $n ?>[js_nr]" value="<?= $h($p['js_nr']) ?>" maxlength="30" class="input input--sm w-28" aria-label="J+S-Nr. <?= $h($wer) ?>"></td>
-            <td><input type="text" name="<?= $n ?>[segelklasse]" value="<?= $h($p['segelklasse']) ?>" placeholder="<?= $h($p['event_klasse']) ?>" maxlength="50" class="input input--sm w-28" aria-label="Segelklasse <?= $h($wer) ?>"></td>
+            <td><input type="text" name="<?= $n ?>[lizenz_nr]" value="<?= $h($p['erfasst']['lizenz_nr']) ?>" placeholder="<?= $h($p['vorgabe']['lizenz_nr']) ?>" maxlength="30" class="input input--sm w-28" aria-label="Lizenz-Nr. <?= $h($wer) ?>"></td>
+            <td><input type="text" name="<?= $n ?>[js_nr]" value="<?= $h($p['erfasst']['js_nr']) ?>" maxlength="30" placeholder="<?= $h($p['vorgabe']['js_nr'] ?: '756.…') ?>" class="input input--sm w-40" aria-label="J+S-Nr. (AHV) <?= $h($wer) ?>"></td>
+            <td><input type="text" name="<?= $n ?>[segelklasse]" value="<?= $h($p['erfasst']['segelklasse']) ?>" placeholder="<?= $h($p['vorgabe']['klasse']) ?>" maxlength="50" class="input input--sm w-28" aria-label="Segelklasse <?= $h($wer) ?>"></td>
             <td><input type="checkbox" name="<?= $n ?>[hat_sotc]" value="1" class="checkbox" <?= $p['hat_sotc'] ? 'checked' : '' ?> aria-label="SOTC <?= $h($wer) ?>"></td>
             <td class="text-xs">
               <?php if ($p['hat_sotc']): ?>

@@ -129,9 +129,12 @@ cm_*                         Gehören dem Class Manager Tool. Hier nur lesend
 ein Excel je Event, gesammelt als ZIP. Wählbar sind durchgeführte/abgeschlossene
 **Breitensport**-Events (ohne Demo-Klasse); ins Formular kommen die **Anwesenden**
 ohne SOTC bis Höchstalter 18 (U19, in der Seite änderbar). Coaches stammen aus
-`cm_event_personalaufwand`. Was das Class Manager Tool nicht führt, liegt in
-`swisssailing_athleten` (Schlüssel: Hash aus E-Mail und Name). `cm_*` wird nur
-gelesen. Die Daten betreffen Minderjährige und sind für jedes Login sichtbar
+`cm_event_personalaufwand`. Geschlecht, Lizenz-Nr., AHV-Nr. und Segelklasse
+kommen aus der Anmeldung (`cm_teilnehmer`, übernommen vom Import des Class
+Manager Tools); `swisssailing_athleten` hält Korrekturen (Vorrang) und SOTC
+(Schlüssel: Hash aus E-Mail und Name). Die J+S-Nummer ist die **AHV-Nummer**
+(Spalte `js_nr`, geprüft und formatiert durch `ahvNummer()`; Ungültiges bleibt
+wie eingegeben und wird markiert). `cm_*` wird nur gelesen. Die Daten betreffen Minderjährige und sind für jedes Login sichtbar
 (die App kennt keine Rollen). Ändert Swiss Sailing das Formular, Zellbezüge in
 `SwissSailingRapport::zellen()` prüfen. Test: `php tests/swisssailing_rapport.php`.
 

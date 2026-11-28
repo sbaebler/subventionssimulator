@@ -6,8 +6,9 @@ require_once __DIR__ . '/db.php';
 // ein Formular pro Förderlager mit Coaches und den Junioren ohne Swiss
 // Olympic Talent Card (SOTC).
 //
-// cm_* wird nur gelesen. Was das Class Manager Tool nicht führt
-// (Geschlecht, Lizenz-Nr., J+S-Nr., SOTC), liegt in swisssailing_athleten.
+// cm_* wird nur gelesen. Geschlecht, Lizenz-Nr., AHV-Nr. (= J+S-Nr.) und
+// Segelklasse kommen aus der Anmeldung (cm_teilnehmer); Korrekturen und
+// SOTC liegen in swisssailing_athleten und haben Vorrang.
 // ---------------------------------------------------------------------
 
 class SwissSailingRapport {
@@ -43,13 +44,43 @@ class SwissSailingRapport {
         ));
     }
 
+    // Die J+S-Nummer ist die AHV-Nummer. Gültig (756, 13 Ziffern, Prüfziffer
+    // EAN-13) ergibt die Schreibweise 756.1234.5678.97, sonst null.
+    public static function ahvNummer(string $eingabe): ?string {
+        $z = preg_replace('/[\s.]/', '', $eingabe);
+        if (!preg_match('/^756\d{10}$/', $z)) return null;
+        $summe = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $summe += (int)$z[$i] * ($i % 2 ? 3 : 1);
+        }
+        if ((10 - $summe % 10) % 10 !== (int)$z[12]) return null;
+        return substr($z, 0, 3) . '.' . substr($z, 3, 4) . '.' . substr($z, 7, 4) . '.' . substr($z, 11);
+    }
+
+    // Was ins Formular kommt: Erfasstes ($zusatz) vor Anmeldung ($anmeldung),
+    // bei der Klasse zuletzt die des Events. Rein.
+    public static function wirksam(array $anmeldung, array $zusatz, string $eventKlasse): array {
+        $erster = fn(?string ...$w) => array_values(array_filter($w, fn($x) => trim((string)$x) !== ''))[0] ?? null;
+        $ahv = $erster($zusatz['js_nr'] ?? null, $anmeldung['ahv_nr'] ?? null);
+        return [
+            'geschlecht' => $erster($zusatz['geschlecht'] ?? null, $anmeldung['geschlecht'] ?? null),
+            'lizenz_nr'  => $erster($zusatz['lizenz_nr'] ?? null, $anmeldung['swisssailing_nr'] ?? null),
+            'js_nr'      => $ahv === null ? null : (self::ahvNummer($ahv) ?? $ahv),
+            'klasse'     => (string)$erster($zusatz['segelklasse'] ?? null, $anmeldung['segelklasse'] ?? null, $eventKlasse),
+        ];
+    }
+
     // Namen der leeren Pflichtangaben des Formulars.
     public static function fehlendeAngaben(array $a): array {
         $felder = [
             'jahrgang' => 'Jahrgang', 'geschlecht' => 'Geschlecht', 'segelclub' => 'Club',
-            'lizenz_nr' => 'Lizenz-Nr.', 'js_nr' => 'J+S-Nr.', 'klasse' => 'Segelklasse',
+            'lizenz_nr' => 'Lizenz-Nr.', 'js_nr' => 'J+S-/AHV-Nr.', 'klasse' => 'Segelklasse',
         ];
-        return array_values(array_filter($felder, fn($f) => empty($a[$f]), ARRAY_FILTER_USE_KEY));
+        $fehlt = array_values(array_filter($felder, fn($f) => empty($a[$f]), ARRAY_FILTER_USE_KEY));
+        if (!empty($a['js_nr']) && self::ahvNummer((string)$a['js_nr']) === null) {
+            $fehlt[] = 'AHV-Nr. ungültig';
+        }
+        return $fehlt;
     }
 
     public static function datumText(string $von, string $bis): string {
@@ -83,10 +114,13 @@ class SwissSailingRapport {
         return $stmt->fetchAll();
     }
 
-    // Anwesende eines Events, ergänzt um die hier erfassten Angaben.
+    // Anwesende eines Events. Die Felder geschlecht/lizenz_nr/js_nr/klasse
+    // sind die wirksamen Werte, 'erfasst' die hier gespeicherten Korrekturen,
+    // 'vorgabe' das, was ohne Korrektur gälte.
     public static function athleten(array $event): array {
         $stmt = db()->prepare('
-            SELECT vorname, nachname, email_norm, jahrgang, segelclub
+            SELECT vorname, nachname, email_norm, jahrgang, segelclub,
+                   geschlecht, ahv_nr, swisssailing_nr, segelklasse
             FROM cm_teilnehmer
             WHERE event_id = ? AND anwesend = 1
             ORDER BY nachname, vorname
@@ -101,13 +135,15 @@ class SwissSailingRapport {
         $zusatz = self::zusatzangaben(array_column($zeilen, 'schluessel'));
         // Bei klassenübergreifenden Events ist die Klasse pro Person offen.
         $eventKlasse = empty($event['ist_uebergreifend']) ? $event['klasse_bezeichnung'] : '';
-        foreach ($zeilen as &$z) {
-            $z += $zusatz[$z['schluessel']]
+        return array_map(function (array $z) use ($zusatz, $eventKlasse): array {
+            $erfasst = $zusatz[$z['schluessel']]
                 ?? ['geschlecht' => null, 'lizenz_nr' => null, 'js_nr' => null, 'segelklasse' => null, 'hat_sotc' => 0];
-            $z['klasse'] = $z['segelklasse'] ?: $eventKlasse;
-        }
-        unset($z);
-        return $zeilen;
+            return array_merge($z, self::wirksam($z, $erfasst, $eventKlasse), [
+                'hat_sotc' => $erfasst['hat_sotc'],
+                'erfasst'  => $erfasst,
+                'vorgabe'  => self::wirksam($z, [], $eventKlasse),
+            ]);
+        }, $zeilen);
     }
 
     private static function zusatzangaben(array $schluessel): array {
@@ -147,7 +183,7 @@ class SwissSailingRapport {
                 $werte = [
                     in_array($e['geschlecht'] ?? '', ['M', 'F'], true) ? $e['geschlecht'] : null,
                     $text($e['lizenz_nr'] ?? '', 30),
-                    $text($e['js_nr'] ?? '', 30),
+                    self::ahvNummer((string)($e['js_nr'] ?? '')) ?? $text($e['js_nr'] ?? '', 30),
                     $text($e['segelklasse'] ?? '', 50),
                     empty($e['hat_sotc']) ? 0 : 1,
                 ];

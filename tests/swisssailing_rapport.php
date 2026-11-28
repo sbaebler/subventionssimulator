@@ -31,9 +31,20 @@ $a = fn(string $v, ?int $jg, int $sotc = 0) => ['vorname' => $v, 'nachname' => '
     'hat_sotc' => $sotc, 'geschlecht' => 'F', 'segelclub' => 'SC <A&B>', 'lizenz_nr' => '=1+1', 'js_nr' => '', 'klasse' => 'ILCA'];
 $gefiltert = $S::filtern([$a('Eva', 2012), $a('Alt', 1990), $a('Kader', 2012, 1), $a('Neu', null)], 2026);
 pruefe('Filter: ohne SOTC, U19', array_column($gefiltert, 'vorname'), ['Eva', 'Neu']);
-pruefe('fehlende Angaben', $S::fehlendeAngaben($a('Eva', 2012)), ['J+S-Nr.']);
+pruefe('fehlende Angaben', $S::fehlendeAngaben($a('Eva', 2012)), ['J+S-/AHV-Nr.']);
+// 756.9217.0769.85 ist die veröffentlichte Beispielnummer.
+pruefe('AHV formatiert',        $S::ahvNummer('7569217076985'), '756.9217.0769.85');
+pruefe('AHV mit Punkten',       $S::ahvNummer(' 756.9217.0769.85 '), '756.9217.0769.85');
+pruefe('AHV falsche Prüfziffer', $S::ahvNummer('756.9217.0769.84'), null);
+pruefe('AHV falsches Land',     $S::ahvNummer('123.4567.8901.28'), null);
+pruefe('ungültige AHV markiert', $S::fehlendeAngaben(['js_nr' => '123'] + $a('Eva', 2012)), ['AHV-Nr. ungültig']);
 
 $event = ['id' => 7, 'bezeichnung' => 'Zürcher Lager 1', 'datum_von' => '2026-07-06', 'datum_bis' => '2026-07-10', 'ort' => 'Thalwil'];
+$anm = ['geschlecht' => 'F', 'ahv_nr' => '756.9217.0769.85', 'swisssailing_nr' => '123', 'segelklasse' => null];
+pruefe('Werte aus der Anmeldung', $S::wirksam($anm, [], 'ILCA'),
+    ['geschlecht' => 'F', 'lizenz_nr' => '123', 'js_nr' => '756.9217.0769.85', 'klasse' => 'ILCA']);
+pruefe('Korrektur hat Vorrang', $S::wirksam($anm, ['geschlecht' => 'M', 'lizenz_nr' => '9', 'segelklasse' => '420'], 'ILCA'),
+    ['geschlecht' => 'M', 'lizenz_nr' => '9', 'js_nr' => '756.9217.0769.85', 'klasse' => '420']);
 pruefe('Dateiname', $S::dateiname($event), '2026-07-06_Zuercher_Lager_1_7');
 $kopf = ['organisator' => 'ZSF', 'verantwortlich' => 'V', 'kontakt' => 'k@x.ch'];
 $viele = array_fill(0, 50, $a('Eva', 2012));
