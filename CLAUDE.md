@@ -43,6 +43,7 @@ subventionssimulator/
 │   ├── verwendung.php           Beiträge & Verwendung: Verteilung auf Empfänger
 │   ├── events.php               Events (read-only aus cm_events)
 │   ├── events_zuordnen.php      Event ↔ Förderprogramm verknüpfen
+│   ├── swisssailing.php         Rapport «Promotion camp activity» an Swiss Sailing (Excel je Förderlager)
 │   ├── papierkorb.php           Soft-gelöschte Programme, Wiederherstellen
 │   ├── benutzer.php             Benutzerverwaltung
 │   ├── anleitung.php            Anleitung inkl. Bahnübersicht-Diagramm
@@ -68,6 +69,8 @@ subventionssimulator/
 │   ├── Subvention.php           Model: CRUD, Soft-Delete, Vollständigkeit, Berechnung
 │   ├── Foerderrechner.php       Reine Formeln, ohne DB – identische Kopie im Class Manager Tool
 │   ├── Event.php                Read-only-Sicht auf cm_events + Zuordnung
+│   ├── SwissSailingRapport.php  Daten, Filterregeln und Excel für den Swiss-Sailing-Rapport
+│   ├── vorlagen/                Originalformular von Swiss Sailing (ohne Autorenangaben)
 │   ├── auth.php                 Session-Auth gegen die Tabelle benutzer
 │   ├── mailer.php               Mailversand
 │   └── password_reset.php       Token-Flow für Passwort-Reset
@@ -110,12 +113,27 @@ subventionen                 Stammdaten: bezeichnung, foerderstelle, kategorie,
   ├── subvention_kategorie_ausschluss Eventkategorien (breitensport/rlz/privat), vom Standard ausgenommen
   └── subvention_event_ausschluss     Einzelne Events, die vom Standard ausgenommen sind
 
+swisssailing_athleten        Zusatzangaben für den Swiss-Sailing-Rapport (Geschlecht,
+                             Lizenz-Nr., J+S-Nr., Segelklasse, SOTC)
+
 benutzer                     Login, Rolle, Aktivstatus
 passwort_reset_tokens        Token-Flow für Passwort-Reset
 
 cm_*                         Gehören dem Class Manager Tool. Hier nur lesend
                              verwenden, nie schreiben.
 ```
+
+### Swiss-Sailing-Rapport
+
+`swisssailing.php` füllt das Formular «Promotion camp activity» (Regionenbeitrag):
+ein Excel je Event, gesammelt als ZIP. Wählbar sind durchgeführte/abgeschlossene
+**Breitensport**-Events (ohne Demo-Klasse); ins Formular kommen die **Anwesenden**
+ohne SOTC bis Höchstalter 18 (U19, in der Seite änderbar). Coaches stammen aus
+`cm_event_personalaufwand`. Was das Class Manager Tool nicht führt, liegt in
+`swisssailing_athleten` (Schlüssel: Hash aus E-Mail und Name). `cm_*` wird nur
+gelesen. Die Daten betreffen Minderjährige und sind für jedes Login sichtbar
+(die App kennt keine Rollen). Ändert Swiss Sailing das Formular, Zellbezüge in
+`SwissSailingRapport::zellen()` prüfen. Test: `php tests/swisssailing_rapport.php`.
 
 ### ENUMs
 

@@ -38,6 +38,7 @@ auth_erforderlich();
       <div x-show="offen" x-cloak
            class="menu absolute left-0 top-full mt-2 w-48 z-20">
         <a href="/events.php"          class="menu__item">Events</a>
+        <a href="/swisssailing.php"    class="menu__item">Swiss-Sailing-Rapport</a>
         <a href="/anleitung.php"       class="menu__item">Anleitung</a>
         <a href="/fachlogik.php"       class="menu__item">Fachlogik</a>
         <a href="/releases.php"        class="menu__item">Neuigkeiten</a>
