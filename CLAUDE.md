@@ -70,6 +70,7 @@ subventionssimulator/
 │   ├── Foerderrechner.php       Reine Formeln, ohne DB – identische Kopie im Class Manager Tool
 │   ├── Event.php                Read-only-Sicht auf cm_events + Zuordnung
 │   ├── SwissSailingRapport.php  Daten, Filterregeln und Excel für den Swiss-Sailing-Rapport
+│   ├── SwissSailingDemo.php     Fiktive Demo-Szenarien für den Rapport (ohne DB)
 │   ├── vorlagen/                Originalformular von Swiss Sailing (ohne Autorenangaben)
 │   ├── auth.php                 Session-Auth gegen die Tabelle benutzer
 │   ├── mailer.php               Mailversand
@@ -137,6 +138,11 @@ Manager Tools); `swisssailing_athleten` hält Korrekturen (Vorrang) und SOTC
 wie eingegeben und wird markiert). `cm_*` wird nur gelesen. Die Daten betreffen Minderjährige und sind für jedes Login sichtbar
 (die App kennt keine Rollen). Ändert Swiss Sailing das Formular, Zellbezüge in
 `SwissSailingRapport::zellen()` prüfen. Test: `php tests/swisssailing_rapport.php`.
+
+**Demo:** Die Auswahl «Daten» bietet fiktive Szenarien aus
+`includes/SwissSailingDemo.php` (`?demo=komplett|luecken|saison`): keine
+DB-Zugriffe, nichts wird gespeichert, Dateinamen mit `DEMO_`. Neue Szenarien
+dort ergänzen.
 
 ### ENUMs
 

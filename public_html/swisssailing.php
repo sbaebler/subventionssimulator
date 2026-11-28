@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/SwissSailingRapport.php';
+require_once __DIR__ . '/../includes/SwissSailingDemo.php';
 
 auth_erforderlich();
 
@@ -13,13 +14,20 @@ $jahr = (int)($quelle['jahr'] ?? date('Y'));
 if ($jahr < 2000 || $jahr > 2100) $jahr = (int)date('Y');
 $maxAlter = max(5, min(99, (int)($quelle['max_alter'] ?? SwissSailingRapport::MAX_ALTER)));
 $gewaehlt = array_values(array_unique(array_map('intval', (array)($quelle['event'] ?? []))));
+// Demo: fiktive Daten, nichts wird gelesen oder gespeichert.
+$demo = (string)($quelle['demo'] ?? '');
+if (!isset(SwissSailingDemo::SZENARIEN[$demo])) $demo = '';
 
 $fehler = null;
 $events = [];
 $auswahl = [];
 
 try {
-    $events = SwissSailingRapport::events($jahr);
+    $events = $demo ? SwissSailingDemo::events($demo, $jahr) : SwissSailingRapport::events($jahr);
+    // In der Demo ohne passende Auswahl gleich alle Lager zeigen.
+    if ($demo && !array_intersect($gewaehlt, array_column($events, 'id'))) {
+        $gewaehlt = array_column($events, 'id');
+    }
     // Nur Events aus der eigenen Liste – fremde IDs fallen weg.
     $auswahl = array_values(array_filter($events, fn($e) => in_array((int)$e['id'], $gewaehlt, true)));
 
@@ -27,25 +35,36 @@ try {
         if (!hash_equals($_SESSION['csrf'], (string)($_POST['csrf'] ?? ''))) {
             throw new RuntimeException('csrf');
         }
-        // Nur Personen der ausgewählten Events dürfen geschrieben werden.
-        $erlaubt = [];
-        foreach ($auswahl as $e) {
-            foreach (SwissSailingRapport::athleten($e) as $a) $erlaubt[$a['schluessel']] = true;
+        $eingaben = (array)($_POST['athlet'] ?? []);
+        if ($demo) {
+            // Eingaben gelten nur für diesen Aufruf.
+            foreach ($auswahl as &$e) {
+                foreach (SwissSailingRapport::athleten($e) as $a) {
+                    if (is_array($eingaben[$a['schluessel']] ?? null)) {
+                        $e['zusatz'][$a['schluessel']] = SwissSailingRapport::normalisieren($eingaben[$a['schluessel']]);
+                    }
+                }
+            }
+            unset($e);
+        } else {
+            // Nur Personen der ausgewählten Events dürfen geschrieben werden.
+            $erlaubt = [];
+            foreach ($auswahl as $e) {
+                foreach (SwissSailingRapport::athleten($e) as $a) $erlaubt[$a['schluessel']] = true;
+            }
+            SwissSailingRapport::speichern(array_intersect_key($eingaben, $erlaubt), auth_benutzer_id() ?: null);
         }
-        SwissSailingRapport::speichern(
-            array_intersect_key((array)($_POST['athlet'] ?? []), $erlaubt),
-            auth_benutzer_id() ?: null
-        );
 
         if (($_POST['aktion'] ?? '') === 'export' && $auswahl) {
             $kopf = [];
             foreach (['organisator', 'verantwortlich', 'kontakt'] as $feld) {
                 $kopf[$feld] = mb_substr(trim((string)($_POST[$feld] ?? '')), 0, 150);
             }
-            $_SESSION['swisssailing_kopf'] = $kopf;
-            $zip = SwissSailingRapport::zipErzeugen($auswahl, $kopf, $maxAlter);
+            if (!$demo) $_SESSION['swisssailing_kopf'] = $kopf;
+            $praefix = $demo ? 'DEMO_' : '';
+            $zip = SwissSailingRapport::zipErzeugen($auswahl, $kopf, $maxAlter, $praefix);
             header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename="SwissSailing_Rapport_' . $jahr . '.zip"');
+            header('Content-Disposition: attachment; filename="' . $praefix . 'SwissSailing_Rapport_' . $jahr . '.zip"');
             header('Content-Length: ' . filesize($zip));
             header('Cache-Control: no-store');
             readfile($zip);
@@ -53,9 +72,10 @@ try {
             exit;
         }
 
-        header('Location: /swisssailing.php?' . http_build_query([
-            'jahr' => $jahr, 'max_alter' => $maxAlter, 'event' => $gewaehlt, 'gespeichert' => 1,
-        ]));
+        header('Location: /swisssailing.php?' . http_build_query(array_filter([
+            'demo' => $demo, 'jahr' => $jahr, 'max_alter' => $maxAlter, 'event' => $gewaehlt,
+            'gespeichert' => $demo ? null : 1,
+        ])));
         exit;
     }
 } catch (Throwable $e) {
@@ -78,7 +98,7 @@ if ($auswahl && !$fehler) {
                 $personen[$a['schluessel']] ??= $a + ['events' => []];
                 $personen[$a['schluessel']]['events'][] = $e['bezeichnung'];
             }
-            $coaches = SwissSailingRapport::coaches((int)$e['id']);
+            $coaches = $e['coaches'] ?? SwissSailingRapport::coaches((int)$e['id']);
             $ohneMail = count(array_filter($coaches, fn($c) => empty($c['email'])));
             if (!$coaches) {
                 $coachHinweise[] = $e['bezeichnung'] . ': keine Coaches (kein Personalaufwand erfasst).';
@@ -97,8 +117,8 @@ if ($auswahl && !$fehler) {
     }
 }
 
-$kopf = $_SESSION['swisssailing_kopf']
-    ?? ['organisator' => SwissSailingRapport::ORGANISATOR, 'verantwortlich' => auth_anzeigename(), 'kontakt' => ''];
+$kopf = $demo ? SwissSailingDemo::KOPF : ($_SESSION['swisssailing_kopf']
+    ?? ['organisator' => SwissSailingRapport::ORGANISATOR, 'verantwortlich' => auth_anzeigename(), 'kontakt' => '']);
 $h = fn($w) => htmlspecialchars((string)$w);
 
 $pageTitle = 'Swiss-Sailing-Rapport';
@@ -120,8 +140,23 @@ require __DIR__ . '/partials/header.php';
 <div class="alert alert--success mb-6">Angaben wurden gespeichert.</div>
 <?php endif; ?>
 
+<?php if ($demo): ?>
+<div class="alert alert--info mb-6">
+  Demo mit fiktiven Daten. Nichts wird gespeichert; die Dateinamen beginnen mit «DEMO_».
+</div>
+<?php endif; ?>
+
 <form method="get" action="/swisssailing.php" class="card mb-6">
   <div class="flex flex-wrap items-end gap-4 mb-4">
+    <div>
+      <label class="block text-sm font-medium mb-1" for="demo">Daten</label>
+      <select id="demo" name="demo" class="input" onchange="this.form.submit()">
+        <option value="">Echte Daten (Class Manager Tool)</option>
+        <?php foreach (SwissSailingDemo::SZENARIEN as $key => $label): ?>
+        <option value="<?= $key ?>" <?= $demo === $key ? 'selected' : '' ?>><?= $h($label) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
     <div>
       <label class="block text-sm font-medium mb-1" for="jahr">Jahr</label>
       <input type="number" id="jahr" name="jahr" min="2000" max="2100" value="<?= $jahr ?>" class="input w-32">
@@ -158,6 +193,7 @@ require __DIR__ . '/partials/header.php';
 <?php if ($auswahl && !$fehler): ?>
 <form method="post" action="/swisssailing.php">
   <input type="hidden" name="csrf" value="<?= $h($_SESSION['csrf']) ?>">
+  <input type="hidden" name="demo" value="<?= $h($demo) ?>">
   <input type="hidden" name="jahr" value="<?= $jahr ?>">
   <input type="hidden" name="max_alter" value="<?= $maxAlter ?>">
   <?php foreach ($auswahl as $e): ?>
@@ -176,7 +212,7 @@ require __DIR__ . '/partials/header.php';
     <h2 class="font-semibold mb-1">Angaben zu den Athletinnen und Athleten (<?= count($personen) ?>)</h2>
     <p class="text-sm text-muted mb-4">
       Die Angaben kommen aus der Anmeldung (Class Manager Tool) und erscheinen hier grau. Fülle nur aus,
-      was fehlt oder falsch ist; deine Eingabe hat Vorrang und bleibt für spätere Rapporte gespeichert.
+      was fehlt oder falsch ist; deine Eingabe hat Vorrang<?= $demo ? ' (in der Demo wird sie nicht gespeichert)' : ' und bleibt für spätere Rapporte gespeichert' ?>.
       Wer eine SOTC hat, erscheint nicht im Formular.
     </p>
     <div class="table-scroll">
@@ -241,12 +277,17 @@ require __DIR__ . '/partials/header.php';
   </section>
 
   <div class="flex flex-wrap gap-2">
+    <?php if (!$demo): ?>
     <button type="submit" name="aktion" value="speichern" class="btn btn--secondary">Angaben speichern</button>
-    <button type="submit" name="aktion" value="export" class="btn btn--primary">Speichern und Excel herunterladen (ZIP)</button>
+    <?php endif; ?>
+    <button type="submit" name="aktion" value="export" class="btn btn--primary">
+      <?= $demo ? 'Demo-Excel herunterladen (ZIP)' : 'Speichern und Excel herunterladen (ZIP)' ?>
+    </button>
   </div>
   <p class="text-xs text-subtle mt-3">
-    Die Dateien enthalten Personendaten Minderjähriger. Gib sie nur an Swiss Sailing weiter.
-    Versendet wird nichts automatisch.
+    <?= $demo
+      ? 'Alle Angaben sind erfunden. Schick diese Dateien nicht an Swiss Sailing.'
+      : 'Die Dateien enthalten Personendaten Minderjähriger. Gib sie nur an Swiss Sailing weiter. Versendet wird nichts automatisch.' ?>
   </p>
 </form>
 <?php endif; ?>

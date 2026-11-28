@@ -66,5 +66,28 @@ $zip->close();
 if ($ziel = getenv('MUSTER')) copy($datei, $ziel);
 unlink($datei);
 
+// Demo-Szenarien laufen ohne DB durch (Verbindung 'x' würde scheitern).
+require_once __DIR__ . '/../includes/SwissSailingDemo.php';
+$fakten = [];
+foreach (array_keys(SwissSailingDemo::SZENARIEN) as $name) {
+    $evs = SwissSailingDemo::events($name, 2026);
+    $pfad = $S::zipErzeugen($evs, SwissSailingDemo::KOPF, 18, 'DEMO_');
+    $z = new ZipArchive();
+    $z->open($pfad);
+    $fakten[$name] = $z->numFiles;
+    $z->close();
+    unlink($pfad);
+}
+pruefe('Demo: Dateien je Szenario', $fakten, ['komplett' => 1, 'luecken' => 1, 'saison' => 4]);
+$alle = fn(string $n) => $S::athleten(SwissSailingDemo::events($n, 2026)[0]);
+pruefe('Demo komplett ohne Lücken', array_merge(...array_map(fn($p) => $S::fehlendeAngaben($p), $alle('komplett'))), []);
+pruefe('Demo Lücken: 2 SOTC und 1 zu alt fallen weg', count($S::filtern($alle('luecken'), 2026)), 9);
+$offen = array_unique(array_merge(...array_map(fn($p) => $S::fehlendeAngaben($p), $S::filtern($alle('luecken'), 2026))));
+sort($offen);
+pruefe('Demo Lücken: jede Art Lücke', $offen, ['AHV-Nr. ungültig', 'Club', 'Geschlecht', 'J+S-/AHV-Nr.', 'Jahrgang', 'Lizenz-Nr.']);
+$gross = SwissSailingDemo::events('saison', 2026)[1];
+$namen = array_map(fn($p) => $p['vorname'] . ' ' . $p['nachname'], $gross['zeilen']);
+pruefe('Demo: Namen im Lager eindeutig', count(array_unique($namen)), count($namen));
+
 echo $fehler ? "\n$fehler Fehler\n" : "\nAlles ok\n";
 exit($fehler ? 1 : 0);

@@ -117,7 +117,11 @@ class SwissSailingRapport {
     // Anwesende eines Events. Die Felder geschlecht/lizenz_nr/js_nr/klasse
     // sind die wirksamen Werte, 'erfasst' die hier gespeicherten Korrekturen,
     // 'vorgabe' das, was ohne Korrektur gälte.
+    // Demo-Events bringen 'zeilen' und 'zusatz' selbst mit (keine DB).
     public static function athleten(array $event): array {
+        if (isset($event['zeilen'])) {
+            return self::aufbereiten($event, $event['zeilen'], $event['zusatz']);
+        }
         $stmt = db()->prepare('
             SELECT vorname, nachname, email_norm, jahrgang, segelclub,
                    geschlecht, ahv_nr, swisssailing_nr, segelklasse
@@ -127,15 +131,16 @@ class SwissSailingRapport {
         ');
         $stmt->execute([$event['id']]);
         $zeilen = $stmt->fetchAll();
-        foreach ($zeilen as &$z) {
-            $z['schluessel'] = self::schluessel($z['email_norm'], $z['vorname'], $z['nachname']);
-        }
-        unset($z);
+        $schluessel = array_map(fn($z) => self::schluessel($z['email_norm'], $z['vorname'], $z['nachname']), $zeilen);
+        return self::aufbereiten($event, $zeilen, self::zusatzangaben($schluessel));
+    }
 
-        $zusatz = self::zusatzangaben(array_column($zeilen, 'schluessel'));
+    // Anmeldungen mit den erfassten Angaben zusammenführen. Rein.
+    private static function aufbereiten(array $event, array $zeilen, array $zusatz): array {
         // Bei klassenübergreifenden Events ist die Klasse pro Person offen.
         $eventKlasse = empty($event['ist_uebergreifend']) ? $event['klasse_bezeichnung'] : '';
         return array_map(function (array $z) use ($zusatz, $eventKlasse): array {
+            $z['schluessel'] = self::schluessel($z['email_norm'], $z['vorname'], $z['nachname']);
             $erfasst = $zusatz[$z['schluessel']]
                 ?? ['geschlecht' => null, 'lizenz_nr' => null, 'js_nr' => null, 'segelklasse' => null, 'hat_sotc' => 0];
             return array_merge($z, self::wirksam($z, $erfasst, $eventKlasse), [
@@ -163,6 +168,18 @@ class SwissSailingRapport {
         return $ergebnis;
     }
 
+    // Formulareingabe einer Person bereinigen. Rein.
+    public static function normalisieren(array $e): array {
+        $text = fn($w, int $max) => mb_substr(trim((string)$w), 0, $max) ?: null;
+        return [
+            'geschlecht'  => in_array($e['geschlecht'] ?? '', ['M', 'F'], true) ? $e['geschlecht'] : null,
+            'lizenz_nr'   => $text($e['lizenz_nr'] ?? '', 30),
+            'js_nr'       => self::ahvNummer((string)($e['js_nr'] ?? '')) ?? $text($e['js_nr'] ?? '', 30),
+            'segelklasse' => $text($e['segelklasse'] ?? '', 50),
+            'hat_sotc'    => empty($e['hat_sotc']) ? 0 : 1,
+        ];
+    }
+
     // $eingaben: [schluessel => ['geschlecht','lizenz_nr','js_nr','segelklasse','hat_sotc']]
     public static function speichern(array $eingaben, ?int $benutzerId): void {
         $setzen = db()->prepare('
@@ -174,19 +191,12 @@ class SwissSailingRapport {
               segelklasse = VALUES(segelklasse), hat_sotc = VALUES(hat_sotc), geaendert_von = VALUES(geaendert_von)
         ');
         $loeschen = db()->prepare('DELETE FROM swisssailing_athleten WHERE schluessel = ?');
-        $text = fn($w, int $max) => mb_substr(trim((string)$w), 0, $max) ?: null;
 
         db()->beginTransaction();
         try {
             foreach ($eingaben as $schluessel => $e) {
                 if (!preg_match('/^[0-9a-f]{64}$/', (string)$schluessel) || !is_array($e)) continue;
-                $werte = [
-                    in_array($e['geschlecht'] ?? '', ['M', 'F'], true) ? $e['geschlecht'] : null,
-                    $text($e['lizenz_nr'] ?? '', 30),
-                    self::ahvNummer((string)($e['js_nr'] ?? '')) ?? $text($e['js_nr'] ?? '', 30),
-                    $text($e['segelklasse'] ?? '', 50),
-                    empty($e['hat_sotc']) ? 0 : 1,
-                ];
+                $werte = array_values(self::normalisieren($e));
                 if (array_filter($werte)) {
                     $setzen->execute([$schluessel, ...$werte, $benutzerId]);
                 } else {
@@ -282,7 +292,7 @@ class SwissSailingRapport {
 
     // ZIP mit einem Formular je Event (bei mehr als 45 Athleten mehrere
     // Teile). Gibt den Pfad einer temporären Datei zurück.
-    public static function zipErzeugen(array $events, array $kopf, int $maxAlter): string {
+    public static function zipErzeugen(array $events, array $kopf, int $maxAlter, string $praefix = ''): string {
         $tmp = tempnam(sys_get_temp_dir(), 'swz');
         $zip = new ZipArchive();
         if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
@@ -291,12 +301,12 @@ class SwissSailingRapport {
         foreach ($events as $event) {
             $jahr = (int)substr($event['datum_von'], 0, 4);
             $athleten = self::filtern(self::athleten($event), $jahr, $maxAlter);
-            $coaches = self::coaches((int)$event['id']);
+            $coaches = $event['coaches'] ?? self::coaches((int)$event['id']);
             $teile = array_chunk($athleten, self::MAX_ATHLETEN) ?: [[]];
             foreach ($teile as $i => $teil) {
                 $suffix = count($teile) > 1 ? '_Teil' . ($i + 1) : '';
                 $zip->addFromString(
-                    self::dateiname($event) . $suffix . '.xlsx',
+                    $praefix . self::dateiname($event) . $suffix . '.xlsx',
                     self::xlsx(self::zellen($event, $kopf, $coaches, $teil))
                 );
             }
